@@ -1,5 +1,4 @@
 .pycach
-
 .idea
 venv/
 .venv/
@@ -15,5 +14,4 @@ htmlcov/
 dist/
 build/
 *.egg-info/
-images/
 *.csv
