@@ -144,5 +144,3 @@ class Features:
 
     def ice_concentration_calculator(self):
         pass
-
-# if __name__ == "__main__":

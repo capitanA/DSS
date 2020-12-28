@@ -1,4 +1,5 @@
 import math
+import tkinter as tk
 
 coordinates = {
     "center_target_coordinated": {"lat": 60.51724810, "long": 146.35859560},
@@ -238,6 +239,18 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
         return area_of_focus_dict
 
 
-if __name__ == "__main__":
-    # print(ownship_position("emergency", 60.51687820, 146.35780540))
-    print(sides_angle(0, 0, 8, 8, 0, 8))
+class BLabel(object):
+    b = ">>>"
+
+    def __init__(self, master):
+
+        self.l = tk.Label(master, bg="white")
+
+    def add_option(self, text):
+        if self.l.cget("text") == "":
+            self.l.config(text=self.b + " " + text)
+        else:
+            self.l.config(text=self.l.cget("text") + "\n" + self.b + " " + text, font=("helvetica", 12))
+
+
+

@@ -13,3 +13,4 @@ Pygments==2.7.3
 six==1.15.0
 traitlets==4.3.3
 wcwidth==0.2.5
+pillow
