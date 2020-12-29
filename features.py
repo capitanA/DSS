@@ -1,6 +1,7 @@
 import csv
 import math
-from helper import ownship_position, area_focus_votter
+from helper import ownship_position, area_focus_votter, updown_rannge_calculator, aspect_votter
+
 TOP_TARGET_POINT = (60.51040, 146.35117)
 CENTER_TARGET_POINT = (60.50914510, 146.35116730)
 BOTTOM_TARGET_POINT = (60.50790, 146.33115)
@@ -13,6 +14,7 @@ class Features:
         self.log_objects = log_objects
         self.time_stamp = time_stamp
         self.vessel = None
+        self.aspect = None
         self.orientation = None
         self.distance_from_target = {"top": 0, "center": 0, "bottom": 0}
         self.area_of_focus = None
@@ -32,20 +34,30 @@ class Features:
         self.speed_calculator()
 
     def aspect_calculator(self):
-        pass
+        (uprange_angle, downrange_angle) = updown_rannge_calculator(self.log_objects[self.time_stamp].latitude,
+                                                                    self.log_objects[self.time_stamp].longtitude,
+                                                                    self.scenario)
+        last_sec = self.log_objects[-1].simtime
+        aspect_vot_dict = {"up_current": 0, "J_approach": 0, "direct": 0}
+        for sec in range(0, 181):
+            (uprange_angle, downrange_angle) = updown_rannge_calculator(self.log_objects[sec].latitude,
+                                                                        self.log_objects[sec].longtitude,
+                                                                        self.scenario)
+            degree_range = (uprange_angle, downrange_angle)
+            updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree_range)
+        if updated_aspect_vot_dict:
+            print(updated_aspect_vot_dict)
+            paires = [(value, key) for key, value in updated_aspect_vot_dict.items()]
+        else:
+            print("the updated_aspect_vot_dict didn't update")
+
+        self.aspect = max(paires)[1]
+        print(self.aspect)
 
     def orientation_calculator(self):
 
         position = ownship_position(self.scenario, self.log_objects[self.time_stamp].latitude,
                                     self.log_objects[self.time_stamp].longtitude)
-
-        heading = 50
-        latitude = 70.76
-        longtitude = 56.98
-
-        # if target_lattitude < latitude:
-        #     left = False
-
         if self.scenario in ["pushing", "leeway"]:
             if self.log_objects[self.time_stamp].heading >= 60 and self.log_objects[self.time_stamp].heading <= 120:
                 self.orientation = "bow"
@@ -92,7 +104,7 @@ class Features:
                 self.time_stamp].heading <= 235):
                 self.orientation = "parallel"
 
-    def distance_calculator(self,):
+    def distance_calculator(self, ):
         num1 = math.pow((self.log_objects[self.time_stamp].longtitude - TOP_TARGET_POINT[1]), 2)
         num2 = math.pow((self.log_objects[self.time_stamp].latitude - TOP_TARGET_POINT[0]), 2)
         distnace_from_top = math.sqrt(num1 + num2)
@@ -113,11 +125,9 @@ class Features:
         # it checks every 5 seconds to determine the position of the ownship respect to the target and zone and bot up the "area_of_focus_dict"
         for timeslip in range(1, self.time_stamp + 1, 5):
             area_of_focus_dict = area_focus_votter(self.scenario, self.log_objects[timeslip], area_of_focus_dict)
-        paires=[(value, key) for key, value in area_of_focus_dict.items()]
+        paires = [(value, key) for key, value in area_of_focus_dict.items()]
 
         self.area_of_focus = max(paires)[1]
-        print(area_of_focus_dict)
-        print(self.area_of_focus)
 
     def heading_calculator(self):
         if 350 <= self.log_objects[self.time_stamp].heading <= 10 or 170 <= self.log_objects[

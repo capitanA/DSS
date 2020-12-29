@@ -1,92 +1,122 @@
 import math
 import tkinter as tk
+import ipdb
 
 coordinates = {
     "center_target_coordinated": {"lat": 60.51724810, "long": 146.35859560},
 
     "pushing": {"lat_top_left": 60.51049,
-                "long_top_left": -146.35544,
+                "long_top_left": 146.35544,
                 "lat_top_right": 60.51049,
-                "long_top_right": -146.35435,
+                "long_top_right": 146.35435,
                 "lat_btm_left": 60.50997,
-                "long_btm_left": -146.35544,
+                "long_btm_left": 146.35544,
                 "lat_btm_right": 60.50997,
-                "long_btm_right": -146.35435, "center_trgt_lat": 60.51023040,
+                "long_btm_right": 146.35435, "center_trgt_lat": 60.51023040,
                 "center_trgt_long": 146.35488790},
 
     "leeway": {"lat_top_left": 60.51039,
-               "long_top_left": -146.35159,
+               "long_top_left": 146.35159,
                "lat_top_right": 60.51039,
-               "long_top_right": -146.35074,
+               "long_top_right": 146.35074,
                "lat_btm_left": 60.50790,
-               "long_btm_left": -146.35159,
+               "long_btm_left": 146.35159,
                "lat_btm_right": 60.50790,
-               "long_btm_right": -146.35074, "center_trgt_lat": 60.50914510,
+               "long_btm_right": 146.35074, "center_trgt_lat": 60.50914510,
                "center_trgt_long": 146.35116730},
 
     "emergency": {"lat_top_left": 60.51833,
-                  "long_top_left": -146.35961,
+                  "long_top_left": 146.35961,
                   "lat_top_right": 60.51833,
-                  "long_top_right": -146.35749,
+                  "long_top_right": 146.35749,
                   "lat_btm_left": 60.51614,
-                  "long_btm_left": -146.35961,
+                  "long_btm_left": 146.35961,
                   "lat_btm_right": 60.51614,
-                  "long_btm_right": -146.35749,
+                  "long_btm_right": 146.35749,
                   "center_trgt_lat": 60.51724810,
-                  "center_trgt_long": 146.35859560},
+                  "center_trgt_long": 146.35859560,
+                  "lat_top_center": 60.51830,
+                  "long_top_center": 146.35769,
+                  "lat_btm_left_vessel": 60.51624,
+                  "long_btm_left_vessel": 146.35972},
 
     "pushing_zone": {"lat_top_left": 60.51117,
-                     "long_top_left": -146.35678,
+                     "long_top_left": 146.35678,
                      "lat_top_right": 60.51117,
-                     "long_top_right": -146.35299,
+                     "long_top_right": 146.35299,
                      "lat_btm_left": 60.50930,
-                     "long_btm_left": -146.35678,
+                     "long_btm_left": 146.35678,
                      "lat_btm_right": 60.50930,
-                     "long_btm_right": -146.35299},
+                     "long_btm_right": 146.35299},
 
     "leeway_zone": {"lat_top_left": 60.50914,
-                    "long_top_left": -146.35285,
+                    "long_top_left": 146.35285,
                     "lat_top_right": 60.50914,
-                    "long_top_right": -146.35162,
+                    "long_top_right": 146.35162,
                     "lat_btm_left": 60.50853,
-                    "long_btm_left": -146.35285,
+                    "long_btm_left": 146.35285,
                     "lat_btm_right": 60.50853,
-                    "long_btm_right": -146.35162}, "emergency_zone": {"lat_top_left": 60.51773,
-                                                                      "long_top_left": -146.36102,
-                                                                      "lat_top_right": 60.51731,
-                                                                      "long_top_right": -146.35900,
-                                                                      "lat_btm_left": 60.51667,
-                                                                      "long_btm_left": -146.36194,
-                                                                      "lat_btm_right": 60.51624,
-                                                                      "long_btm_right": -146.35993}}
+                    "long_btm_right": 146.35162}, "emergency_zone": {"lat_top_left": 60.51773,
+                                                                     "long_top_left": 146.36102,
+                                                                     "lat_top_right": 60.51731,
+                                                                     "long_top_right": 146.35900,
+                                                                     "lat_btm_left": 60.51667,
+                                                                     "long_btm_left": 146.36194,
+                                                                     "lat_btm_right": 60.51624,
+                                                                     "long_btm_right": 146.35993}}
 
 
 def updown_rannge_calculator(ownship_lattitude, ownship_longtitude, scenario):
     if ownship_lattitude > coordinates[scenario]["lat_top_left"]:
-        uprange_rad_angle = math.atan(abs(ownship_lattitude - coordinates[scenario]["lat_top_left"]) / abs(
-            ownship_longtitude - coordinates[scenario]["lat_top_left"]))
-        downrange_rad_angel = math.atan(abs(ownship_lattitude - coordinates[scenario]["lat_btm_left"]) / abs(
-            ownship_longtitude - coordinates[scenario]["lat_btm_left"]))
-        converted_uprange_degree = math.degrees(abs(uprange_rad_angle / 0.54307152)) + 90
-        converted_downrange_degree = math.degrees(abs(downrange_rad_angel / 0.54307152)) + 90
-        return converted_uprange_degree, converted_downrange_degree
+        downrange_rad_angle = math.atan(abs(ownship_lattitude - (
+            coordinates[scenario]["lat_top_left"] if scenario != "emergency" else coordinates[scenario][
+                "lat_top_center"])) / abs(
+            abs(ownship_longtitude) - (
+                coordinates[scenario]["long_top_left"] if scenario != "emergency" else coordinates[scenario][
+                    "long_top_center"])))
+        uprange_rad_angel = math.atan(abs(ownship_lattitude - (
+            coordinates[scenario]["lat_btm_left"] if scenario != "emergency" else coordinates[scenario][
+                "lat_btm_left_vessel"])) / abs(
+            abs(ownship_longtitude) - (
+                coordinates[scenario]["long_btm_left"] if scenario != "emergency" else coordinates[scenario][
+                    "long_btm_left_vessel"])))
 
-    elif ownship_lattitude < coordinates[scenario]["lat_top_left"]:
-        uprange_rad_angle = math.atan(abs(ownship_lattitude - coordinates[scenario]["lat_top_left"]) / abs(
-            ownship_longtitude - coordinates[scenario]["lat_top_left"]))
-        downrange_rad_angel = math.atan(abs(ownship_lattitude - coordinates[scenario]["lat_btm_left"]) / abs(
-            ownship_longtitude - coordinates[scenario]["lat_btm_left"]))
-        converted_uprange_degree = math.degrees(abs(uprange_rad_angle / 0.54307152)) - 90
-        converted_downrange_degree = math.degrees(abs(downrange_rad_angel / 0.54307152)) - 90
-        return converted_uprange_degree, converted_downrange_degree
+        downrange_degree = math.degrees(abs(downrange_rad_angle)) / 0.54307152 + 90
+        uprange_degree = math.degrees(abs(uprange_rad_angel / 0.54307152)) + 90
+        return downrange_degree, uprange_degree
+
+    elif ownship_lattitude < coordinates[scenario]["lat_btm_left"]:
+        downrange_rad_angle = math.atan(abs(ownship_lattitude - (
+            coordinates[scenario]["lat_top_left"] if scenario != "emergency" else coordinates[scenario][
+                "lat_top_center"])) / abs(
+            abs(ownship_longtitude) - (
+                coordinates[scenario]["long_top_left"] if scenario != "emergency" else coordinates[scenario][
+                    "long_top_center"])))
+        uprange_rad_angel = math.atan(abs(ownship_lattitude - (
+            coordinates[scenario]["lat_btm_left"] if scenario != "emergency" else coordinates[scenario][
+                "lat_btm_left_vessel"])) / abs(
+            abs(ownship_longtitude) - (
+                coordinates[scenario]["long_btm_left"] if scenario != "emergency" else coordinates[scenario][
+                    "long_btm_left_vessel"])))
+        downrange_degree = abs(90 - math.degrees(abs(downrange_rad_angle / 0.54307152)))
+        uprange_degree = abs(90 - math.degrees(abs(uprange_rad_angel / 0.54307152)))
+        return downrange_degree, uprange_degree
     else:
-        uprange_rad_angle = math.atan(abs(ownship_lattitude - coordinates[scenario]["lat_top_left"]) / abs(
-            ownship_longtitude - coordinates[scenario]["lat_top_left"]))
-        downrange_rad_angel = math.atan(abs(ownship_lattitude - coordinates[scenario]["lat_btm_left"]) / abs(
-            ownship_longtitude - coordinates[scenario]["lat_btm_left"]))
-        converted_uprange_degree = math.degrees(abs(uprange_rad_angle / 0.54307152)) - 90
-        converted_downrange_degree = math.degrees(abs(downrange_rad_angel / 0.54307152)) + 90
-        return converted_uprange_degree, converted_downrange_degree
+        downrange_rad_angle = math.atan(abs(ownship_lattitude - (
+            coordinates[scenario]["lat_top_left"] if scenario != "emergency" else coordinates[scenario][
+                "lat_top_center"])) / abs(
+            abs(ownship_longtitude) - (
+                coordinates[scenario]["long_top_left"] if scenario != "emergency" else coordinates[scenario][
+                    "long_top_center"])))
+        uprange_rad_angel = math.atan(abs(ownship_lattitude - (
+            coordinates[scenario]["lat_btm_left"] if scenario != "emergency" else coordinates[scenario][
+                "lat_btm_left_vessel"])) / abs(
+            abs(ownship_longtitude) - (
+                coordinates[scenario]["long_btm_left"] if scenario != "emergency" else coordinates[scenario][
+                    "long_btm_left_vessel"])))
+        downrange_degree = abs(90 - math.degrees(abs(downrange_rad_angle / 0.54307152)))
+        uprange_degree = 90 + math.degrees(abs(uprange_rad_angel / 0.54307152))
+        return downrange_degree, uprange_degree
 
 
 def ownship_position(scenario, ownship_lattitude, ownship_longtitude):
@@ -239,6 +269,18 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
         return area_of_focus_dict
 
 
+def aspect_votter(log_objects, current_sec, aspect_vot_dict, degree_range):
+    # it will check if the ship heading is biger than uprange smaller than downrange or in between them. then decide what is the aspect.
+    ## I increased and decreased 5 degree to/from the threashold to be in a safe side for making decision.
+    if log_objects[current_sec].heading > degree_range[1] + 5:
+        aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
+    elif log_objects[current_sec].heading < degree_range[0] - 5:
+        aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
+    else:
+        aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
+    return aspect_vot_dict
+
+
 class BLabel(object):
     b = ">>>"
 
@@ -251,6 +293,3 @@ class BLabel(object):
             self.l.config(text=self.b + " " + text)
         else:
             self.l.config(text=self.l.cget("text") + "\n" + self.b + " " + text, font=("helvetica", 12))
-
-
-
