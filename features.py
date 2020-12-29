@@ -13,7 +13,6 @@ class Features:
         self.scenario = scenario
         self.log_objects = log_objects
         self.time_stamp = time_stamp
-        self.vessel = None
         self.aspect = None
         self.orientation = None
         self.distance_from_target = {"top": 0, "center": 0, "bottom": 0}
@@ -34,75 +33,38 @@ class Features:
         self.speed_calculator()
 
     def aspect_calculator(self):
-        (uprange_angle, downrange_angle) = updown_rannge_calculator(self.log_objects[self.time_stamp].latitude,
-                                                                    self.log_objects[self.time_stamp].longtitude,
-                                                                    self.scenario)
+
         last_sec = self.log_objects[-1].simtime
         aspect_vot_dict = {"up_current": 0, "J_approach": 0, "direct": 0}
         for sec in range(0, 181):
-            (uprange_angle, downrange_angle) = updown_rannge_calculator(self.log_objects[sec].latitude,
+            (downrange_angle, uprange_angle) = updown_rannge_calculator(self.log_objects[sec].latitude,
                                                                         self.log_objects[sec].longtitude,
                                                                         self.scenario)
-            degree_range = (uprange_angle, downrange_angle)
+            if downrange_angle > uprange_angle:
+                downrange_angle = uprange_angle
+                uprange_angle = downrange_angle
+                degree_range = (downrange_angle, uprange_angle)
+
+            degree_range = (downrange_angle, uprange_angle)
             updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree_range)
         if updated_aspect_vot_dict:
-            print(updated_aspect_vot_dict)
             paires = [(value, key) for key, value in updated_aspect_vot_dict.items()]
         else:
             print("the updated_aspect_vot_dict didn't update")
 
         self.aspect = max(paires)[1]
-        print(self.aspect)
 
     def orientation_calculator(self):
+        (uprange_angle, downrange_angle) = updown_rannge_calculator(self.log_objects[-1].latitude,
+                                                                    self.log_objects[-1].longtitude,
+                                                                    self.scenario)
 
-        position = ownship_position(self.scenario, self.log_objects[self.time_stamp].latitude,
-                                    self.log_objects[self.time_stamp].longtitude)
-        if self.scenario in ["pushing", "leeway"]:
-            if self.log_objects[self.time_stamp].heading >= 60 and self.log_objects[self.time_stamp].heading <= 120:
-                self.orientation = "bow"
-            elif self.log_objects[self.time_stamp].heading >= 250 and self.log_objects[self.time_stamp].heading <= 290:
-                self.orientation = "stern"
-            elif (self.log_objects[self.time_stamp].heading >= 350 and self.log_objects[
-                self.time_stamp].heading <= 360) or (
-                    self.log_objects[self.time_stamp].heading >= 0 and self.log_objects[
-                self.time_stamp].heading <= 10) or (
-                    self.log_objects[self.time_stamp].heading >= 170 and self.log_objects[
-                self.time_stamp].heading <= 190):
-                self.orientation = "paralel"
+        thresh = (uprange_angle - downrange_angle) / 2
+        ownship_pos = ownship_position(self.scenario, self.log_objects[-1].latitude, self.log_objects[-1].longtitude)
+        if ownship_pos in ["top_right", "right", "btm_right"]:
+            new_range = (uprange_angle - thresh, downrange_angle + thresh)
 
-        elif self.scenario in ["pushing", "leeway"]:
-            if self.log_objects[self.time_stamp].heading >= 60 and self.log_objects[self.time_stamp].heading <= 120:
-                self.orientation = "stern"
-            elif self.log_objects[self.time_stamp].heading >= 250 and self.log_objects[self.time_stamp].heading <= 290:
-                self.orientation = "bow"
-            elif (self.log_objects[self.time_stamp].heading >= 350 and self.log_objects[
-                self.time_stamp].heading <= 360) or (
-                    self.log_objects[self.time_stamp].heading >= 0 and self.log_objects[
-                self.time_stamp].heading <= 10) or (
-                    self.log_objects[self.time_stamp].heading >= 170 and self.log_objects[
-                self.time_stamp].heading <= 190):
-                self.orientation = "parallel"
-
-        elif self.scenario not in ["pushing", "leeway"]:
-            if self.log_objects[self.time_stamp].heading >= 90 and self.log_objects[self.time_stamp].heading <= 180:
-                self.orientation = "bow"
-            elif self.log_objects[self.time_stamp].heading >= 270 and self.log_objects[self.time_stamp].heading <= 360:
-                self.orientation = "stern"
-            elif (self.log_objects[self.time_stamp].heading >= 35 and heading <= 55) or (
-                    self.log_objects[self.time_stamp].heading >= 215 and heading <= 235):
-                self.orientation = "parallel"
-
-        elif self.scenario not in ["pushing", "leeway"]:
-            if self.log_objects[self.time_stamp].heading >= 90 and self.log_objects[self.time_stamp].heading <= 180:
-                self.orientation = "stern"
-            elif self.log_objects[self.time_stamp].heading >= 270 and self.log_objects[self.time_stamp].heading <= 360:
-                self.orientation = "bow"
-            elif (self.log_objects[self.time_stamp].heading >= 35 and self.log_objects[
-                self.time_stamp].heading <= 55) or (
-                    self.log_objects[self.time_stamp].heading >= 215 and self.log_objects[
-                self.time_stamp].heading <= 235):
-                self.orientation = "parallel"
+            new_range = (uprange_angle + thresh, downrange_angle - thresh)
 
     def distance_calculator(self, ):
         num1 = math.pow((self.log_objects[self.time_stamp].longtitude - TOP_TARGET_POINT[1]), 2)
