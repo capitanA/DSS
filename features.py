@@ -38,11 +38,12 @@ class Features:
         last_sec = self.log_objects[-1].simtime
         aspect_vot_dict = {"up_current": 0, "J_approach": 0, "direct": 0}
         for sec in range(0, 181):
-            # ipdb.set_trace()
-            up_heading, down_heading = updown_rannge_calculator(self.log_objects[sec].latitude,
+            ownship_pos = ownship_position(self.scenario, self.log_objects[300].latitude,
+                                           self.log_objects[360].longtitude)
+            down_heading, up_heading = updown_rannge_calculator(self.log_objects[sec].latitude,
                                                                 self.log_objects[sec].longtitude,
-                                                                self.scenario)
-            degree = (up_heading, down_heading)
+                                                                self.scenario, ownship_pos)
+            degree = (down_heading, up_heading)
 
             updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree)
         if updated_aspect_vot_dict:
@@ -53,35 +54,39 @@ class Features:
         self.aspect = max(paires)[1]
 
     def orientation_calculator(self):
-        down_heading, up_heading = updown_rannge_calculator(self.log_objects[360].latitude,
-                                                            self.log_objects[360].longtitude,
-                                                            self.scenario)
+        ownship_pos = ownship_position(self.scenario, self.log_objects[180].latitude, self.log_objects[180].longtitude)
+        down_heading, up_heading = updown_rannge_calculator(self.log_objects[180].latitude,
+                                                            self.log_objects[180].longtitude,
+                                                            self.scenario, ownship_pos)
 
         thresh = abs((up_heading - down_heading)) / 2
         new_range = [down_heading - thresh, up_heading + thresh]
         # ipdb.set_trace()
         print(new_range)
 
-        ownship_pos = ownship_position(self.scenario, self.log_objects[300].latitude, self.log_objects[360].longtitude)
+        ownship_pos = ownship_position(self.scenario, self.log_objects[180].latitude, self.log_objects[180].longtitude)
         if new_range[0] <= 0:
             new_ang = 360 - abs(new_range[0])
             new_range = [new_range[1], new_ang]
-            if 0 <= self.log_objects[360].heading <= new_range[0] or new_range[1] <= self.log_objects[
+            if abs(new_range[0] - self.log_objects[180].heading) < new_range[1] - self.log_objects[180].heading:
+                new_range = [new_range[0] - 10, new_range[1]]
+            else:
+                new_range = [new_range[0] + 10, new_range[1] + 10]
+            if 0 <= self.log_objects[180].heading <= new_range[0] or new_range[1] <= self.log_objects[
                 330].heading <= 360:
                 print(f"this is newrange_first{new_range}")
                 print("bow")
             else:
                 print("stern")
-        # ipdb.set_trace()
 
         else:
-            if abs(new_range[0]-self.log_objects[360].heading)<new_range[1]-self.log_objects[360].heading:
-                new_range = [new_range[0]-10, new_range[1]]
+            if abs(new_range[0] - self.log_objects[180].heading) < new_range[1] - self.log_objects[300].heading:
+                new_range = [new_range[0] - 10, new_range[1]]
             else:
-                new_range = [new_range[0] + 10, new_range[1]+10]
+                new_range = [new_range[0] + 10, new_range[1] + 10]
 
             print(f"this is newrange_seccond{new_range}")
-            if new_range[0] <= self.log_objects[360].heading <= new_range[1]:
+            if new_range[0] <= self.log_objects[180].heading <= new_range[1]:
                 print("bow")
             else:
                 print("stern")

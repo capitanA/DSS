@@ -2,9 +2,17 @@ import math
 import tkinter as tk
 import ipdb
 
-KHATA = 0.54307152
-khata_1 = 0.61222
-khata_nahae = 52.726, 0.7184
+angle_pos_key = {"top": ["top_right", "top_left"], "bottom": ["btm_right", "btm_left"],
+                 "left": ["top_left", "btm_left"], "right": ["btm_left", "top_right"],
+                 "top_left": ["top_right", "btm_left"], "top_right": ["btm_right", "top_left"],
+                 "bottom_left": ["top_left", "btm_right"], "bottom_right":
+                     ["bottom_left", "top_right"]}
+angle_pos_key_emergency = {"top": ["top_center", "btm_left_vessel"], "bottom": ["top_center", "btm_left_vessel"],
+                           "left": ["top_center", "btm_right_vessel"], "right": ["btm_right_vessel", "top_center"],
+                           "top_left": ["top_center", "btm_left_vessel"],
+                           "top_right": ["btm_right_vessel", "top_center"],
+                           "bottom_left": ["top_center", "btm_right_vessel"], "bottom_right":
+                               ["btm_right_vessel", "top_center"]}
 coordinates = {
     "center_target_coordinated": {"lat": 60.51724810, "long": 146.35859560},
 
@@ -119,105 +127,130 @@ def angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, downrang
             return 90 - downrange, 270 + uprange
 
 
-def updown_rannge_calculator(ownship_lattitude, ownship_longtitude, scenario):
-    ownship_pos = ownship_position(scenario, ownship_lattitude, ownship_longtitude)
-    if ownship_pos in ["top_left", "left", "bottom_left"]:
+def updown_rannge_calculator(ownship_lattitude, ownship_longtitude, scenario, ownship_pos):
+    down_key, up_key = angle_pos_key[ownship_pos]
+    down_key_emg, up_key_emg = angle_pos_key_emergency[ownship_pos]
+    downrange_rad_angle = math.atan(abs(ownship_lattitude - (
+        coordinates[scenario]["lat_" + down_key] if scenario != "emergency" else coordinates[scenario][
+            "lat_" + down_key_emg])) / abs(
+        abs(ownship_longtitude) - (
+            coordinates[scenario]["long_" + down_key] if scenario != "emergency" else coordinates[scenario][
+                "long_" + down_key_emg])))
+    uprange_rad_angel = math.atan(abs(ownship_lattitude - (
+        coordinates[scenario]["lat_" + up_key] if scenario != "emergency" else coordinates[scenario][
+            "lat_" + down_key_emg])) / abs(
+        abs(ownship_longtitude) - (
+            coordinates[scenario]["long_" + up_key] if scenario != "emergency" else coordinates[scenario][
+                "long_" + up_key_emg])))
+    downrange_degree = math.degrees(abs(downrange_rad_angle))
+    uprange_degree = math.degrees(abs(uprange_rad_angel))
+    correct_downrange_degree = correct_angle(downrange_degree)
+    correct_uprange_degree = correct_angle(uprange_degree)
+    print(downrange_degree, uprange_degree)
+    angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
+                                  correct_uprange_degree, scenario)
+    return angle_range
 
-        downrange_rad_angle = math.atan(abs(ownship_lattitude - (
-            coordinates[scenario]["lat_top_left"] if scenario != "emergency" else coordinates[scenario][
-                "lat_top_center"])) / abs(
-            abs(ownship_longtitude) - (
-                coordinates[scenario]["long_top_left"] if scenario != "emergency" else coordinates[scenario][
-                    "long_top_center"])))
-        uprange_rad_angel = math.atan(abs(ownship_lattitude - (
-            coordinates[scenario]["lat_btm_left"] if scenario != "emergency" else coordinates[scenario][
-                "lat_btm_left_vessel"])) / abs(
-            abs(ownship_longtitude) - (
-                coordinates[scenario]["long_btm_left"] if scenario != "emergency" else coordinates[scenario][
-                    "long_btm_left_vessel"])))
 
-        downrange_degree = math.degrees(abs(downrange_rad_angle))
-        uprange_degree = math.degrees(abs(uprange_rad_angel))
-        correct_downrange_degree = correct_angle(downrange_degree)
-        correct_uprange_degree = correct_angle(uprange_degree)
-        print(downrange_degree,uprange_degree)
-        print(ownship_pos)
-
-        angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
-                                      correct_uprange_degree, scenario)
-        print(angle_range)
-
-        return angle_range
-    elif ownship_pos in ["top_right", "right", "bottom_right"]:
-
-        uprange_rad_angel = math.atan(abs(ownship_lattitude - (
-            coordinates[scenario]["lat_top_right"] if scenario != "emergency" else coordinates[scenario][
-                "lat_top_center"])) / abs(
-            abs(ownship_longtitude) - (
-                coordinates[scenario]["long_top_right"] if scenario != "emergency" else coordinates[scenario][
-                    "long_top_center"])))
-        downrange_rad_angle = math.atan(abs(ownship_lattitude - (
-            coordinates[scenario]["lat_btm_right"] if scenario != "emergency" else coordinates[scenario][
-                "lat_btm_right_vessel"])) / abs(
-            abs(ownship_longtitude) - (
-                coordinates[scenario]["long_btm_right"] if scenario != "emergency" else coordinates[scenario][
-                    "long_btm_right_vessel"])))
-        downrange_degree = math.degrees(abs(downrange_rad_angle))
-        uprange_degree = math.degrees(abs(uprange_rad_angel))
-        correct_downrange_degree = correct_angle(downrange_degree)
-        correct_uprange_degree = correct_angle(uprange_degree)
-        angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
-                                      correct_uprange_degree, scenario)
-        return angle_range
-
-    elif ownship_pos == "top":
-
-        downrange_rad_angle = math.atan(abs(ownship_lattitude -
-                                            (coordinates[scenario]["lat_top_right"] if scenario != "emergency" else
-                                             coordinates[scenario][
-                                                 "lat_top_center"]) / abs(
-            abs(ownship_longtitude) - (
-                coordinates[scenario]["long_top_right"] if scenario != "emergency" else coordinates[scenario][
-                    "long_top_center"]))))
-        uprange_rad_angel = math.atan(abs(ownship_lattitude -
-                                          (coordinates[scenario]["lat_top_left"] if scenario != "emergency" else
-                                           coordinates[scenario][
-                                               "lat_btm_left_vessel"])) / abs(
-            abs(ownship_longtitude) -
-            (coordinates[scenario]["long_top_left"] if scenario != "emergency" else coordinates[scenario][
-                "long_btm_left_vessel"])))
-
-        downrange_degree = math.degrees(abs(downrange_rad_angle))
-        uprange_degree = math.degrees(abs(uprange_rad_angel))
-        correct_downrange_degree = correct_angle(downrange_degree)
-        correct_uprange_degree = correct_angle(uprange_degree)
-        angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
-                                      correct_uprange_degree, scenario)
-        return angle_range
-    elif ownship_pos == "bottom":
-
-        downrange_rad_angle = math.atan(abs(ownship_lattitude -
-                                            (coordinates[scenario]["lat_btm_right"] if scenario != "emergency" else
-                                             coordinates[scenario][
-                                                 "lat_top_center"]) / abs(
-            abs(ownship_longtitude) - (
-                coordinates[scenario]["long_btm_right"] if scenario != "emergency" else coordinates[scenario][
-                    "long_top_center"]))))
-        uprange_rad_angel = math.atan(abs(ownship_lattitude -
-                                          (coordinates[scenario]["lat_btm_left"] if scenario != "emergency" else
-                                           coordinates[scenario][
-                                               "lat_btm_left_vessel"])) / abs(
-            abs(ownship_longtitude) -
-            (coordinates[scenario]["long_btm_left"] if scenario != "emergency" else coordinates[scenario][
-                "long_btm_left_vessel"])))
-
-        downrange_degree = math.degrees(abs(downrange_rad_angle))
-        uprange_degree = math.degrees(abs(uprange_rad_angel))
-        correct_downrange_degree = correct_angle(downrange_degree)
-        correct_uprange_degree = correct_angle(uprange_degree)
-        angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
-                                      correct_uprange_degree, scenario)
-        return angle_range
+# def updown_rannge_calculator(ownship_lattitude, ownship_longtitude, scenario):
+#     ownship_pos = ownship_position(scenario, ownship_lattitude, ownship_longtitude)
+#     if ownship_pos in ["top_left", "left", "bottom_left"]:
+#
+#         downrange_rad_angle = math.atan(abs(ownship_lattitude - (
+#             coordinates[scenario]["lat_top_left"] if scenario != "emergency" else coordinates[scenario][
+#                 "lat_top_center"])) / abs(
+#             abs(ownship_longtitude) - (
+#                 coordinates[scenario]["long_top_left"] if scenario != "emergency" else coordinates[scenario][
+#                     "long_top_center"])))
+#         uprange_rad_angel = math.atan(abs(ownship_lattitude - (
+#             coordinates[scenario]["lat_btm_left"] if scenario != "emergency" else coordinates[scenario][
+#                 "lat_btm_left_vessel"])) / abs(
+#             abs(ownship_longtitude) - (
+#                 coordinates[scenario]["long_btm_left"] if scenario != "emergency" else coordinates[scenario][
+#                     "long_btm_left_vessel"])))
+#
+#         downrange_degree = math.degrees(abs(downrange_rad_angle))
+#         uprange_degree = math.degrees(abs(uprange_rad_angel))
+#         correct_downrange_degree = correct_angle(downrange_degree)
+#         correct_uprange_degree = correct_angle(uprange_degree)
+#         print(downrange_degree,uprange_degree)
+#         print(ownship_pos)
+#
+#         angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
+#                                       correct_uprange_degree, scenario)
+#         print(angle_range)
+#
+#         return angle_range
+#     elif ownship_pos in ["top_right", "right", "bottom_right"]:
+#
+#         uprange_rad_angel = math.atan(abs(ownship_lattitude - (
+#             coordinates[scenario]["lat_top_right"] if scenario != "emergency" else coordinates[scenario][
+#                 "lat_top_center"])) / abs(
+#             abs(ownship_longtitude) - (
+#                 coordinates[scenario]["long_top_right"] if scenario != "emergency" else coordinates[scenario][
+#                     "long_top_center"])))
+#         downrange_rad_angle = math.atan(abs(ownship_lattitude - (
+#             coordinates[scenario]["lat_btm_right"] if scenario != "emergency" else coordinates[scenario][
+#                 "lat_btm_right_vessel"])) / abs(
+#             abs(ownship_longtitude) - (
+#                 coordinates[scenario]["long_btm_right"] if scenario != "emergency" else coordinates[scenario][
+#                     "long_btm_right_vessel"])))
+#         downrange_degree = math.degrees(abs(downrange_rad_angle))
+#         uprange_degree = math.degrees(abs(uprange_rad_angel))
+#         correct_downrange_degree = correct_angle(downrange_degree)
+#         correct_uprange_degree = correct_angle(uprange_degree)
+#         angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
+#                                       correct_uprange_degree, scenario)
+#         return angle_range
+#
+#     elif ownship_pos == "top":
+#
+#         downrange_rad_angle = math.atan(abs(ownship_lattitude -
+#                                             (coordinates[scenario]["lat_top_right"] if scenario != "emergency" else
+#                                              coordinates[scenario][
+#                                                  "lat_top_center"]) / abs(
+#             abs(ownship_longtitude) - (
+#                 coordinates[scenario]["long_top_right"] if scenario != "emergency" else coordinates[scenario][
+#                     "long_top_center"]))))
+#         uprange_rad_angel = math.atan(abs(ownship_lattitude -
+#                                           (coordinates[scenario]["lat_top_left"] if scenario != "emergency" else
+#                                            coordinates[scenario][
+#                                                "lat_btm_left_vessel"])) / abs(
+#             abs(ownship_longtitude) -
+#             (coordinates[scenario]["long_top_left"] if scenario != "emergency" else coordinates[scenario][
+#                 "long_btm_left_vessel"])))
+#
+#         downrange_degree = math.degrees(abs(downrange_rad_angle))
+#         uprange_degree = math.degrees(abs(uprange_rad_angel))
+#         correct_downrange_degree = correct_angle(downrange_degree)
+#         correct_uprange_degree = correct_angle(uprange_degree)
+#         angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
+#                                       correct_uprange_degree, scenario)
+#         return angle_range
+#     elif ownship_pos == "bottom":
+#
+#         downrange_rad_angle = math.atan(abs(ownship_lattitude -
+#                                             (coordinates[scenario]["lat_btm_right"] if scenario != "emergency" else
+#                                              coordinates[scenario][
+#                                                  "lat_top_center"]) / abs(
+#             abs(ownship_longtitude) - (
+#                 coordinates[scenario]["long_btm_right"] if scenario != "emergency" else coordinates[scenario][
+#                     "long_top_center"]))))
+#         uprange_rad_angel = math.atan(abs(ownship_lattitude -
+#                                           (coordinates[scenario]["lat_btm_left"] if scenario != "emergency" else
+#                                            coordinates[scenario][
+#                                                "lat_btm_left_vessel"])) / abs(
+#             abs(ownship_longtitude) -
+#             (coordinates[scenario]["long_btm_left"] if scenario != "emergency" else coordinates[scenario][
+#                 "long_btm_left_vessel"])))
+#
+#         downrange_degree = math.degrees(abs(downrange_rad_angle))
+#         uprange_degree = math.degrees(abs(uprange_rad_angel))
+#         correct_downrange_degree = correct_angle(downrange_degree)
+#         correct_uprange_degree = correct_angle(uprange_degree)
+#         angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
+#                                       correct_uprange_degree, scenario)
+#         return angle_range
 
 
 def ownship_position(scenario, ownship_lattitude, ownship_longtitude):

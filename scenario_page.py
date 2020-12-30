@@ -15,10 +15,10 @@ class PlayScenario:
 
     # this is a function which by create an object of Feature class. Then fill all the variables of pushing scenario.
     def start(self):
-        with open('A96_ScP_R1_interpolatedLog.csv', newline='') as myFile:
+        with open('E96_ScL_R1_interpolatedLog.csv', newline='') as myFile:
             logrowsoperator = LogRowsOperator()
             log_objects = logrowsoperator.read_file(myFile)
-            self.features = Features(log_objects, "pushing", 360)
+            self.features = Features(log_objects, "leeway", 180)
 
     def init_page(self):
         container = tk.Frame(self.root, width=self.main_frame_width * 0.94, height=self.main_frame_height * 0.67,
