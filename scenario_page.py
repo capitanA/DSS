@@ -1,24 +1,90 @@
+"""
+This scripts is for safety at sea project design to help seafarer to drive the ships better
+Created on Fr 6 Nov 8:27:27 2020
+@author:Fatemeh Yazdanpanah and Arash Fassihozzaman  <a.fassihozzamanlangroudi@mun.ca>
+"""
+
 import tkinter as tk
-from log_file import LogRowsOperator
+from log_file import CsvRowsOperator, CsvFile
 from features import Features
-from functools import partial
+import os
+import xml.etree.cElementTree as ET
+import ipdb
+
+engine_dic = {"pEngine": 0, "fTunnelThruster": 0, "sEngine": 0, "aTunnelThruster": 0}
+rudder_dic = {"pRudder": 0, "sRudder": 0}
 
 
 class PlayScenario:
 
-    def __init__(self, root, main_frame):
+    def __init__(self, root, main_frame, scenario):
         self.root = root
         self.main_frame = main_frame
+        self.scenario = scenario
         self.main_frame_width = self.main_frame.winfo_width()
         self.main_frame_height = self.main_frame.winfo_height()
         self.features = None
 
-    # this is a function which by create an object of Feature class. Then fill all the variables of pushing scenario.
-    def start(self):
+    # this function will make the TraceData log file well_formed to be ready for parsing.
+    def log_reader(self):
+        f = open('/Users/arash/project/my_project/extracting_features/TraceData.log', 'r')
+        linelist = f.readlines()
+        well_formed_tracedata = open('/Users/arash/project/my_project/extracting_features/well_formed_TraceData.log',
+                                     "w+")
+        for line in linelist:
+
+            if line.rfind("Throttle Pcts") != -1:
+                line = line.replace("Throttle Pcts", "Throttle_Pcts")
+            if line.rfind("Rudder Angles") != -1:
+                line = line.replace("Rudder Angles", "Rudder_Angles")
+            well_formed_tracedata.write(line)
+        return well_formed_tracedata.name
+
+    # this function is aimed to parse the log file and iterate into the file to  fill the log_objects list in wich,
+    # each object is a row for our csv file to be generated
+    def assist(self):
+
+        log_objects = []
+        well_formed_filename = self.log_reader()
+        i = 0
+        if os.path.isfile(well_formed_filename):
+            xml_file = ET.parse(well_formed_filename).getroot()
+
+            for log_entity in xml_file.iter("log_entity"):
+                if log_entity.attrib["SimTime"] == "0":
+                    continue
+                if float(log_entity.attrib["SimTime"]) > i:
+                    for index, element in enumerate(log_entity):
+                        for item in element.items():
+                            if item:
+                                if index == 0:
+                                    engine_dic.update({item[0]: float(item[1])})
+                                elif index == 1:
+                                    rudder_dic.update({item[0]: float(item[1])})
+                    aftthruster = engine_dic["aTunnelThruster"]
+                    forethruster = engine_dic["fTunnelThruster"]
+                    portengine = engine_dic["pEngine"]
+                    stbdengine = engine_dic["sEngine"]
+                    portrudder = rudder_dic["pRudder"]
+                    stbdrudder = rudder_dic["sRudder"]
+
+                    csv_obj = CsvFile(int(float(log_entity.attrib["SimTime"])), float(log_entity.attrib["Latitude"]),
+                                      float(log_entity.attrib["Longitude"]), float(log_entity.attrib["SOG"]),
+                                      float(log_entity.attrib["COG"]), float(log_entity.attrib["Heading"]),
+                                      float(aftthruster), float(forethruster),
+                                      float(portengine), float(stbdengine),
+                                      float(portrudder), float(stbdrudder))
+                    log_objects.append(csv_obj)
+                    if (self.scenario == "emergency" and i == 1800) or (
+                            self.scenario in ["pushing", "leeway"] and i == 900):
+                        break
+                    else:
+                        i += 1
+
         with open('E96_ScL_R1_interpolatedLog.csv', newline='') as myFile:
-            logrowsoperator = LogRowsOperator()
+            logrowsoperator = CsvRowsOperator()
             log_objects = logrowsoperator.read_file(myFile)
-            self.features = Features(log_objects, "leeway", 180)
+            self.features = Features(log_objects, self.scenario, 900)
 
     def init_page(self):
         container = tk.Frame(self.root, width=self.main_frame_width * 0.94, height=self.main_frame_height * 0.67,
@@ -150,7 +216,7 @@ class PlayScenario:
 
         ####### creat the canvas for the suggested approach section  #######
         assist_btn = tk.Button(suggested_approach_frame, text="Assist", bg="green", width=32, height=2, anchor="c",
-                               command=self.start)
+                               command=self.assist)
         # now, when the features object created filling the pushing scenario variables("suggested own ship status") can be done.
         assist_btn.config(relief="groove", font=("helvetica", 12, "bold"), fg="green")
         assist_btn.place(relx=.5, rely=.9, anchor="center")

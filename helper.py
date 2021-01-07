@@ -1,12 +1,13 @@
 import math
 import tkinter as tk
+import xml.etree.cElementTree as ET
 import ipdb
 
 angle_pos_key = {"top": ["top_right", "top_left"], "bottom": ["btm_right", "btm_left"],
                  "left": ["top_left", "btm_left"], "right": ["btm_left", "top_right"],
                  "top_left": ["top_right", "btm_left"], "top_right": ["btm_right", "top_left"],
                  "bottom_left": ["top_left", "btm_right"], "bottom_right":
-                     ["bottom_left", "top_right"]}
+                     ["btm_left", "top_right"]}
 angle_pos_key_emergency = {"top": ["top_center", "btm_left_vessel"], "bottom": ["top_center", "btm_left_vessel"],
                            "left": ["top_center", "btm_right_vessel"], "right": ["btm_right_vessel", "top_center"],
                            "top_left": ["top_center", "btm_left_vessel"],
@@ -79,7 +80,7 @@ coordinates = {
                                                                      "long_btm_right": 146.35993}}
 
 
-def angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, downrange, uprange, scenario):
+def angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, downrange, uprange, scenario):
     if scenario == "emergency":
         if ownship_pos == "top_left":
             return downrange + 90, uprange + 90
@@ -91,17 +92,17 @@ def angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, downrang
             return 90 - downrange, 270 + uprange
         # it is on the left side of target
         elif ownship_lattitude > coordinates[scenario]["lat_btm_left_vessel"] and ownship_lattitude < \
-                coordinates[scenario]["lat_top_left"] and ownship_longtitude > coordinates[scenario][
+                coordinates[scenario]["lat_top_left"] and ownship_longitude > coordinates[scenario][
             "long_btm_left_vessel"]:
             return 90 - downrange, 90 + uprange
         # it is on the bottom_left of the target
-        elif ownship_lattitude < coordinates[scenario]["lat_btm_left_vessel"] and ownship_longtitude > \
+        elif ownship_lattitude < coordinates[scenario]["lat_btm_left_vessel"] and ownship_longitude > \
                 coordinates[scenario][
                     "long_btm_left_vessel"]:
             return 90 - downrange, 90 - uprange
         # it is on the right side of the target
         elif ownship_lattitude > coordinates[scenario]["lat_btm_left_vessel"] and ownship_lattitude < \
-                coordinates[scenario]["lat_top_left"] and ownship_longtitude < coordinates[scenario][
+                coordinates[scenario]["lat_top_left"] and ownship_longitude < coordinates[scenario][
             "long_top_center"]:
             return 270 - downrange, 270 + uprange
         # it is on the along side of the target
@@ -127,19 +128,19 @@ def angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, downrang
             return 90 - downrange, 270 + uprange
 
 
-def updown_rannge_calculator(ownship_lattitude, ownship_longtitude, scenario, ownship_pos):
+def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, ownship_pos):
     down_key, up_key = angle_pos_key[ownship_pos]
     down_key_emg, up_key_emg = angle_pos_key_emergency[ownship_pos]
     downrange_rad_angle = math.atan(abs(ownship_lattitude - (
         coordinates[scenario]["lat_" + down_key] if scenario != "emergency" else coordinates[scenario][
             "lat_" + down_key_emg])) / abs(
-        abs(ownship_longtitude) - (
+        abs(ownship_longitude) - (
             coordinates[scenario]["long_" + down_key] if scenario != "emergency" else coordinates[scenario][
                 "long_" + down_key_emg])))
     uprange_rad_angel = math.atan(abs(ownship_lattitude - (
         coordinates[scenario]["lat_" + up_key] if scenario != "emergency" else coordinates[scenario][
             "lat_" + down_key_emg])) / abs(
-        abs(ownship_longtitude) - (
+        abs(ownship_longitude) - (
             coordinates[scenario]["long_" + up_key] if scenario != "emergency" else coordinates[scenario][
                 "long_" + up_key_emg])))
     downrange_degree = math.degrees(abs(downrange_rad_angle))
@@ -147,113 +148,12 @@ def updown_rannge_calculator(ownship_lattitude, ownship_longtitude, scenario, ow
     correct_downrange_degree = correct_angle(downrange_degree)
     correct_uprange_degree = correct_angle(uprange_degree)
     print(downrange_degree, uprange_degree)
-    angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
+    angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, correct_downrange_degree,
                                   correct_uprange_degree, scenario)
     return angle_range
 
 
-# def updown_rannge_calculator(ownship_lattitude, ownship_longtitude, scenario):
-#     ownship_pos = ownship_position(scenario, ownship_lattitude, ownship_longtitude)
-#     if ownship_pos in ["top_left", "left", "bottom_left"]:
-#
-#         downrange_rad_angle = math.atan(abs(ownship_lattitude - (
-#             coordinates[scenario]["lat_top_left"] if scenario != "emergency" else coordinates[scenario][
-#                 "lat_top_center"])) / abs(
-#             abs(ownship_longtitude) - (
-#                 coordinates[scenario]["long_top_left"] if scenario != "emergency" else coordinates[scenario][
-#                     "long_top_center"])))
-#         uprange_rad_angel = math.atan(abs(ownship_lattitude - (
-#             coordinates[scenario]["lat_btm_left"] if scenario != "emergency" else coordinates[scenario][
-#                 "lat_btm_left_vessel"])) / abs(
-#             abs(ownship_longtitude) - (
-#                 coordinates[scenario]["long_btm_left"] if scenario != "emergency" else coordinates[scenario][
-#                     "long_btm_left_vessel"])))
-#
-#         downrange_degree = math.degrees(abs(downrange_rad_angle))
-#         uprange_degree = math.degrees(abs(uprange_rad_angel))
-#         correct_downrange_degree = correct_angle(downrange_degree)
-#         correct_uprange_degree = correct_angle(uprange_degree)
-#         print(downrange_degree,uprange_degree)
-#         print(ownship_pos)
-#
-#         angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
-#                                       correct_uprange_degree, scenario)
-#         print(angle_range)
-#
-#         return angle_range
-#     elif ownship_pos in ["top_right", "right", "bottom_right"]:
-#
-#         uprange_rad_angel = math.atan(abs(ownship_lattitude - (
-#             coordinates[scenario]["lat_top_right"] if scenario != "emergency" else coordinates[scenario][
-#                 "lat_top_center"])) / abs(
-#             abs(ownship_longtitude) - (
-#                 coordinates[scenario]["long_top_right"] if scenario != "emergency" else coordinates[scenario][
-#                     "long_top_center"])))
-#         downrange_rad_angle = math.atan(abs(ownship_lattitude - (
-#             coordinates[scenario]["lat_btm_right"] if scenario != "emergency" else coordinates[scenario][
-#                 "lat_btm_right_vessel"])) / abs(
-#             abs(ownship_longtitude) - (
-#                 coordinates[scenario]["long_btm_right"] if scenario != "emergency" else coordinates[scenario][
-#                     "long_btm_right_vessel"])))
-#         downrange_degree = math.degrees(abs(downrange_rad_angle))
-#         uprange_degree = math.degrees(abs(uprange_rad_angel))
-#         correct_downrange_degree = correct_angle(downrange_degree)
-#         correct_uprange_degree = correct_angle(uprange_degree)
-#         angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
-#                                       correct_uprange_degree, scenario)
-#         return angle_range
-#
-#     elif ownship_pos == "top":
-#
-#         downrange_rad_angle = math.atan(abs(ownship_lattitude -
-#                                             (coordinates[scenario]["lat_top_right"] if scenario != "emergency" else
-#                                              coordinates[scenario][
-#                                                  "lat_top_center"]) / abs(
-#             abs(ownship_longtitude) - (
-#                 coordinates[scenario]["long_top_right"] if scenario != "emergency" else coordinates[scenario][
-#                     "long_top_center"]))))
-#         uprange_rad_angel = math.atan(abs(ownship_lattitude -
-#                                           (coordinates[scenario]["lat_top_left"] if scenario != "emergency" else
-#                                            coordinates[scenario][
-#                                                "lat_btm_left_vessel"])) / abs(
-#             abs(ownship_longtitude) -
-#             (coordinates[scenario]["long_top_left"] if scenario != "emergency" else coordinates[scenario][
-#                 "long_btm_left_vessel"])))
-#
-#         downrange_degree = math.degrees(abs(downrange_rad_angle))
-#         uprange_degree = math.degrees(abs(uprange_rad_angel))
-#         correct_downrange_degree = correct_angle(downrange_degree)
-#         correct_uprange_degree = correct_angle(uprange_degree)
-#         angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
-#                                       correct_uprange_degree, scenario)
-#         return angle_range
-#     elif ownship_pos == "bottom":
-#
-#         downrange_rad_angle = math.atan(abs(ownship_lattitude -
-#                                             (coordinates[scenario]["lat_btm_right"] if scenario != "emergency" else
-#                                              coordinates[scenario][
-#                                                  "lat_top_center"]) / abs(
-#             abs(ownship_longtitude) - (
-#                 coordinates[scenario]["long_btm_right"] if scenario != "emergency" else coordinates[scenario][
-#                     "long_top_center"]))))
-#         uprange_rad_angel = math.atan(abs(ownship_lattitude -
-#                                           (coordinates[scenario]["lat_btm_left"] if scenario != "emergency" else
-#                                            coordinates[scenario][
-#                                                "lat_btm_left_vessel"])) / abs(
-#             abs(ownship_longtitude) -
-#             (coordinates[scenario]["long_btm_left"] if scenario != "emergency" else coordinates[scenario][
-#                 "long_btm_left_vessel"])))
-#
-#         downrange_degree = math.degrees(abs(downrange_rad_angle))
-#         uprange_degree = math.degrees(abs(uprange_rad_angel))
-#         correct_downrange_degree = correct_angle(downrange_degree)
-#         correct_uprange_degree = correct_angle(uprange_degree)
-#         angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longtitude, correct_downrange_degree,
-#                                       correct_uprange_degree, scenario)
-#         return angle_range
-
-
-def ownship_position(scenario, ownship_lattitude, ownship_longtitude):
+def ownship_position(scenario, ownship_lattitude, ownship_longitude):
     if "_zone" in scenario:
 
         if scenario == "emergency_zone":
@@ -274,7 +174,7 @@ def ownship_position(scenario, ownship_lattitude, ownship_longtitude):
             md = (y42 - y32) / (x42 - x32)
 
             # Translation of Coordinate axes for point 5
-            x52 = ownship_longtitude - coordinates[scenario]["long_btm_left"]
+            x52 = ownship_longitude - coordinates[scenario]["long_btm_left"]
             y52 = ownship_lattitude - coordinates[scenario]["lat_btm_left"]
 
             # finding zone of point 5
@@ -296,22 +196,22 @@ def ownship_position(scenario, ownship_lattitude, ownship_longtitude):
 
             # check if th owner ship is upper than the target
             if ownship_lattitude > coordinates[scenario]["lat_top_left"]:
-                if abs(ownship_longtitude) > abs(coordinates[scenario]["long_top_left"]):
+                if abs(ownship_longitude) > abs(coordinates[scenario]["long_top_left"]):
                     return "top_left"
-                elif abs(ownship_longtitude) < abs(coordinates[scenario]["long_top_right"]):
+                elif abs(ownship_longitude) < abs(coordinates[scenario]["long_top_right"]):
                     return "top_right"
                 else:
                     return "top"
             # check if the ownership is lower than the target
             elif ownship_lattitude < coordinates[scenario]["lat_btm_left"]:
-                if abs(ownship_longtitude) > abs(coordinates[scenario]["long_btm_left"]):
+                if abs(ownship_longitude) > abs(coordinates[scenario]["long_btm_left"]):
                     return "bottom_left"
-                elif abs(ownship_longtitude) < abs(coordinates[scenario]["long_btm_right"]):
+                elif abs(ownship_longitude) < abs(coordinates[scenario]["long_btm_right"]):
                     return "bottom_right"
                 else:
                     return "bottom"
             else:
-                if abs(ownship_longtitude) < abs(coordinates[scenario]["long_btm_left"]):
+                if abs(ownship_longitude) < abs(coordinates[scenario]["long_btm_left"]):
                     return "z"
                 else:
                     return "alongside"
@@ -319,25 +219,25 @@ def ownship_position(scenario, ownship_lattitude, ownship_longtitude):
 
         # check if th owner ship is upper than the target
         if ownship_lattitude > coordinates[scenario]["lat_top_left"]:
-            if abs(ownship_longtitude) > abs(coordinates[scenario]["long_top_left"]):
+            if abs(ownship_longitude) > abs(coordinates[scenario]["long_top_left"]):
                 return "top_left"
-            elif abs(ownship_longtitude) < abs(coordinates[scenario]["long_top_right"]):
+            elif abs(ownship_longitude) < abs(coordinates[scenario]["long_top_right"]):
                 return "top_right"
             else:
                 return "top"
         # check if the ownership is lower than the target
         elif ownship_lattitude < coordinates[scenario]["lat_btm_left"]:
-            if abs(ownship_longtitude) > abs(coordinates[scenario]["long_btm_left"]):
+            if abs(ownship_longitude) > abs(coordinates[scenario]["long_btm_left"]):
                 return "bottom_left"
-            elif abs(ownship_longtitude) < abs(coordinates[scenario]["long_btm_right"]):
+            elif abs(ownship_longitude) < abs(coordinates[scenario]["long_btm_right"]):
                 return "bottom_right"
             else:
                 return "bottom"
         else:
 
-            if abs(ownship_longtitude) > abs(coordinates[scenario]["long_btm_left"]):
+            if abs(ownship_longitude) > abs(coordinates[scenario]["long_btm_left"]):
                 return "left"
-            elif abs(ownship_longtitude) < abs(coordinates[scenario]["long_btm_right"]):
+            elif abs(ownship_longitude) < abs(coordinates[scenario]["long_btm_right"]):
 
                 return "right"
             else:
@@ -347,8 +247,8 @@ def ownship_position(scenario, ownship_lattitude, ownship_longtitude):
 
 def area_focus_votter(scenario, instant_log, area_of_focus_dict):
     if scenario == "leeway":
-        ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longtitude)
-        ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longtitude)
+        ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longitude)
+        ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longitude)
         if ownship_zone_pos == "z":
             area_of_focus_dict.update({"z": area_of_focus_dict["z"] + 1})
         elif ownship_zone_pos == "left":
@@ -360,8 +260,8 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
         return area_of_focus_dict
 
     elif scenario == "pushing":
-        ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longtitude)
-        ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longtitude)
+        ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longitude)
+        ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longitude)
         if ownship_zone_pos == "z":
             area_of_focus_dict.update({"z": area_of_focus_dict["z"] + 1})
         elif "top" in ownship_zone_pos:
@@ -374,8 +274,8 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
         return area_of_focus_dict
 
     else:
-        ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longtitude)
-        ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longtitude)
+        ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longitude)
+        ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longitude)
         if ownship_zone_pos == "z":
             area_of_focus_dict.update({"z": area_of_focus_dict["z"] + 1})
         elif ownship_zone_pos == "top" and ownship_target_pos == "alongside":
@@ -404,6 +304,11 @@ def correct_angle(x):
     y = (math.pow(10, -4) * math.pow(x, 3)) - (0.0228 * math.pow(x, 2)) + (2.2484 * x) - 0.3535
     return y
 
+
+# this function determine in which seconds a collision occurred {collision with ICE}.
+# stored those seconds in a set named "collision_time_set"
+def collision_time_determinor(scenario):
+    pass
 
 class BLabel(object):
     b = ">>>"

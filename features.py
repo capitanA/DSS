@@ -1,7 +1,8 @@
 import csv
 import ipdb
 import math
-from helper import ownship_position, area_focus_votter, updown_rannge_calculator, aspect_votter
+from helper import ownship_position, area_focus_votter, updown_rannge_calculator, aspect_votter, \
+    collision_time_determinor
 
 TOP_TARGET_POINT = (60.51040, 146.35117)
 CENTER_TARGET_POINT = (60.50914510, 146.35116730)
@@ -39,9 +40,9 @@ class Features:
         aspect_vot_dict = {"up_current": 0, "J_approach": 0, "direct": 0}
         for sec in range(0, 181):
             ownship_pos = ownship_position(self.scenario, self.log_objects[300].latitude,
-                                           self.log_objects[360].longtitude)
+                                           self.log_objects[360].longitude)
             down_heading, up_heading = updown_rannge_calculator(self.log_objects[sec].latitude,
-                                                                self.log_objects[sec].longtitude,
+                                                                self.log_objects[sec].longitude,
                                                                 self.scenario, ownship_pos)
             degree = (down_heading, up_heading)
 
@@ -52,11 +53,12 @@ class Features:
             print("the updated_aspect_vot_dict didn't update")
 
         self.aspect = max(paires)[1]
+        print(self.aspect)
 
     def orientation_calculator(self):
-        ownship_pos = ownship_position(self.scenario, self.log_objects[180].latitude, self.log_objects[180].longtitude)
+        ownship_pos = ownship_position(self.scenario, self.log_objects[180].latitude, self.log_objects[180].longitude)
         down_heading, up_heading = updown_rannge_calculator(self.log_objects[180].latitude,
-                                                            self.log_objects[180].longtitude,
+                                                            self.log_objects[180].longitude,
                                                             self.scenario, ownship_pos)
 
         thresh = abs((up_heading - down_heading)) / 2
@@ -64,7 +66,7 @@ class Features:
         # ipdb.set_trace()
         print(new_range)
 
-        ownship_pos = ownship_position(self.scenario, self.log_objects[180].latitude, self.log_objects[180].longtitude)
+        ownship_pos = ownship_position(self.scenario, self.log_objects[180].latitude, self.log_objects[180].longitude)
         if new_range[0] <= 0:
             new_ang = 360 - abs(new_range[0])
             new_range = [new_range[1], new_ang]
@@ -92,15 +94,15 @@ class Features:
                 print("stern")
 
     def distance_calculator(self, ):
-        num1 = math.pow((self.log_objects[self.time_stamp].longtitude - TOP_TARGET_POINT[1]), 2)
+        num1 = math.pow((self.log_objects[self.time_stamp].longitude - TOP_TARGET_POINT[1]), 2)
         num2 = math.pow((self.log_objects[self.time_stamp].latitude - TOP_TARGET_POINT[0]), 2)
         distnace_from_top = math.sqrt(num1 + num2)
 
-        num1 = math.pow((self.log_objects[self.time_stamp].longtitude - CENTER_TARGET_POINT[1]), 2)
+        num1 = math.pow((self.log_objects[self.time_stamp].longitude - CENTER_TARGET_POINT[1]), 2)
         num2 = math.pow((self.log_objects[self.time_stamp].latitude - CENTER_TARGET_POINT[0]), 2)
         distnace_from_center = math.sqrt(num1 + num2)
 
-        num1 = math.pow((self.log_objects[self.time_stamp].longtitude - BOTTOM_TARGET_POINT[1]), 2)
+        num1 = math.pow((self.log_objects[self.time_stamp].longitude - BOTTOM_TARGET_POINT[1]), 2)
         num2 = math.pow((self.log_objects[self.time_stamp].latitude - BOTTOM_TARGET_POINT[0]), 2)
         distnace_from_bottom = math.sqrt(num1 + num2)
 
@@ -134,7 +136,7 @@ class Features:
             self.speed = ("dangerous", self.log_objects[self.time_stamp].sog)
 
     def ice_technique_determinor(self):
-        pass
+        collision_time_determinor(self.scenario)
 
     def ice_loads_calculator(self):
         pass

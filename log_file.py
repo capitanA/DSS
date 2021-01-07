@@ -1,13 +1,13 @@
 import csv
 
 
-class LogFile:
+class CsvFile:
     def __init__(self, simtime=0, latitude=0, longitude=0, sog=0, cog=0, heading=0, aftthruster=0, forethruster=0,
                  portengine=0,
                  stbdengine=0, portrudder=0, stbdrudder=0):
         self.simtime = simtime
         self.latitude = latitude
-        self.longtitude = longitude
+        self.longitude = longitude
         self.sog = sog
         self.cog = cog
         self.heading = heading
@@ -19,7 +19,7 @@ class LogFile:
         self.stbdrudder = stbdrudder
 
 
-class LogRowsOperator:
+class CsvRowsOperator:
     def __init__(self):
         self.log_objects = []
 
@@ -32,8 +32,9 @@ class LogRowsOperator:
                 continue
             else:
                 self.log_objects.append(
-                    LogFile(float(row[0]), float(row[1]), abs(float(row[2])), float(row[3]), float(row[4]), float(row[5]),
+                    CsvFile(float(row[0]), float(row[1]), abs(float(row[2])), float(row[3]), float(row[4]), float(row[5]),
                             float(row[6]), float(row[7]), float(row[8]), float(row[9]), float(row[10]),
                             float(row[11])))
                 line_count += 1
         return self.log_objects
+

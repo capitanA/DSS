@@ -1,6 +1,6 @@
 import tkinter as tk
 from PIL import ImageTk, Image
-
+import ipdb
 from helper import BLabel
 from functools import partial
 from scenario_page import PlayScenario
@@ -11,8 +11,8 @@ def resize_image(img, root):
     return resized_img
 
 
-def do_the_scenario(scenario_1_frame, scenario_2_frame, scenario_3_frame, main_frame, root):
-    start_scenario(scenario_1_frame, scenario_2_frame, scenario_3_frame, main_frame, root)
+def do_the_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_frame, root):
+    start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_frame, root)
 
 
 # def do_leeway_scenario(scenario_1_frame, scenario_2_frame, scenario_3_frame, main_frame, root):
@@ -23,13 +23,13 @@ def do_the_scenario(scenario_1_frame, scenario_2_frame, scenario_3_frame, main_f
 #     pushing_scenario(scenario_1_frame, scenario_2_frame, scenario_3_frame, main_frame, root)
 
 
-def start_scenario(scenario_1_frame, scenario_2_frame, scenario_3_frame, main_frame, root):
-    scenario_1_frame.destroy()
-    scenario_2_frame.destroy()
-    scenario_3_frame.destroy()
+def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_frame, root):
+    pushing_frame.destroy()
+    leeway_frame.destroy()
+    emergency_frame.destroy()
     ff = tk.Button(root, text="Back To Main Menue", width=20, height=3, anchor="c", command=get_back, bg="gray")
     ff.place(relx=0.5, rely=0.05, anchor="center")
-    scenario_obj = PlayScenario(root, main_frame)
+    scenario_obj = PlayScenario(root, main_frame, scenario)
     scenario_obj.init_page()
 
 
@@ -67,73 +67,75 @@ def init_page(root):
     # label = tk.Label(main_frame, text='DSS for Offshore ships', font=('Helvetica', 60, 'bold'),bg="grey")
     # label.place(relx=0.5, rely=0.15, anchor="center")
     # root.wm_attributes("-transparent", root["bg"])
-    scenario_1_frame = tk.Frame(main_frame, width=(frame_width - 100) / 3, height=400, bg="white")
-    scenario_1_frame.config(borderwidth=6, relief="groove")
-    scenario_1_frame.place(relx=0.17, rely=0.5, anchor="center")
+    pushing_frame = tk.Frame(main_frame, width=(frame_width - 100) / 3, height=400, bg="white")
+    pushing_frame.config(borderwidth=6, relief="groove")
+    pushing_frame.place(relx=0.17, rely=0.5, anchor="center")
 
-    scenario_2_frame = tk.Frame(main_frame, width=(frame_width - 100) / 3, height=400, bg="white")
-    scenario_2_frame.config(borderwidth=6, relief="groove")
+    leeway_frame = tk.Frame(main_frame, width=(frame_width - 100) / 3, height=400, bg="white")
+    leeway_frame.config(borderwidth=6, relief="groove")
 
-    scenario_2_frame.place(relx=0.5, rely=0.5, anchor="center")
+    leeway_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-    scenario_3_frame = tk.Frame(main_frame, width=(frame_width - 100) / 3, height=400, bg="white")
-    scenario_3_frame.config(borderwidth=6, relief="groove")
+    emergency_frame = tk.Frame(main_frame, width=(frame_width - 100) / 3, height=400, bg="white")
+    emergency_frame.config(borderwidth=6, relief="groove")
 
-    scenario_3_frame.place(relx=0.83, rely=0.5, anchor="center")
+    emergency_frame.place(relx=0.83, rely=0.5, anchor="center")
 
     Button_Pushing_img = tk.PhotoImage(file="images/Pushing_look.png")
     Button_Leeway_img = tk.PhotoImage(file="images/Leaway_look.png")
     Button_Emergency_img = tk.PhotoImage(file="images/Emergency_look.png")
 
-    ######   First button for first scenario  ######
-    command_1 = partial(do_the_scenario, scenario_1_frame, scenario_2_frame, scenario_3_frame, main_frame, root)
-    scenario_btn_1 = tk.Button(scenario_1_frame, image=Button_Pushing_img, anchor="c", command=command_1,
-                               relief="raised")
-    scenario_btn_1.place(relx=0.5, rely=0.03, anchor="n")
+    ######   First button for Pushing scenario  ######
+    pushing_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "pushing", main_frame,
+                              root)
+    pushing_btn = tk.Button(pushing_frame, image=Button_Pushing_img, anchor="c", command=pushing_command,
+                            relief="raised")
+    pushing_btn.place(relx=0.5, rely=0.03, anchor="n")
 
-    ######   Second button for second scenario  ######
-    command_2 = partial(do_the_scenario, scenario_1_frame, scenario_2_frame, scenario_3_frame, main_frame, root)
-    scenario_btn_2 = tk.Button(scenario_2_frame, image=Button_Leeway_img, anchor="c", command=command_2,
-                               relief="raised")
-    scenario_btn_2.place(relx=0.5, rely=0.03, anchor="n")
+    ######   Seccond button for Leeway scenario  ######
+    leeway_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "leeway", main_frame, root)
+    leeway_btn = tk.Button(leeway_frame, image=Button_Leeway_img, anchor="c", command=leeway_command,
+                           relief="raised")
+    leeway_btn.place(relx=0.5, rely=0.03, anchor="n")
 
-    ######   Third button for third scenario  ######
-    command_3 = partial(do_the_scenario, scenario_1_frame, scenario_2_frame, scenario_3_frame, main_frame, root)
-    scenario_btn_3 = tk.Button(scenario_3_frame, image=Button_Emergency_img, anchor="c", command=command_3,
-                               relief="raised")
-    scenario_btn_3.place(relx=0.5, rely=0.03, anchor="n")
+    ######   Third button for Emergency Scenario  ######
+    emergency_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "emergency", main_frame,
+                                root)
+    emergency_btn = tk.Button(emergency_frame, image=Button_Emergency_img, anchor="c", command=emergency_command,
+                              relief="raised")
+    emergency_btn.place(relx=0.5, rely=0.03, anchor="n")
 
     ######   the image for pushing scenario   ######
     opend_img_1 = Image.open("images/pushing.png")
     resize_image_1 = resize_image(opend_img_1, root)
     image_1 = ImageTk.PhotoImage(resize_image_1)
-    img_1_lbl = tk.Label(scenario_1_frame, image=image_1)
+    img_1_lbl = tk.Label(pushing_frame, image=image_1)
     img_1_lbl.place(relx=0.5, rely=0.45, anchor="center")
 
     ######   the image for leeway scenario   ######
     opened_img_2 = Image.open("images/leeway.png")
     resize_image_2 = resize_image(opened_img_2, root)
     image_2 = ImageTk.PhotoImage(resize_image_2)
-    img_2_lbl = tk.Label(scenario_2_frame, image=image_2)
+    img_2_lbl = tk.Label(leeway_frame, image=image_2)
     img_2_lbl.place(relx=0.5, rely=0.45, anchor="center")
 
     ######   the image for emergency scenario   ######
     opened_img_3 = Image.open("images/emergency.png")
     resize_image_3 = resize_image(opened_img_3, root)
     image_3 = ImageTk.PhotoImage(resize_image_3)
-    img_3_lbl = tk.Label(scenario_3_frame, image=image_3)
+    img_3_lbl = tk.Label(emergency_frame, image=image_3)
     img_3_lbl.place(relx=0.5, rely=0.45, anchor="center")
 
     ######   The frames for descriptions   ######
-    dsc_frame_sce_1 = tk.Frame(scenario_1_frame, width=350, height=((frame_width - 30) / 3) * 0.25, bg="white")
+    dsc_frame_sce_1 = tk.Frame(pushing_frame, width=350, height=((frame_width - 30) / 3) * 0.25, bg="white")
     dsc_frame_sce_1.place(relx=0.55, rely=0.85, anchor="center")
     dsc_frame_sce_1.config(borderwidth=2, relief="groove")
 
-    dsc_frame_sce_2 = tk.Frame(scenario_2_frame, width=350, height=((frame_width - 30) / 3) * 0.25, bg="white")
+    dsc_frame_sce_2 = tk.Frame(leeway_frame, width=350, height=((frame_width - 30) / 3) * 0.25, bg="white")
     dsc_frame_sce_2.place(relx=0.55, rely=0.85, anchor="center")
     dsc_frame_sce_2.config(borderwidth=2, relief="groove")
 
-    dsc_frame_sce_3 = tk.Frame(scenario_3_frame, width=350, height=((frame_width - 30) / 3) * 0.25, bg="white")
+    dsc_frame_sce_3 = tk.Frame(emergency_frame, width=350, height=((frame_width - 30) / 3) * 0.25, bg="white")
     dsc_frame_sce_3.place(relx=0.55, rely=0.85, anchor="center")
     dsc_frame_sce_3.config(borderwidth=2, relief="groove")
 
