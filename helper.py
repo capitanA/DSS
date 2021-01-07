@@ -308,7 +308,24 @@ def correct_angle(x):
 # this function determine in which seconds a collision occurred {collision with ICE}.
 # stored those seconds in a set named "collision_time_set"
 def collision_time_determinor(scenario):
-    pass
+    dic_entity = {"thisEntityID": 0}
+    collision_time = list()
+    xml_file = ET.parse('/Users/arash/project/my_project/extracting_features/well_formed_TraceData.log').getroot()
+    for log_event in xml_file.iter("log_event"):
+        for index, element in enumerate(log_event):
+            if element.tag == "Load":
+                for item in element.items():
+                    if item:
+                        dic_entity.update({item[0]: item[1]})
+                if dic_entity["thisEntityID"] == "1" and dic_entity["thisEntityID"] != "10":
+                    if scenario == "emergency" and float(log_event.attrib["SimTime"]) < 1801:
+                        collision_time.append(int(float(log_event.attrib["SimTime"])))
+                    elif (scenario == "pushing" or scenario == "leeway") and float(log_event.attrib["SimTime"]) < 901:
+                        collision_time.append(int(float(log_event.attrib["SimTime"])))
+
+    collision_time_set = set(collision_time)
+    return collision_time_set
+
 
 class BLabel(object):
     b = ">>>"
