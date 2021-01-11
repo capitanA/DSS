@@ -7,6 +7,7 @@ from helper import ownship_position, area_focus_votter, updown_rannge_calculator
 TOP_TARGET_POINT = (60.51040, 146.35117)
 CENTER_TARGET_POINT = (60.50914510, 146.35116730)
 BOTTOM_TARGET_POINT = (60.50790, 146.33115)
+dicdic = {"pushing": 0, "leeway": 0, "prop_wash": 0, "other": 0}
 
 
 class Features:
@@ -24,6 +25,7 @@ class Features:
         self.ice_managment = None
         self.ide_loads = None
         self.ice_concentration = None
+        self.maneuver = None
         self.aspect_calculator()
         self.orientation_calculator()
         self.distance_calculator()
@@ -31,7 +33,6 @@ class Features:
         self.heading_calculator()
         self.ice_technique_determinor()
         self.ice_loads_calculator()
-        self.ice_concentration_calculator()
         self.speed_calculator()
 
     def aspect_calculator(self):
@@ -56,9 +57,9 @@ class Features:
         print(self.aspect)
 
     def orientation_calculator(self):
-        ownship_pos = ownship_position(self.scenario, self.log_objects[180].latitude, self.log_objects[180].longitude)
-        down_heading, up_heading = updown_rannge_calculator(self.log_objects[180].latitude,
-                                                            self.log_objects[180].longitude,
+        ownship_pos = ownship_position(self.scenario, self.log_objects[-1].latitude, self.log_objects[-1].longitude)
+        down_heading, up_heading = updown_rannge_calculator(self.log_objects[-1].latitude,
+                                                            self.log_objects[-1].longitude,
                                                             self.scenario, ownship_pos)
 
         thresh = abs((up_heading - down_heading)) / 2
@@ -66,32 +67,30 @@ class Features:
         # ipdb.set_trace()
         print(new_range)
 
-        ownship_pos = ownship_position(self.scenario, self.log_objects[180].latitude, self.log_objects[180].longitude)
+        ownship_pos = ownship_position(self.scenario, self.log_objects[-1].latitude, self.log_objects[-1].longitude)
         if new_range[0] <= 0:
             new_ang = 360 - abs(new_range[0])
             new_range = [new_range[1], new_ang]
-            if abs(new_range[0] - self.log_objects[180].heading) < new_range[1] - self.log_objects[180].heading:
+            if abs(new_range[0] - self.log_objects[-1].heading) < new_range[1] - self.log_objects[-1].heading:
                 new_range = [new_range[0] - 10, new_range[1]]
             else:
                 new_range = [new_range[0] + 10, new_range[1] + 10]
-            if 0 <= self.log_objects[180].heading <= new_range[0] or new_range[1] <= self.log_objects[
+            if 0 <= self.log_objects[-1].heading <= new_range[0] or new_range[1] <= self.log_objects[
                 330].heading <= 360:
-                print(f"this is newrange_first{new_range}")
-                print("bow")
+                self.orientation = "bow"
             else:
-                print("stern")
+                self.orientation = "stern"
 
         else:
-            if abs(new_range[0] - self.log_objects[180].heading) < new_range[1] - self.log_objects[300].heading:
+            if abs(new_range[0] - self.log_objects[-1].heading) < new_range[1] - self.log_objects[-1].heading:
                 new_range = [new_range[0] - 10, new_range[1]]
             else:
                 new_range = [new_range[0] + 10, new_range[1] + 10]
 
-            print(f"this is newrange_seccond{new_range}")
-            if new_range[0] <= self.log_objects[180].heading <= new_range[1]:
-                print("bow")
+            if new_range[0] <= self.log_objects[-1].heading <= new_range[1]:
+                self.orientation = "bow"
             else:
-                print("stern")
+                self.orientation = "stern"
 
     def distance_calculator(self, ):
         num1 = math.pow((self.log_objects[self.time_stamp].longitude - TOP_TARGET_POINT[1]), 2)
@@ -136,10 +135,45 @@ class Features:
             self.speed = ("dangerous", self.log_objects[self.time_stamp].sog)
 
     def ice_technique_determinor(self):
-        collision_time_determinor(self.scenario)
+        start_loc_ice = {"emergency": 146.3655880, "pushing": 146.36156890, "leeway": self.log_objects[0].longitude}
+        colision_time = collision_time_determinor(self.scenario)
+        heading_delta = abs(self.log_objects[390].heading - self.log_objects[390].cog)
+        # vessel is not in contact with ice or is not in ice field.
+        if self.time_stamp not in colision_time or self.log_objects[self.time_stamp].longitude > start_loc_ice[
+            self.scenario]:
+            print(colision_time)
+            print("not ")
+            # Heading and course are in the opposite direction    and   Engines are in forward direction
+            if 135 <= heading_delta <= 225 and self.log_objects[self.time_stamp].portengine > 0 and self.log_objects[
+                self.time_stamp].stbdengine > 0:
+                self.maneuver = "prop_wash"
+                dicdic.update({"prop_wash": dicdic["prop_wash"] + 1})
+            # if not propwashing in open water,must just be maneuvering in open water
+            else:
+                self.maneuver = "other"
+                dicdic.update({"other": dicdic["other"] + 1})
+
+
+        else:  # vessel is in contact with ice
+            if 135 <= heading_delta <= 225:  # Heading and course are in the opposite direction
+                if self.log_objects[self.time_stamp].portengine > 0 and self.log_objects[
+                    self.time_stamp].stbdengine > 0:  # Engines are in forward direction
+                    self.maneuver = "prop_wash"
+                    dicdic.update({"prop_wash": dicdic["prop_wash"] + 1})
+                elif self.log_objects[self.time_stamp].sog <= 0.2:
+                    self.maneuver = "leeway"
+                    dicdic.update({"leeway": dicdic["leeway"] + 1})
+                else:  # moving above 0.4 knots in reverse while in contact with ice
+                    self.maneuve = "other"
+                    dicdic.update({"other": dicdic["other"] + 1})
+            elif self.log_objects[self.time_stamp].sog <= 0.2:
+                self.maneuver = "leeway"
+                dicdic.update({"leeway": dicdic["leeway"] + 1})
+            else:  # if heading and course are alligned
+                self.maneuver = "pushing"
+                dicdic.update({"pushing": dicdic["pushing"] + 1})
+        print(self.maneuver)
+        print(dicdic)
 
     def ice_loads_calculator(self):
-        pass
-
-    def ice_concentration_calculator(self):
         pass
