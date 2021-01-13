@@ -2,7 +2,7 @@ import csv
 import ipdb
 import math
 from helper import ownship_position, area_focus_votter, updown_rannge_calculator, aspect_votter, \
-    collision_time_determinor
+    collision_time_determinor, get_point
 
 TOP_TARGET_POINT = (60.51040, 146.35117)
 CENTER_TARGET_POINT = (60.50914510, 146.35116730)
@@ -92,17 +92,20 @@ class Features:
             else:
                 self.orientation = "stern"
 
-    def distance_calculator(self, ):
-        num1 = math.pow((self.log_objects[self.time_stamp].longitude - TOP_TARGET_POINT[1]), 2)
-        num2 = math.pow((self.log_objects[self.time_stamp].latitude - TOP_TARGET_POINT[0]), 2)
+    def distance_calculator(self):
+        point = get_point(self.scenario, self.log_objects[self.time_stamp].latitude,
+                          self.log_objects[self.time_stamp].longitude)
+
+        num1 = math.pow((self.log_objects[self.time_stamp].longitude - point[1]), 2)
+        num2 = math.pow((self.log_objects[self.time_stamp].latitude - point[0]), 2)
         distnace_from_top = math.sqrt(num1 + num2)
 
-        num1 = math.pow((self.log_objects[self.time_stamp].longitude - CENTER_TARGET_POINT[1]), 2)
-        num2 = math.pow((self.log_objects[self.time_stamp].latitude - CENTER_TARGET_POINT[0]), 2)
+        num1 = math.pow((self.log_objects[self.time_stamp].longitude - point[1]), 2)
+        num2 = math.pow((self.log_objects[self.time_stamp].latitude - point[0]), 2)
         distnace_from_center = math.sqrt(num1 + num2)
 
-        num1 = math.pow((self.log_objects[self.time_stamp].longitude - BOTTOM_TARGET_POINT[1]), 2)
-        num2 = math.pow((self.log_objects[self.time_stamp].latitude - BOTTOM_TARGET_POINT[0]), 2)
+        num1 = math.pow((self.log_objects[self.time_stamp].longitude - point[1]), 2)
+        num2 = math.pow((self.log_objects[self.time_stamp].latitude - point[0]), 2)
         distnace_from_bottom = math.sqrt(num1 + num2)
 
         self.distance_from_target.update(

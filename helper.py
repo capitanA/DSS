@@ -4,7 +4,7 @@ import xml.etree.cElementTree as ET
 import ipdb
 
 angle_pos_key = {"top": ["top_right", "top_left"], "bottom": ["btm_right", "btm_left"],
-                 "left": ["top_left", "btm_left"], "right": ["btm_left", "top_right"],
+                 "left": ["top_left", "btm_left"], "right": ["btm_right", "top_right"],
                  "top_left": ["top_right", "btm_left"], "top_right": ["btm_right", "top_left"],
                  "bottom_left": ["top_left", "btm_right"], "bottom_right":
                      ["btm_left", "top_right"]}
@@ -34,8 +34,13 @@ coordinates = {
                "lat_btm_left": 60.50790,
                "long_btm_left": 146.35159,
                "lat_btm_right": 60.50790,
-               "long_btm_right": 146.35074, "center_trgt_lat": 60.50914510,
-               "center_trgt_long": 146.35116730},
+               "long_btm_right": 146.35074,
+               "center_trgt_long": 146.35116730,
+               "center_trgt_lat": 60.50914510,
+               "long_top_center": 146.35116730,
+               "lat_top_center": 60.51038,
+               "center_trgt_btm_long": 146.35116730,
+               "center_trgt_btm_lat": 60.50792},
 
     "emergency": {"lat_top_left": 60.51833,
                   "long_top_left": 146.35961,
@@ -47,6 +52,8 @@ coordinates = {
                   "long_btm_right": 146.35749,
                   "center_trgt_lat": 60.51724810,
                   "center_trgt_long": 146.35859560,
+                  "center_trgt_btm_lat": 60.49526,
+                  "center_trgt_btm_long": 146.37848,
                   "lat_top_center": 60.51830,
                   "long_top_center": 146.35769,
                   "lat_btm_left_vessel": 60.51624,
@@ -325,6 +332,27 @@ def collision_time_determinor(scenario):
 
     collision_time_set = set(collision_time)
     return collision_time_set
+
+
+def get_point(scenario, ownship_lattitude, ownship_longitude):
+    ownship_pos = ownship_position(scenario, ownship_lattitude, ownship_longitude)
+    if scenario == "emergency":
+        if ownship_pos in ["alongside", "left", "right"]:
+            return coordinates[scenario]["center_trgt_lat"], coordinates[scenario]["center_trgt_long"]
+        elif ownship_pos in ["bottom_left", "bottom_right", "bottom"]:
+            return coordinates[scenario]["center_trgt_btm_lat"], coordinates[scenario]["center_trgt_btm_long"]
+        else:
+            return coordinates[scenario]["lat_top_center"], coordinates[scenario]["long_top_center"]
+
+    elif scenario == "leeway":
+        if ownship_pos in ["left", "right"]:
+            return coordinates[scenario]["center_trgt_lat"], coordinates[scenario]["center_trgt_long"]
+        elif ownship_pos in ["bottom_left", "bottom_right", "bottom"]:
+            return coordinates[scenario]["center_trgt_btm_lat"], coordinates[scenario]["center_trgt_btm_long"]
+        else:
+            return coordinates[scenario]["lat_top_center"], coordinates[scenario]["long_top_center"]
+    else:
+        return coordinates[scenario]["center_trgt_lat"], coordinates[scenario]["center_trgt_long"]
 
 
 class BLabel(object):
