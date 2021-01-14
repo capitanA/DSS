@@ -18,7 +18,7 @@ class Features:
         self.time_stamp = time_stamp
         self.aspect = None
         self.orientation = None
-        self.distance_from_target = {"top": 0, "center": 0, "bottom": 0}
+        self.distance_from_target = None
         self.area_of_focus = None
         self.heading = None
         self.speed = None
@@ -98,18 +98,9 @@ class Features:
 
         num1 = math.pow((self.log_objects[self.time_stamp].longitude - point[1]), 2)
         num2 = math.pow((self.log_objects[self.time_stamp].latitude - point[0]), 2)
-        distnace_from_top = math.sqrt(num1 + num2)
-
-        num1 = math.pow((self.log_objects[self.time_stamp].longitude - point[1]), 2)
-        num2 = math.pow((self.log_objects[self.time_stamp].latitude - point[0]), 2)
-        distnace_from_center = math.sqrt(num1 + num2)
-
-        num1 = math.pow((self.log_objects[self.time_stamp].longitude - point[1]), 2)
-        num2 = math.pow((self.log_objects[self.time_stamp].latitude - point[0]), 2)
         distnace_from_bottom = math.sqrt(num1 + num2)
 
-        self.distance_from_target.update(
-            {"top": distnace_from_top, "center": distnace_from_center, "bottom": distnace_from_bottom})
+        self.distance_from_target = distnace_from_bottom
 
     def area_of_focus_determinor(self):
         area_of_focus_dict = {"av": 0, "z": 0, "az": 0, "along_zone": 0}

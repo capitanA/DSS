@@ -27,8 +27,8 @@ def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_
     pushing_frame.destroy()
     leeway_frame.destroy()
     emergency_frame.destroy()
-    ff = tk.Button(root, text="Back To Main Menue", width=20, height=3, anchor="c", command=get_back, bg="gray")
-    ff.place(relx=0.5, rely=0.05, anchor="center")
+    go_back_button = tk.Button(root, text="Back To Main Menue", width=20, height=3, anchor="c", command=get_back, bg="gray")
+    go_back_button.place(relx=0.5, rely=0.05, anchor="center")
     scenario_obj = PlayScenario(root, main_frame, scenario)
     scenario_obj.init_page()
 

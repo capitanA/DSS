@@ -25,13 +25,13 @@ class PlayScenario:
         self.main_frame_width = self.main_frame.winfo_width()
         self.main_frame_height = self.main_frame.winfo_height()
         self.features = None
-        self.suggested_speed = None
-        self.suggested_heading = None
-        self.suggested_area_focus = None
-        self.suggested_aspect = None
-        self.suggested_orientation = None
-        self.suggested_distance_target = None
-        self.suggested_maneuver = None
+        # self.suggested_speed = None
+        # self.suggested_heading = None
+        # self.suggested_area_focus = None
+        # self.suggested_aspect = None
+        # self.suggested_orientation = None
+        # self.suggested_distance_target = None
+        # self.suggested_maneuver = None
 
     # this function will make the TraceData log file well_formed to be ready for parsing.
     def log_reader(self):
@@ -96,13 +96,23 @@ class PlayScenario:
             #     log_objects = logrowsoperator.read_file(myFile)
 
             self.features = Features(log_objects, self.scenario, 390)
+        # filling the suggested ownship status attributes
         self.suggested_speed.config(text=self.features.speed)
         self.suggested_heading.config(text=self.features.heading)
         self.suggested_area_focus.config(text=self.features.area_of_focus)
         self.suggested_aspect.config(text=self.features.aspect)
         self.suggested_orientation.config(text=self.features.orientation)
-        self.suggested_distance_target.config(text=f"Center:{self.features.distance_from_target['center']}")
+        self.suggested_distance_target.config(text=self.features.distance_from_target)
         self.suggested_maneuver.config(text=self.features.maneuver)
+
+        # filling the own vessel properties attributes
+        self.scale_speed.set(log_objects[-1].sog)
+        self.scale_heading.set(log_objects[-1].heading)
+        # self.scale_ice_load.set(log_objects[-1].speed)
+        # self.scale_distance_target
+        # self.entry_aspect
+        # self.entry_area_focus.config
+        # self.entry_orientation_target.
 
     def init_page(self):
 
@@ -133,53 +143,47 @@ class PlayScenario:
         suggested_approach_lbl.place(relx=0.2, rely=-0.001, anchor="center")
 
         ####### create the widgets for the own vessel properties frame ######
-        scale_1_lbl = tk.Label(own_vessel_frame, text="Vessel Speed", font=("helvetica", 12, "bold"))
-        scale_1_lbl.place(relx=0.1, rely=0.12, anchor="center")
-        scale_1 = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
-        scale_1.config(length=240)
-        scale_1.place(relx=0.6, rely=0.1, anchor="center")
+        scale_speed = tk.Label(own_vessel_frame, text="Vessel Speed", font=("helvetica", 12, "bold"))
+        scale_speed.place(relx=0.1, rely=0.12, anchor="center")
+        self.scale_speed = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
+        self.scale_speed.config(length=240)
+        self.scale_speed.place(relx=0.6, rely=0.1, anchor="center")
 
-        scale_1_lbl = tk.Label(own_vessel_frame, text="Vessel Heading", font=("helvetica", 12, "bold"))
-        scale_1_lbl.place(relx=0.11, rely=0.22, anchor="center")
-        scale_2 = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
-        scale_2.config(length=240)
-        scale_2.place(relx=0.6, rely=0.2, anchor="center")
+        scale_heading = tk.Label(own_vessel_frame, text="Vessel Heading", font=("helvetica", 12, "bold"))
+        scale_heading.place(relx=0.11, rely=0.22, anchor="center")
+        self.scale_heading = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
+        self.scale_heading.config(length=240)
+        self.scale_heading.place(relx=0.6, rely=0.2, anchor="center")
 
-        scale_1_lbl = tk.Label(own_vessel_frame, text="Ice Concentration", font=("helvetica", 12, "bold"))
-        scale_1_lbl.place(relx=0.12, rely=0.32, anchor="center")
-        scale_3 = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
-        scale_3.config(length=240)
-        scale_3.place(relx=0.6, rely=0.3, anchor="center")
+        scale_ice_load = tk.Label(own_vessel_frame, text="Ice Load", font=("helvetica", 12, "bold"))
+        scale_ice_load.place(relx=0.06, rely=0.32, anchor="center")
+        self.scale_ice_load = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
+        self.scale_ice_load.config(length=240)
+        self.scale_ice_load.place(relx=0.6, rely=0.3, anchor="center")
 
-        scale_1_lbl = tk.Label(own_vessel_frame, text="Ice Load", font=("helvetica", 12, "bold"))
-        scale_1_lbl.place(relx=0.06, rely=0.42, anchor="center")
-        scale_4 = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
-        scale_4.config(length=240)
-        scale_4.place(relx=0.6, rely=0.4, anchor="center")
+        scale_distance_target = tk.Label(own_vessel_frame, text="Distance from Target", font=("helvetica", 12, "bold"))
+        scale_distance_target.place(relx=0.13, rely=0.42, anchor="center")
+        self.scale_distance_target = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
+        self.scale_distance_target.config(length=240)
+        self.scale_distance_target.place(relx=0.6, rely=0.4, anchor="center")
 
-        scale_1_lbl = tk.Label(own_vessel_frame, text="Distance from Target", font=("helvetica", 12, "bold"))
-        scale_1_lbl.place(relx=0.13, rely=0.52, anchor="center")
-        scale_5 = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
-        scale_5.config(length=240)
-        scale_5.place(relx=0.6, rely=0.5, anchor="center")
+        lbl_aspect = tk.Label(own_vessel_frame, text="Aspect", font=("helvetica", 12, "bold"))
+        lbl_aspect.place(relx=0.06, rely=0.52, anchor="center")
+        self.entry_aspect = tk.Entry(own_vessel_frame)
+        self.entry_aspect.place(relx=0.60, rely=0.52, anchor="center")
+        self.entry_aspect.config(width=26, justify="center", relief="groove")
 
-        entry_aspect = tk.Entry(own_vessel_frame)
-        entry_aspect.place(relx=0.60, rely=0.62, anchor="center")
-        entry_aspect.config(width=26, justify="center", relief="groove")
-        scale_1_lbl = tk.Label(own_vessel_frame, text="Aspect", font=("helvetica", 12, "bold"))
-        scale_1_lbl.place(relx=0.06, rely=0.62, anchor="center")
+        lbl_area_focus = tk.Label(own_vessel_frame, text="Area of Focus", font=("helvetica", 12, "bold"))
+        lbl_area_focus.place(relx=0.1, rely=0.62, anchor="center")
+        self.entry_area_focus = tk.Entry(own_vessel_frame)
+        self.entry_area_focus.place(relx=0.60, rely=0.62, anchor="center")
+        self.entry_area_focus.config(width=26, justify="center", relief="groove")
 
-        entry_area_focus = tk.Entry(own_vessel_frame)
-        entry_area_focus.place(relx=0.60, rely=0.72, anchor="center")
-        entry_area_focus.config(width=26, justify="center", relief="groove")
-        scale_1_lbl = tk.Label(own_vessel_frame, text="Area of Focus", font=("helvetica", 12, "bold"))
-        scale_1_lbl.place(relx=0.1, rely=0.72, anchor="center")
-
-        entry_orientation_target = tk.Entry(own_vessel_frame)
-        entry_orientation_target.place(relx=0.60, rely=0.82, anchor="center")
-        entry_orientation_target.config(width=26, justify="center", relief="groove")
-        scale_1_lbl = tk.Label(own_vessel_frame, text="Orientation to Target", font=("helvetica", 12, "bold"))
-        scale_1_lbl.place(relx=0.13, rely=0.82, anchor="center")
+        lbl_orientation = tk.Label(own_vessel_frame, text="Orientation to Target", font=("helvetica", 12, "bold"))
+        lbl_orientation.place(relx=0.13, rely=0.72, anchor="center")
+        self.entry_orientation_target = tk.Entry(own_vessel_frame)
+        self.entry_orientation_target.place(relx=0.60, rely=0.72, anchor="center")
+        self.entry_orientation_target.config(width=26, justify="center", relief="groove")
 
         ####### create the widgets for the suggested own ship status  ######
 
