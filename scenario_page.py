@@ -54,6 +54,24 @@ class PlayScenario:
             well_formed_tracedata.write(line)
         return well_formed_tracedata.name
 
+    # This function will generate a csv file based on the TraceDtaa logfile!
+    def generate_csv_file(self, log_objects):
+        with open('/Users/arash/project/my_project/extracting_features/csv_interpolatedLog.csv', "w+") as logfile_csv:
+            fields_name = ["SimTime", "Latitude", "Longitude", "SOG", "COG", "Heading", "AftThruster", "ForeThruster",
+                           "PortEngine", "StbdEngine", "PortRudder", "StbdRudder"]
+            # csv_writer = csv.DictWriter(logfile_csv,fieldnames=fieldnames, delimiter=",", quoting=csv.QUOTE_MINIMAL)
+            csv_writer = csv.DictWriter(logfile_csv, fieldnames=fields_name)
+            csv_writer.writeheader()
+            for line_num in range(len(log_objects)):
+                csv_writer.writerow(
+                    {"SimTime": log_objects[line_num].simtime, "Latitude": log_objects[line_num].latitude,
+                     "Longitude": log_objects[line_num].longitude, "SOG": log_objects[line_num].sog,
+                     "COG": log_objects[line_num].cog, "Heading": log_objects[line_num].heading,
+                     "AftThruster": log_objects[line_num].aftthruster,
+                     "ForeThruster": log_objects[line_num].forethruster,
+                     "PortEngine": log_objects[line_num].portengine, "StbdEngine": log_objects[line_num].stbdengine,
+                     "PortRudder": log_objects[line_num].portrudder, "StbdRudder": log_objects[line_num].stbdrudder})
+        return logfile_csv.name
 
     # this function is aimed to parse the log file and iterate into the file to  fill the log_objects list in which,
     # each object is a row for our csv file to be generated
@@ -102,8 +120,9 @@ class PlayScenario:
         #     logrowsoperator = CsvRowsOperator()
         #     log_objects = logrowsoperator.read_file(myFile)
 
-        # this line get the last second when the user needs an assist
-        instant_second = log_objects[-1].simtime
+        instant_second = log_objects[-1].simtime  # this line get the last second when the user needs an assist
+
+        csvfile_name = self.generate_csv_file(log_objects)  # this will generate a csv file based on DataTrace file
 
         self.features = Features(log_objects, self.scenario, 900)
 
