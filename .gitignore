@@ -16,3 +16,6 @@ build/
 *.egg-info/
 *.csv
 *.log
+*.xls
+*.xlsx
+classifier.py

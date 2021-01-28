@@ -14,8 +14,24 @@ angle_pos_key_emergency = {"top": ["top_center", "btm_left_vessel"], "bottom": [
                            "top_right": ["btm_right_vessel", "top_center"],
                            "bottom_left": ["top_center", "btm_right_vessel"], "bottom_right":
                                ["btm_right_vessel", "top_center"]}
+
 coordinates = {
-    "center_target_coordinated": {"lat": 60.51724810, "long": 146.35859560},
+    "emergency_circumference": {
+        "lat": (
+            60.51831, 60.51825, 60.51811, 60.51790, 60.51771, 60.51751, 60.51731, 60.51708, 60.51685, 60.51662,
+            60.51638,
+            60.51619),
+        "long": (
+            146.35763, 146.35801, 146.35829, 146.35850, 146.35865, 146.35883, 146.35897, 146.35919, 146.35940,
+            146.35958,
+            146.35969, 146.35953)},
+    "leeway_circumference": {"lat": (
+        60.51039, 60.51021, 60.50996, 60.50971, 60.50974, 60.50917, 60.50894, 60.50870, 60.50843, 60.50817,
+        60.50796, 60.50792), "long": (
+        146.35117, 146.35148, 146.35159, 146.35159, 146.35159, 146.35159, 146.35159, 146.35159, 146.35159, 146.35154,
+        146.35146, 146.35114)},
+    "pushing_circumference": {"lat": 60.51023, "long": 146.35488, "df_from_corner": 146.71,
+                              "df_from_circumference": 103.46},
 
     "pushing": {"lat_top_left": 60.51049,
                 "long_top_left": 146.35544,
@@ -87,6 +103,7 @@ coordinates = {
                                                                      "long_btm_right": 146.35993}}
 
 
+# This function determine in which quarter the ship got located. Then calculated the correct angle proportional in relation to the start point.
 def angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, downrange, uprange, scenario):
     if scenario == "emergency":
         if ownship_pos == "top_left":
@@ -160,6 +177,7 @@ def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, own
     return angle_range
 
 
+# This function determine the location of ownship vessel in relation to target!
 def ownship_position(scenario, ownship_lattitude, ownship_longitude):
     if "_zone" in scenario:
 
@@ -252,6 +270,7 @@ def ownship_position(scenario, ownship_lattitude, ownship_longitude):
                 return "alongside"
 
 
+# this function will raise an vote to the current posision of ownship whether it is above vessel, above zone, in zone!
 def area_focus_votter(scenario, instant_log, area_of_focus_dict):
     if scenario == "leeway":
         ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longitude)
@@ -280,7 +299,8 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
 
         return area_of_focus_dict
 
-    else:
+
+    else:  # this is for emergency
         ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longitude)
         ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longitude)
         if ownship_zone_pos == "z":
@@ -298,11 +318,11 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
 def aspect_votter(log_objects, current_sec, aspect_vot_dict, degree_range):
     # it will check if the ship heading is biger than uprange smaller than downrange or in between them. then decide what is the aspect.
     ## I increased and decreased 5 degree to/from the threashold to be in a safe side for making decision.
-    if log_objects[current_sec].heading > degree_range[1] + 5:
+    if log_objects[current_sec].cog > degree_range[1] + 5 and log_objects[current_sec].cog < 225:
         aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
-    elif log_objects[current_sec].heading < degree_range[0] - 5:
+    elif 0 < log_objects[current_sec].cog < degree_range[0] - 5 or 315 < log_objects[current_sec].cog < 360:
         aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
-    else:
+    elif log_objects[current_sec].cog <= degree_range[1] + 5 and log_objects[current_sec].cog >= degree_range[0] - 5:
         aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
     return aspect_vot_dict
 
@@ -353,6 +373,38 @@ def get_point(scenario, ownship_lattitude, ownship_longitude):
             return coordinates[scenario]["lat_top_center"], coordinates[scenario]["long_top_center"]
     else:
         return coordinates[scenario]["center_trgt_lat"], coordinates[scenario]["center_trgt_long"]
+
+
+def calc_dist_from_target(ownship_lat, ownship_long, scenario):
+    # to calculate the distance between two coordinates the below equation was used:
+    # dx = (long1 - long2) * 40000 * math.cos((lat1 + lat2) * math.pi / 360) / 360
+    # dy = (lat1- lat2) * 40000 / 360
+    # distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+    # for emergency and leeway scenario we calculate the distance between 12 point on the target circumference.
+    # then the minimum of those distances determine as the  distance of ownship from target
+    # In the pushing scenario the distance of ownship from the target centere calculated.
+    # then determine what the ownship position to subtract a certain amount as it is in the coordinates["pushing"] DICT
+    dist_list = []
+    if scenario in ["emergency", "leeway"]:
+
+        for i in range(12):
+            dx = abs((coordinates[scenario + "_circumference"]["long"][i] - ownship_long) * 40000 * math.cos(
+                (ownship_lat + coordinates[scenario + "_circumference"]["lat"][i]) * math.pi / 360) / 360)
+            dy = abs((ownship_lat - coordinates[scenario + "_circumference"]["lat"][i]) * 40000 / 360)
+            distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+            dist_list.append(round(distance * 1000, 2))
+    else:  # when the scenario is pushing
+        dx = abs((coordinates[scenario + "_circumference"]["long"] - ownship_long) * 40000 * math.cos(
+            (ownship_lat + coordinates[scenario + "_circumference"]["lat"]) * math.pi / 360) / 360)
+        dy = abs((ownship_lat - coordinates[scenario + "_circumference"]["lat"]) * 40000 / 360)
+        distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+        ownship_pos = ownship_position(scenario, ownship_lat, ownship_long)
+        if ownship_pos in ["top_left", "top_right", "bottom_right", "bottom_left"]:
+            dist_list.append(round((distance - coordinates[scenario + "_circumference"]["df_from_corner"]) * 1000, 2))
+        else:
+            dist_list.append(
+                round((distance - coordinates[scenario + "_circumference"]["df_from_circumference"]) * 1000, 2))
+    return dist_list
 
 
 class BLabel(object):

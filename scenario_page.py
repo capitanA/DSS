@@ -5,15 +5,21 @@ Created on Fr 6 Nov 8:27:27 2020
 """
 
 import tkinter as tk
-from log_file import CsvRowsOperator, CsvFile
+from log_file import CsvFile
 from features import Features
 import os
 import xml.etree.cElementTree as ET
 import ipdb
-import timeit
+import csv
 
 engine_dic = {"pEngine": 0, "fTunnelThruster": 0, "sEngine": 0, "aTunnelThruster": 0}
 rudder_dic = {"pRudder": 0, "sRudder": 0}
+
+# This dictionary will help to create a feature row, corresponding to status of ownship at the time of assistance request
+feature_keis = {"solo": 0, "combo": 1, "p": 0, "pw+l": 1, "l": 2, "p+l": 3, "pw": 4, "l+pw": 5, "j_approach": 0,
+                "direct": 1, "up_current": 2, "av": 0, "z": 1, "az": 2, "angle": 0, "perpendicular": 1, "stem": 2,
+                "angle_stem": 3, "stem_angle": 4, "stern": 0, "bow": 1, "safe": 0,
+                "dangerous": 1}
 
 
 class PlayScenario:
@@ -33,7 +39,7 @@ class PlayScenario:
         # self.suggested_distance_target = None
         # self.suggested_maneuver = None
 
-    # this function will make the TraceData log file well_formed to be ready for parsing.
+    # this function will make the TraceData file well_formed to be ready for parsing.
     def log_reader(self):
         f = open('/Users/arash/project/my_project/extracting_features/TraceData.log', 'r')
         linelist = f.readlines()
@@ -48,7 +54,8 @@ class PlayScenario:
             well_formed_tracedata.write(line)
         return well_formed_tracedata.name
 
-    # this function is aimed to parse the log file and iterate into the file to  fill the log_objects list in wich,
+
+    # this function is aimed to parse the log file and iterate into the file to  fill the log_objects list in which,
     # each object is a row for our csv file to be generated
     def assist(self):
 
@@ -91,31 +98,51 @@ class PlayScenario:
                     else:
                         i += 1
 
-            # with open('E96_ScL_R1_interpolatedLog.csv', newline='') as myFile:
-            #     logrowsoperator = CsvRowsOperator()
-            #     log_objects = logrowsoperator.read_file(myFile)
+        # with open('E96_ScL_R1_interpolatedLog.csv', newline='') as myFile:
+        #     logrowsoperator = CsvRowsOperator()
+        #     log_objects = logrowsoperator.read_file(myFile)
 
-            self.features = Features(log_objects, self.scenario, 390)
-        # filling the suggested ownship status attributes
-        self.suggested_speed.config(text=self.features.speed)
-        self.suggested_heading.config(text=self.features.heading)
-        self.suggested_area_focus.config(text=self.features.area_of_focus)
-        self.suggested_aspect.config(text=self.features.aspect)
-        self.suggested_orientation.config(text=self.features.orientation)
-        self.suggested_distance_target.config(text=self.features.distance_from_target)
-        self.suggested_maneuver.config(text=self.features.maneuver)
+        # this line get the last second when the user needs an assist
+        instant_second = log_objects[-1].simtime
+
+        self.features = Features(log_objects, self.scenario, 900)
+
+        # filling the suggested ownship status variables
+        self.suggested_speed.config(text="N/A")
+        self.suggested_heading.config(text="N/A")
+        self.suggested_area_focus.config(text="N/A")
+        self.suggested_aspect.config(text="N/A")
+        self.suggested_orientation.config(text="N/A")
+        self.suggested_distance_target.config(text="N/A")
+        self.suggested_maneuver.config(text="N/A")
 
         # filling the own vessel properties attributes
-        self.scale_speed.set(log_objects[-1].sog)
-        self.scale_heading.set(log_objects[-1].heading)
-        # self.scale_ice_load.set(log_objects[-1].speed)
-        # self.scale_distance_target
-        # self.entry_aspect
-        # self.entry_area_focus.config
-        # self.entry_orientation_target.
+        self.scale_speed.set(self.features.speed[1])
+        self.scale_heading.set(int(self.features.heading[1]))
+        self.scale_ice_load.set(10)
+        self.scale_distance_target.set(round(self.features.distance_from_target, 4))
+        self.entry_aspect.insert(0, self.features.aspect)
+        self.entry_area_focus.insert(0, self.features.area_of_focus)
+        self.entry_orientation_target.insert(0, self.features.orientation)
+        # ipdb.set_trace()
+        self.entry_technique.insert(0, self.features.maneuver)
+        self.decision_tree_classifire(self.features)
+        self.entry_head.insert(0, self.features.heading[0])
+
+    def decision_tree_classifire(self, features):
+        pass
+
+    def reset_properties(self):
+        self.scale_speed.set(0)
+        self.scale_heading.set(0)
+        self.scale_ice_load.set(0)
+        self.scale_distance_target.set(0)
+        self.entry_aspect.delete(0, 100)
+        self.entry_area_focus.delete(0, 100)
+        self.entry_orientation_target.delete(0, 100)
+        self.entry_technique.delete(0, 100)
 
     def init_page(self):
-
         container = tk.Frame(self.root, width=self.main_frame_width * 0.94, height=self.main_frame_height * 0.67,
                              bg="white")
         container.config(borderwidth=6, relief="groove")
@@ -143,27 +170,36 @@ class PlayScenario:
         suggested_approach_lbl.place(relx=0.2, rely=-0.001, anchor="center")
 
         ####### create the widgets for the own vessel properties frame ######
+
         scale_speed = tk.Label(own_vessel_frame, text="Vessel Speed", font=("helvetica", 12, "bold"))
         scale_speed.place(relx=0.1, rely=0.12, anchor="center")
-        self.scale_speed = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
-        self.scale_speed.config(length=240)
+        self.scale_speed = tk.Scale(own_vessel_frame, from_=0, to=10.0, resolution=0.01, orient="horizontal")
+        self.scale_speed.config(length=240, tickinterval=0.001)
         self.scale_speed.place(relx=0.6, rely=0.1, anchor="center")
 
         scale_heading = tk.Label(own_vessel_frame, text="Vessel Heading", font=("helvetica", 12, "bold"))
         scale_heading.place(relx=0.11, rely=0.22, anchor="center")
-        self.scale_heading = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
+        self.scale_heading = tk.Scale(own_vessel_frame, from_=0, to=500, resolution=0.01, orient="horizontal")
         self.scale_heading.config(length=240)
         self.scale_heading.place(relx=0.6, rely=0.2, anchor="center")
 
+        lbl_head = tk.Label(own_vessel_frame, text="Heading", font=("helvetica", 12, "bold"))
+        lbl_head.place(relx=0.12, rely=0.92, anchor="center")
+        self.entry_head = tk.Entry(own_vessel_frame)
+        self.entry_head.place(relx=0.60, rely=0.92, anchor="center")
+        self.entry_head.config(width=26, justify="center", relief="groove")
+
         scale_ice_load = tk.Label(own_vessel_frame, text="Ice Load", font=("helvetica", 12, "bold"))
         scale_ice_load.place(relx=0.06, rely=0.32, anchor="center")
-        self.scale_ice_load = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
+        self.scale_ice_load = tk.Scale(own_vessel_frame, from_=0, to=500, orient="horizontal")
         self.scale_ice_load.config(length=240)
         self.scale_ice_load.place(relx=0.6, rely=0.3, anchor="center")
 
-        scale_distance_target = tk.Label(own_vessel_frame, text="Distance from Target", font=("helvetica", 12, "bold"))
+        scale_distance_target = tk.Label(own_vessel_frame, text="Distance from Target(m)",
+                                         font=("helvetica", 12, "bold"))
         scale_distance_target.place(relx=0.13, rely=0.42, anchor="center")
-        self.scale_distance_target = tk.Scale(own_vessel_frame, from_=-500, to=500, orient="horizontal")
+        self.scale_distance_target = tk.Scale(own_vessel_frame, from_=0, to=300, resolution=0.01,
+                                              orient="horizontal")
         self.scale_distance_target.config(length=240)
         self.scale_distance_target.place(relx=0.6, rely=0.4, anchor="center")
 
@@ -184,6 +220,12 @@ class PlayScenario:
         self.entry_orientation_target = tk.Entry(own_vessel_frame)
         self.entry_orientation_target.place(relx=0.60, rely=0.72, anchor="center")
         self.entry_orientation_target.config(width=26, justify="center", relief="groove")
+
+        lbl_technique = tk.Label(own_vessel_frame, text="Technique", font=("helvetica", 12, "bold"))
+        lbl_technique.place(relx=0.07, rely=0.82, anchor="center")
+        self.entry_technique = tk.Entry(own_vessel_frame)
+        self.entry_technique.place(relx=0.60, rely=0.82, anchor="center")
+        self.entry_technique.config(width=26, justify="center", relief="groove")
 
         ####### create the widgets for the suggested own ship status  ######
 
@@ -244,6 +286,11 @@ class PlayScenario:
         # now, when the features object created filling the pushing scenario variables("suggested own ship status") can be done.
         assist_btn.config(relief="groove", font=("helvetica", 12, "bold"), fg="green")
         assist_btn.place(relx=.5, rely=.9, anchor="center")
+
+        # reset_vessel_properties_btn = tk.Button(own_vessel_frame, text="RESET", relief="groove",
+        #                                         font=("helvetica", 12, "bold"), fg="red", width=22, height=2,
+        #                                         command=self.reset_properties)
+        # reset_vessel_properties_btn.place(relx=.5, rely=.9, anchor="center")
 
         canvas = tk.Canvas(suggested_approach_frame)
         canvas.place(relx=0.5, rely=0.5, anchor="center")
