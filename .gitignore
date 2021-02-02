@@ -19,3 +19,4 @@ build/
 *.xls
 *.xlsx
 classifier.py
+test.py

@@ -3,13 +3,16 @@ import ipdb
 import math
 from helper import ownship_position, area_focus_votter, updown_rannge_calculator, aspect_votter, \
     collision_time_determinor, get_point, calc_dist_from_target
+from tkinter import messagebox
 import numpy as np
+
 
 class Features:
 
-    def __init__(self, log_objects, scenario, time_stamp):
+    def __init__(self, log_objects, scenario, logger, time_stamp):
         self.scenario = scenario
         self.log_objects = log_objects
+        self.logger = logger
         self.time_stamp = time_stamp
         self.aspect = None
         self.orientation = None
@@ -28,8 +31,8 @@ class Features:
 
     def aspect_calculator(self):
 
-        last_sec = self.log_objects[-1].simtime
         aspect_vot_dict = {"up_current": 0, "J_approach": 0, "direct": 0}
+        # this 241 is for 3 minutes of the logfile to be considered for determining the aspect of the ownship
         for sec in range(0, 241, 1):
             ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
                                            self.log_objects[sec].longitude)
@@ -39,11 +42,13 @@ class Features:
             degree = (down_heading, up_heading)
 
             updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree)
+
         if updated_aspect_vot_dict:
+
             paires = [(value, key) for key, value in updated_aspect_vot_dict.items()]
+
         else:
-            print("the updated_aspect_vot_dict didn't update")
-        # ipdb.set_trace()
+            self.logger.info("The dictionary for aspect_calculation didn't get updated!(Check features.py module)")
         self.aspect = max(paires)[1]
 
     def orientation_calculator(self):
@@ -189,49 +194,3 @@ class Features:
                     technique_dict.update({"pushing": technique_dict["pushing"] + 1})
         paires = [(value, key) for key, value in technique_dict.items()]
         self.maneuver = max(paires)[1]
-
-    # def ice_technique_determinor(self):
-    #     technique_dict = {"prop_wash": 0, "leeway": 0, "pushing": 0, "other": 0}
-    #     start_loc_ice = {"emergency": 146.3655880, "pushing": 146.36156890, "leeway": self.log_objects[0].longitude}
-    #     for sec in range(self.time_stamp - 320, self.time_stamp + 1, 5):
-    #         colision_time = collision_time_determinor(self.scenario)
-    #         heading_delta = abs(self.log_objects[self.time_stamp].heading - self.log_objects[self.time_stamp].cog)
-    #         # vessel is not in contact with ice or is not in ice field.
-    #         if self.time_stamp not in colision_time or self.log_objects[self.time_stamp].longitude > start_loc_ice[
-    #             self.scenario]:
-    #             # Heading and course are in the opposite direction    and   Engines are in forward direction
-    #             if 135 <= heading_delta <= 225 and self.log_objects[self.time_stamp].portengine > 0 and \
-    #                     self.log_objects[
-    #                         self.time_stamp].stbdengine > 0:
-    #                 self.maneuver = "prop_wash"
-    #                 technique_dict.update({"prop_wash": technique_dict["prop_wash"] + 1})
-    #             # if not propwashing in open water,must just be maneuvering in open water
-    #             else:
-    #                 self.maneuver = "other"
-    #                 technique_dict.update({"other": technique_dict["other"] + 1})
-    #
-    #
-    #         else:  # vessel is in contact with iced
-    #             if 135 <= heading_delta <= 225:  # Heading and course are in the opposite direction
-    #                 if self.log_objects[self.time_stamp].sog <= 0.2:
-    #                     self.maneuver = "leeway"
-    #                     technique_dict.update({"leeway": technique_dict["leeway"] + 1})
-    #
-    #                 elif self.log_objects[self.time_stamp].portengine > 0 and self.log_objects[
-    #                     self.time_stamp].stbdengine > 0:
-    #                     # Engines are in forward direction
-    #                     self.maneuver = "prop_wash"
-    #                     technique_dict.update({"prop_wash": technique_dict["prop_wash"] + 1})
-    #
-    #                 else:  # moving above 0.4 knots in reverse while in contact with ice
-    #
-    #                     self.maneuver = "other"
-    #                     technique_dict.update({"other": technique_dict["other"] + 1})
-    #             elif self.log_objects[self.time_stamp].sog <= 0.2:
-    #                 self.maneuver = "leeway"
-    #                 technique_dict.update({"leeway": technique_dict["leeway"] + 1})
-    #             else:  # if heading and course are alligned
-    #                 self.maneuver = "pushing"
-    #                 technique_dict.update({"pushing": technique_dict["pushing"] + 1})
-    #     paires = [(value, key) for key, value in technique_dict.items()]
-    #     self.maneuver = max(paires)[1]

@@ -1,9 +1,10 @@
 import tkinter as tk
 from PIL import ImageTk, Image
-import ipdb
 from helper import BLabel
 from functools import partial
 from scenario_page import PlayScenario
+import logging
+import ipdb
 
 
 def resize_image(img, root):
@@ -27,9 +28,10 @@ def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_
     pushing_frame.destroy()
     leeway_frame.destroy()
     emergency_frame.destroy()
-    go_back_button = tk.Button(root, text="Back To Main Menue", width=20, height=3, anchor="c", command=get_back, bg="gray")
+    go_back_button = tk.Button(root, text="Back To Main Menue", width=20, height=3, anchor="c", command=get_back,
+                               bg="gray")
     go_back_button.place(relx=0.5, rely=0.05, anchor="center")
-    scenario_obj = PlayScenario(root, main_frame, scenario)
+    scenario_obj = PlayScenario(root, main_frame, scenario, logger)
     scenario_obj.init_page()
 
 
@@ -51,6 +53,8 @@ def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_
 
 def get_back():
     init_page(root)
+
+
 
 
 def init_page(root):
@@ -93,13 +97,15 @@ def init_page(root):
     pushing_btn.place(relx=0.5, rely=0.03, anchor="n")
 
     ######   Seccond button for Leeway scenario  ######
-    leeway_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "leeway", main_frame, root)
+    leeway_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "leeway", main_frame,
+                             root)
     leeway_btn = tk.Button(leeway_frame, image=Button_Leeway_img, anchor="c", command=leeway_command,
                            relief="raised")
     leeway_btn.place(relx=0.5, rely=0.03, anchor="n")
 
     ######   Third button for Emergency Scenario  ######
-    emergency_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "emergency", main_frame,
+    emergency_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "emergency",
+                                main_frame,
                                 root)
     emergency_btn = tk.Button(emergency_frame, image=Button_Emergency_img, anchor="c", command=emergency_command,
                               relief="raised")
@@ -179,6 +185,17 @@ def init_page(root):
 
 
 if __name__ == "__main__":
+    """ setting looger for programmer"""
+    logging.basicConfig(filename="logs.log",
+                        format='%(asctime)s %(message)s',
+                        filemode='w+',
+                        level=logging.INFO)
+
+    logger = logging.getLogger(__name__)
+    console = logging.StreamHandler()  # this is to let logger knows to write it into log file instead of terminal
+    console.setLevel(logging.INFO)
+    logger.addHandler(console)
+
     root = tk.Tk()
     root.title("DSS")
     root.geometry("1200x800")

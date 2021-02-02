@@ -14,3 +14,5 @@ six==1.15.0
 traitlets==4.3.3
 wcwidth==0.2.5
 pillow
+numpy
+

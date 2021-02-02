@@ -171,7 +171,6 @@ def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, own
     uprange_degree = math.degrees(abs(uprange_rad_angel))
     correct_downrange_degree = correct_angle(downrange_degree)
     correct_uprange_degree = correct_angle(uprange_degree)
-    print(downrange_degree, uprange_degree)
     angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, correct_downrange_degree,
                                   correct_uprange_degree, scenario)
     return angle_range
@@ -337,7 +336,7 @@ def correct_angle(x):
 def collision_time_determinor(scenario):
     dic_entity = {"thisEntityID": 0}
     collision_time = list()
-    xml_file = ET.parse('/Users/arash/project/my_project/extracting_features/well_formed_TraceData.log').getroot()
+    xml_file = ET.parse('/Users/arash/project/my_project/DSS/well_formed_TraceData.log').getroot()
     for log_event in xml_file.iter("log_event"):
         for index, element in enumerate(log_event):
             if element.tag == "Load":
