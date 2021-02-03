@@ -1,6 +1,7 @@
 import math
 import tkinter as tk
 import xml.etree.cElementTree as ET
+import os
 import ipdb
 
 angle_pos_key = {"top": ["top_right", "top_left"], "bottom": ["btm_right", "btm_left"],
@@ -239,7 +240,7 @@ def ownship_position(scenario, ownship_lattitude, ownship_longitude):
                     return "z"
                 else:
                     return "alongside"
-    else:
+    else:  # this is for determining where the ownship is located in relation to the target
 
         # check if th owner ship is upper than the target
         if ownship_lattitude > coordinates[scenario]["lat_top_left"]:
@@ -304,7 +305,7 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
         ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longitude)
         if ownship_zone_pos == "z":
             area_of_focus_dict.update({"z": area_of_focus_dict["z"] + 1})
-        elif ownship_zone_pos == "top" and ownship_target_pos == "alongside":
+        elif (ownship_zone_pos == "top" and ownship_target_pos == "alongside") or ownship_target_pos == "alongside":
             area_of_focus_dict.update({"az": area_of_focus_dict["az"] + 1})
         elif ownship_target_pos in ["top", "top_right"]:
             area_of_focus_dict.update({"av": area_of_focus_dict["av"] + 1})
@@ -314,16 +315,31 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
         return area_of_focus_dict
 
 
-def aspect_votter(log_objects, current_sec, aspect_vot_dict, degree_range):
-    # it will check if the ship heading is biger than uprange smaller than downrange or in between them. then decide what is the aspect.
+def aspect_votter(log_objects, current_sec, aspect_vot_dict, degree_range, scenario):
+    # it will check if the ownship heading is bigger than uprange , smaller than downrange or in between them. then decide what is the aspect.
     ## I increased and decreased 5 degree to/from the threashold to be in a safe side for making decision.
-    if log_objects[current_sec].cog > degree_range[1] + 5 and log_objects[current_sec].cog < 225:
-        aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
-    elif 0 < log_objects[current_sec].cog < degree_range[0] - 5 or 315 < log_objects[current_sec].cog < 360:
-        aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
-    elif log_objects[current_sec].cog <= degree_range[1] + 5 and log_objects[current_sec].cog >= degree_range[0] - 5:
-        aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
-    return aspect_vot_dict
+    print(degree_range)
+    print(log_objects[current_sec].heading)
+
+    if scenario == "emergency":
+        if log_objects[current_sec].heading > degree_range[1] + 5 and log_objects[current_sec].heading < 225:
+            aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
+        elif 0 < log_objects[current_sec].heading < degree_range[0] - 5 or 315 < log_objects[current_sec].heading < 360:
+            aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
+        elif log_objects[current_sec].heading <= degree_range[1] + 5 and log_objects[current_sec].heading >= \
+                degree_range[0] - 5:
+            aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
+        return aspect_vot_dict
+    else:
+
+        if log_objects[current_sec].cog > degree_range[1] + 5 and log_objects[current_sec].cog < 225:
+            aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
+        elif 0 < log_objects[current_sec].cog < degree_range[0] - 5 or 315 < log_objects[current_sec].cog < 360:
+            aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
+        elif log_objects[current_sec].cog <= degree_range[1] + 5 and log_objects[current_sec].cog >= degree_range[
+            0] - 5:
+            aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
+        return aspect_vot_dict
 
 
 def correct_angle(x):
@@ -334,9 +350,10 @@ def correct_angle(x):
 # this function determine in which seconds a collision occurred {collision with ICE}.
 # stored those seconds in a set named "collision_time_set"
 def collision_time_determinor(scenario):
+    current_path = os.getcwd()
     dic_entity = {"thisEntityID": 0}
     collision_time = list()
-    xml_file = ET.parse('/Users/arash/project/my_project/DSS/well_formed_TraceData.log').getroot()
+    xml_file = ET.parse(current_path + '/well_formed_TraceData.log').getroot()
     for log_event in xml_file.iter("log_event"):
         for index, element in enumerate(log_event):
             if element.tag == "Load":

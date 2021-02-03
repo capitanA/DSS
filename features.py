@@ -33,7 +33,7 @@ class Features:
 
         aspect_vot_dict = {"up_current": 0, "J_approach": 0, "direct": 0}
         # this 241 is for 3 minutes of the logfile to be considered for determining the aspect of the ownship
-        for sec in range(0, 241, 1):
+        for sec in range(0, 240, 1):
             ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
                                            self.log_objects[sec].longitude)
             down_heading, up_heading = updown_rannge_calculator(self.log_objects[sec].latitude,
@@ -41,9 +41,10 @@ class Features:
                                                                 self.scenario, ownship_pos)
             degree = (down_heading, up_heading)
 
-            updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree)
+            updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree,self.scenario)
 
         if updated_aspect_vot_dict:
+            print(updated_aspect_vot_dict)
 
             paires = [(value, key) for key, value in updated_aspect_vot_dict.items()]
 
@@ -112,6 +113,7 @@ class Features:
         for timeslip in range(0, self.time_stamp + 1, 1):
             area_of_focus_dict = area_focus_votter(self.scenario, self.log_objects[timeslip], area_of_focus_dict)
         paires = [(value, key) for key, value in area_of_focus_dict.items()]
+        print(area_of_focus_dict)
 
         self.area_of_focus = max(paires)[1]
 
