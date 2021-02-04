@@ -41,7 +41,7 @@ class Features:
                                                                 self.scenario, ownship_pos)
             degree = (down_heading, up_heading)
 
-            updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree,self.scenario)
+            updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree, self.scenario)
 
         if updated_aspect_vot_dict:
             print(updated_aspect_vot_dict)
@@ -94,7 +94,7 @@ class Features:
                 self.orientation = "stern"
 
     # to calculate the distance between two coordinates(lat,long). first we need to convert the (lat,long) to (x,y)
-    # which is the cartesian coordinates then calculate the distance. with tha said the equation "the calc_dist_from_target"
+    # which is the cartesian coordinates. then calculate the distance. with that said, the equation "the calc_dist_from_target"
     # had used to get the distance between two (lat,long) coordinates directly.
     def distance_calculator(self):
         count = 0
@@ -120,28 +120,47 @@ class Features:
     # Thi function will create a dictionary to check what was the ownship heading from 3 minutes before requesting assistance.
     # Then based on this dictionary, the most occurance will be considered as the ownship heading!
     def heading_calculator(self):
-        heading_dict = {"perpendicular": 0, "stem": 0, "angle": 0}
         if self.time_stamp - 180 < 0:
-            print("Raise an warning to let the user know this is not an appropriate time to get assistance!")
+            self.logger.info("the user asked an assistance at a n inappropriate time! (Not recommended)")
+        heading_dict = {"perpendicular": 0, "stem": 0, "angle": 0}
+        if self.scenario == "emergency":
+            for sec in range(self.time_stamp - 360, self.time_stamp + 1, 1):
+                if 103 <= self.log_objects[self.time_stamp].heading <= 123 or 283 <= self.log_objects[
+                    self.time_stamp].heading <= 303:
+                    heading_dict.update({"perpendicular": heading_dict["perpendicular"] + 1})
+                elif 13 <= self.log_objects[self.time_stamp].heading <= 33 or 193 <= self.log_objects[
+                    self.time_stamp].heading <= 213:
+                    heading_dict.update({"stem": heading_dict["stem"] + 1})
+                else:
+                    heading_dict.update({"angle": heading_dict["angle"] + 1})
+
+
         else:
             for sec in range(self.time_stamp - 180, self.time_stamp + 1, 1):
-                if 350 <= self.log_objects[
-                    self.time_stamp].heading <= 360 or 0 <= self.log_objects[self.time_stamp].heading <= 10 or 170 <= \
+                if self.scenario == "emergency":
+                    angle = self.log_objects[self.time_stamp].heading + 23
+                    self.log_objects[self.time_stamp].heading = angle
+                    if angle < 0:
+                        angle = 360 + angle
+                        self.log_objects[self.time_stamp].heading = angle
+                if 350 <= self.log_objects[self.time_stamp].heading <= 360 or 0 <= self.log_objects[
+                    self.time_stamp].heading <= 10 or 170 <= \
                         self.log_objects[
                             self.time_stamp].heading <= 190:
-                    heading_dict.update({"stem": heading_dict["stem"] + 1, "perpendicular": 0, "angle": 0})
+                    heading_dict.update({"stem": heading_dict["stem"] + 1})
                     # self.heading = ("stem", self.log_objects[self.time_stamp].heading)
 
                 elif 80 <= self.log_objects[self.time_stamp].heading <= 100 or 260 <= self.log_objects[
                     self.time_stamp].heading <= 280:
-                    heading_dict.update({"perpendicular": heading_dict["perpendicular"] + 1, "stem": 0, "angle": 0})
+                    heading_dict.update({"perpendicular": heading_dict["perpendicular"] + 1})
                     # self.heading = ("perpendicular", self.log_objects[self.time_stamp].heading)
                 else:
-                    heading_dict.update({"perpendicular": 0, "stem": 0, "angle": heading_dict["angle"] + 1})
+                    heading_dict.update({"angle": heading_dict["angle"] + 1})
                     # self.heading = ("angle", self.log_objects[self.time_stamp].heading)
-            paires = [(value, key) for key, value in heading_dict.items()]
-            heading = max(paires)[1]
-            self.heading = (heading, self.log_objects[self.time_stamp].heading)
+        paires = [(value, key) for key, value in heading_dict.items()]
+        heading = max(paires)[1]
+        print(heading_dict)
+        self.heading = (heading, self.log_objects[self.time_stamp].heading)
 
     def speed_calculator(self):
 

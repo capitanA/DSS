@@ -397,8 +397,8 @@ def calc_dist_from_target(ownship_lat, ownship_long, scenario):
     # dy = (lat1- lat2) * 40000 / 360
     # distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
     # for emergency and leeway scenario we calculate the distance between 12 point on the target circumference.
-    # then the minimum of those distances determine as the  distance of ownship from target
-    # In the pushing scenario the distance of ownship from the target centere calculated.
+    # then the minimum of those distances considered as the  distance of ownship from target.
+    # In the pushing scenario the distance of ownship from the target centre calculated.
     # then determine what the ownship position to subtract a certain amount as it is in the coordinates["pushing"] DICT
     dist_list = []
     if scenario in ["emergency", "leeway"]:
