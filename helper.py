@@ -31,17 +31,17 @@ coordinates = {
         60.50796, 60.50792), "long": (
         146.35117, 146.35148, 146.35159, 146.35159, 146.35159, 146.35159, 146.35159, 146.35159, 146.35159, 146.35154,
         146.35146, 146.35114)},
-    "pushing_circumference": {"lat": 60.51023, "long": 146.35488, "df_from_corner": 146.71,
-                              "df_from_circumference": 103.46},
+    "pushing_circumference": {"lat": 60.51023, "long": 146.35488, "df_from_corner": 42.60,
+                              "df_from_circumference": 28.81},
 
-    "pushing": {"lat_top_left": 60.51049,
-                "long_top_left": 146.35544,
-                "lat_top_right": 60.51049,
-                "long_top_right": 146.35435,
-                "lat_btm_left": 60.50997,
-                "long_btm_left": 146.35544,
-                "lat_btm_right": 60.50997,
-                "long_btm_right": 146.35435, "center_trgt_lat": 60.51023040,
+    "pushing": {"lat_top_left": 60.51116,
+                "long_top_left": 146.35677,
+                "lat_top_right": 60.51116,
+                "long_top_right": 146.35300,
+                "lat_btm_left": 60.50930,
+                "long_btm_left": 146.35677,
+                "lat_btm_right": 60.50930,
+                "long_btm_right": 146.35300, "center_trgt_lat": 60.51023040,
                 "center_trgt_long": 146.35488790},
 
     "leeway": {"lat_top_left": 60.51039,
@@ -250,7 +250,7 @@ def ownship_position(scenario, ownship_lattitude, ownship_longitude):
                 return "top_right"
             else:
                 return "top"
-        # check if the ownership is lower than the target
+        # check if the ownship is lower than the target
         elif ownship_lattitude < coordinates[scenario]["lat_btm_left"]:
             if abs(ownship_longitude) > abs(coordinates[scenario]["long_btm_left"]):
                 return "bottom_left"
@@ -416,10 +416,12 @@ def calc_dist_from_target(ownship_lat, ownship_long, scenario):
         distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
         ownship_pos = ownship_position(scenario, ownship_lat, ownship_long)
         if ownship_pos in ["top_left", "top_right", "bottom_right", "bottom_left"]:
-            dist_list.append(round((distance - coordinates[scenario + "_circumference"]["df_from_corner"]) * 1000, 2))
+
+            dist_list.append(round((distance * 1000) - coordinates[scenario + "_circumference"]["df_from_corner"], 2))
+
         else:
             dist_list.append(
-                round((distance - coordinates[scenario + "_circumference"]["df_from_circumference"]) * 1000, 2))
+                round((distance * 1000) - coordinates[scenario + "_circumference"]["df_from_circumference"], 2))
     return dist_list
 
 

@@ -32,7 +32,30 @@ class Features:
     def aspect_calculator(self):
 
         aspect_vot_dict = {"up_current": 0, "J_approach": 0, "direct": 0}
-        # this 241 is for 3 minutes of the logfile to be considered for determining the aspect of the ownship
+        # this 241 is for 4 minutes of the logfile to be considered for determining the aspect of the ownship
+
+        # if self.scenario=="":
+        #     i = 0
+        #     while self.log_objects[i].longitude > 146.35541:
+        #         ownship_pos = ownship_position(self.scenario, self.log_objects[i].latitude,
+        #                                        self.log_objects[i].longitude)
+        #         down_heading, up_heading = updown_rannge_calculator(self.log_objects[i].latitude,
+        #                                                             self.log_objects[i].longitude,
+        #                                                             self.scenario, ownship_pos)
+        #         degree = (down_heading, up_heading)
+        #
+        #         updated_aspect_vot_dict = aspect_votter(self.log_objects, i, aspect_vot_dict, degree, self.scenario)
+        #         i += 1
+        #
+        #     if updated_aspect_vot_dict:
+        #         print(updated_aspect_vot_dict)
+        #
+        #         paires = [(value, key) for key, value in updated_aspect_vot_dict.items()]
+        #
+        #     else:
+        #         self.logger.info("The dictionary for aspect_calculation didn't get updated!(Check features.py module)")
+        #     self.aspect = max(paires)[1]
+        # else:
         for sec in range(0, 240, 1):
             ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
                                            self.log_objects[sec].longitude)
@@ -98,14 +121,14 @@ class Features:
     # had used to get the distance between two (lat,long) coordinates directly.
     def distance_calculator(self):
         count = 0
-        for num in range(500, 901, 1):
+        for num in range(self.time_stamp - 400, self.time_stamp, 1):
             distances_list = calc_dist_from_target(self.log_objects[num].latitude,
                                                    self.log_objects[num].longitude,
                                                    self.scenario)
 
             self.distance_from_target = min(distances_list)
             count += self.distance_from_target
-        print(f"this is distance{count / 400}")
+        print(f"this is distance {count / 400}")
 
     def area_of_focus_determinor(self):
         area_of_focus_dict = {"av": 0, "z": 0, "az": 0, "along_zone": 0}
@@ -164,15 +187,15 @@ class Features:
 
     def speed_calculator(self):
 
-        count = 0
-        for num in range(901):
-            count += self.log_objects[num].sog
-        print(f"this is speed average{count / 900}")
-
         if self.log_objects[self.time_stamp].sog <= 3:
             self.speed = ("safe", self.log_objects[self.time_stamp].sog)
         else:
             self.speed = ("dangerous", self.log_objects[self.time_stamp].sog)
+
+        count = 0
+        for num in range(self.time_stamp + 1):
+            count += self.log_objects[num].sog
+        print(f"this is speed average{count / self.time_stamp} and is {self.speed[0]}")
 
     def ice_technique_determinor(self):
         technique_dict = {"prop_wash": 0, "leeway": 0, "pushing": 0, "other": 0}

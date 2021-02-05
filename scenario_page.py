@@ -106,8 +106,8 @@ class PlayScenario:
 
         try:
             xml_file = ET.parse(well_formed_filename).getroot()
-        except FileNotFoundError as fnf_error:
-            print(fnf_error)
+        except IOError:
+        # except FileNotFoundError as fnf_error:
             self.logger.info("The well_formed_TraceData.log cannot be parsed! it seems there is no such a file!")
 
         for log_entity in xml_file.iter("log_entity"):
