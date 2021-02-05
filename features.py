@@ -147,39 +147,30 @@ class Features:
             self.logger.info("the user asked an assistance at a n inappropriate time! (Not recommended)")
         heading_dict = {"perpendicular": 0, "stem": 0, "angle": 0}
         if self.scenario == "emergency":
+            # when the scenario is emergency the coordinates should be rotated by 23 degree to get the correct answer.
             for sec in range(self.time_stamp - 360, self.time_stamp + 1, 1):
-                if 103 <= self.log_objects[self.time_stamp].heading <= 123 or 283 <= self.log_objects[
-                    self.time_stamp].heading <= 303:
+                angle = self.log_objects[self.time_stamp].heading + 23
+                self.log_objects[sec].heading = angle
+                if angle < 0:
+                    angle = 360 + angle
+                    self.log_objects[sec].heading = angle
+                if 103 <= self.log_objects[sec].heading <= 123 or 283 <= self.log_objects[
+                    sec].heading <= 303:
                     heading_dict.update({"perpendicular": heading_dict["perpendicular"] + 1})
-                elif 13 <= self.log_objects[self.time_stamp].heading <= 33 or 193 <= self.log_objects[
-                    self.time_stamp].heading <= 213:
+                elif 13 <= self.log_objects[sec].heading <= 33 or 193 <= self.log_objects[
+                    sec].heading <= 213:
                     heading_dict.update({"stem": heading_dict["stem"] + 1})
                 else:
                     heading_dict.update({"angle": heading_dict["angle"] + 1})
-
-
         else:
-            for sec in range(self.time_stamp - 180, self.time_stamp + 1, 1):
-                if self.scenario == "emergency":
-                    angle = self.log_objects[self.time_stamp].heading + 23
-                    self.log_objects[self.time_stamp].heading = angle
-                    if angle < 0:
-                        angle = 360 + angle
-                        self.log_objects[self.time_stamp].heading = angle
-                if 350 <= self.log_objects[self.time_stamp].heading <= 360 or 0 <= self.log_objects[
-                    self.time_stamp].heading <= 10 or 170 <= \
-                        self.log_objects[
-                            self.time_stamp].heading <= 190:
+            for sec in range(self.time_stamp - 300, self.time_stamp + 1, 1):
+                if 350 <= self.log_objects[sec].heading <= 360 or 0 <= self.log_objects[sec].heading <= 10 or 170 <= \
+                        self.log_objects[sec].heading <= 190:
                     heading_dict.update({"stem": heading_dict["stem"] + 1})
-                    # self.heading = ("stem", self.log_objects[self.time_stamp].heading)
-
-                elif 80 <= self.log_objects[self.time_stamp].heading <= 100 or 260 <= self.log_objects[
-                    self.time_stamp].heading <= 280:
+                elif 80 <= self.log_objects[sec].heading <= 100 or 260 <= self.log_objects[sec].heading <= 280:
                     heading_dict.update({"perpendicular": heading_dict["perpendicular"] + 1})
-                    # self.heading = ("perpendicular", self.log_objects[self.time_stamp].heading)
                 else:
                     heading_dict.update({"angle": heading_dict["angle"] + 1})
-                    # self.heading = ("angle", self.log_objects[self.time_stamp].heading)
         paires = [(value, key) for key, value in heading_dict.items()]
         heading = max(paires)[1]
         print(heading_dict)
