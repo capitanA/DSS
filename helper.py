@@ -162,42 +162,47 @@ def angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, downrange
 # coordinates to calculate the angle based on.  it uses the 'angle_pos_key' and 'angle_pos_key_emergency' to see which
 # points it should consider from 'coordinates' dictionary. for the pushing scenario it use the 'pushing_zone' dictionary
 # to get the points for determining the angle range
-def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, ownship_pos):
+def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, ownship_pos, orientation_mode):
     down_key, up_key = angle_pos_key[ownship_pos]
     down_key_emg, up_key_emg = angle_pos_key_emergency[ownship_pos]
 
     if scenario == "pushing":
-        downrange_rad_angle = math.atan(
-            abs(ownship_lattitude - (coordinates[scenario + "_zone"]["lat_" + down_key])) / abs(
-                abs(ownship_longitude) - (coordinates[scenario + "_zone"]["long_" + down_key])))
-        uprange_rad_angel = math.atan(abs(ownship_lattitude - (coordinates[scenario + "_zone"]["lat_" + up_key])) / abs(
-            abs(ownship_longitude) - (coordinates[scenario + "_zone"]["long_" + up_key])))
-        downrange_degree = math.degrees(abs(downrange_rad_angle))
-        uprange_degree = math.degrees(abs(uprange_rad_angel))
-        correct_downrange_degree = correct_angle(downrange_degree)
-        correct_uprange_degree = correct_angle(uprange_degree)
-        angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, correct_downrange_degree,
-                                      correct_uprange_degree, scenario)
-    else:
+        if orientation_mode:
+            coord_dict_key = scenario
+        else:
+            coord_dict_key = scenario + "_zone"
 
-        downrange_rad_angle = math.atan(abs(ownship_lattitude - (
-            coordinates[scenario]["lat_" + down_key] if scenario != "emergency" else coordinates[scenario][
-                "lat_" + down_key_emg])) / abs(
-            abs(ownship_longitude) - (
-                coordinates[scenario]["long_" + down_key] if scenario != "emergency" else coordinates[scenario][
-                    "long_" + down_key_emg])))
-        uprange_rad_angel = math.atan(abs(ownship_lattitude - (
-            coordinates[scenario]["lat_" + up_key] if scenario != "emergency" else coordinates[scenario][
-                "lat_" + down_key_emg])) / abs(
-            abs(ownship_longitude) - (
-                coordinates[scenario]["long_" + up_key] if scenario != "emergency" else coordinates[scenario][
-                    "long_" + up_key_emg])))
-        downrange_degree = math.degrees(abs(downrange_rad_angle))
-        uprange_degree = math.degrees(abs(uprange_rad_angel))
-        correct_downrange_degree = correct_angle(downrange_degree)
-        correct_uprange_degree = correct_angle(uprange_degree)
-        angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, correct_downrange_degree,
-                                      correct_uprange_degree, scenario)
+        # downrange_rad_angle = math.atan(
+        #     abs(ownship_lattitude - (coordinates[coord_dict_key]["lat_" + down_key])) / abs(
+        #         abs(ownship_longitude) - (coordinates[coord_dict_key]["long_" + down_key])))
+        # uprange_rad_angel = math.atan(abs(ownship_lattitude - (coordinates[coord_dict_key]["lat_" + up_key])) / abs(
+        #     abs(ownship_longitude) - (coordinates[coord_dict_key]["long_" + up_key])))
+        # downrange_degree = math.degrees(abs(downrange_rad_angle))
+        # uprange_degree = math.degrees(abs(uprange_rad_angel))
+        # correct_downrange_degree = correct_angle(downrange_degree)
+        # correct_uprange_degree = correct_angle(uprange_degree)
+        # angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, correct_downrange_degree,
+        #                               correct_uprange_degree, scenario)
+    # else:
+
+    downrange_rad_angle = math.atan(abs(ownship_lattitude - (
+        coordinates[coord_dict_key]["lat_" + down_key] if scenario != "emergency" else coordinates[coord_dict_key][
+            "lat_" + down_key_emg])) / abs(
+        abs(ownship_longitude) - (
+            coordinates[coord_dict_key]["long_" + down_key] if scenario != "emergency" else coordinates[coord_dict_key][
+                "long_" + down_key_emg])))
+    uprange_rad_angel = math.atan(abs(ownship_lattitude - (
+        coordinates[coord_dict_key]["lat_" + up_key] if scenario != "emergency" else coordinates[coord_dict_key][
+            "lat_" + down_key_emg])) / abs(
+        abs(ownship_longitude) - (
+            coordinates[coord_dict_key]["long_" + up_key] if scenario != "emergency" else coordinates[coord_dict_key][
+                "long_" + up_key_emg])))
+    downrange_degree = math.degrees(abs(downrange_rad_angle))
+    uprange_degree = math.degrees(abs(uprange_rad_angel))
+    correct_downrange_degree = correct_angle(downrange_degree)
+    correct_uprange_degree = correct_angle(uprange_degree)
+    angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, correct_downrange_degree,
+                                  correct_uprange_degree, scenario)
     return angle_range
 
 

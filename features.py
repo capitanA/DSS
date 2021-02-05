@@ -61,7 +61,7 @@ class Features:
                                            self.log_objects[sec].longitude)
             down_heading, up_heading = updown_rannge_calculator(self.log_objects[sec].latitude,
                                                                 self.log_objects[sec].longitude,
-                                                                self.scenario, ownship_pos)
+                                                                self.scenario, ownship_pos, False)
             degree = (down_heading, up_heading)
 
             updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree, self.scenario)
@@ -76,45 +76,58 @@ class Features:
         self.aspect = max(paires)[1]
 
     def orientation_calculator(self):
-        ownship_pos = ownship_position(self.scenario, self.log_objects[self.time_stamp].latitude,
-                                       self.log_objects[self.time_stamp].longitude)
-        down_heading, up_heading = updown_rannge_calculator(self.log_objects[self.time_stamp].latitude,
-                                                            self.log_objects[self.time_stamp].longitude,
-                                                            self.scenario, ownship_pos)
+        orientation_dict = {"bow": 0, "stern": 0}
 
-        thresh = abs((up_heading - down_heading)) / 2
-        new_range = [down_heading - thresh, up_heading + thresh]
-        # if the down_heading is less than thresh, so it placed in the fourth quarter so need to have a different
-        # calculation for  determining the range
-        if new_range[0] <= 0:
-            new_ang = 360 - abs(new_range[0])
-            new_range = [new_range[1], new_ang]
-            if abs(new_range[0] - self.log_objects[self.time_stamp].heading) < new_range[1] - self.log_objects[
-                self.time_stamp].heading:
-                new_range = [new_range[0] - 10, new_range[1]]
+        for sec in range(self.time_stamp):
+
+            ownship_pos = ownship_position(self.scenario, self.log_objects[self.time_stamp].latitude,
+                                           self.log_objects[self.time_stamp].longitude)
+            down_heading, up_heading = updown_rannge_calculator(self.log_objects[self.time_stamp].latitude,
+                                                                self.log_objects[self.time_stamp].longitude,
+                                                                self.scenario, ownship_pos, True)
+
+            thresh = abs((up_heading - down_heading)) / 2
+            new_range = [down_heading - thresh, up_heading + thresh]
+            # if the down_heading is less than thresh, so it placed in the fourth quarter so need to have a different
+            # calculation for  determining the range
+            if new_range[0] <= 0:
+                new_ang = 360 - abs(new_range[0])
+                new_range = [new_range[1], new_ang]
+                if abs(new_range[0] - self.log_objects[sec].heading) < new_range[1] - self.log_objects[
+                    sec].heading:
+                    new_range = [new_range[0] - 10, new_range[1]]
+                else:
+                    new_range = [new_range[0] + 10, new_range[1] + 10]
+                if 0 <= self.log_objects[sec].heading <= new_range[0] or new_range[1] <= self.log_objects[
+                    sec].heading <= 360:
+                    orientation_dict.update({"bow": orientation_dict["bow"] + 1})
+                    self.orientation = "bow"
+
+
+                else:
+                    orientation_dict.update({"stern": orientation_dict["stern"] + 1})
+                    self.orientation = "stern"
+
+
             else:
-                new_range = [new_range[0] + 10, new_range[1] + 10]
-            if 0 <= self.log_objects[self.time_stamp].heading <= new_range[0] or new_range[1] <= self.log_objects[
-                self.time_stamp].heading <= 360:
-                self.orientation = "bow"
+                # this part want to understand if the ownship heading is close to the down_heading range or up_heading range!
+                # this 10 achived by experiments and make the code work correctly!
+                if (abs(new_range[0] - self.log_objects[sec].heading)) < (new_range[1] - self.log_objects[
+                    sec].heading):
+                    new_range = [new_range[0] - 10, new_range[1]]
+                else:
+                    new_range = [new_range[0] + 10, new_range[1] + 10]
 
-            else:
-                self.orientation = "stern"
-
-
-        else:
-            # this part want to undestand if the ownship heading is close to the down_heading range or up_heading range!
-            # this 10 achived by experiment and make the code work correctly
-            if (abs(new_range[0] - self.log_objects[self.time_stamp].heading)) < (new_range[1] - self.log_objects[
-                self.time_stamp].heading):
-                new_range = [new_range[0] - 10, new_range[1]]
-            else:
-                new_range = [new_range[0] + 10, new_range[1] + 10]
-
-            if new_range[0] <= self.log_objects[self.time_stamp].heading <= new_range[1]:
-                self.orientation = "bow"
-            else:
-                self.orientation = "stern"
+                if new_range[0] <= self.log_objects[sec].heading <= new_range[1]:
+                    orientation_dict.update({"bow": orientation_dict["bow"] + 1})
+                    self.orientation = "bow"
+                else:
+                    orientation_dict.update({"stern": orientation_dict["stern"] + 1})
+                    self.orientation = "stern"
+        paires = [(value, key) for key, value in orientation_dict.items()]
+        orientation = max(paires)[1]
+        print(orientation_dict)
+        self.orientation = orientation
 
     # to calculate the distance between two coordinates(lat,long). first we need to convert the (lat,long) to (x,y)
     # which is the cartesian coordinates. then calculate the distance. with that said, the equation "the calc_dist_from_target"
@@ -163,7 +176,7 @@ class Features:
                 else:
                     heading_dict.update({"angle": heading_dict["angle"] + 1})
         else:
-            for sec in range(self.time_stamp - 300, self.time_stamp + 1, 1):
+            for sec in range(self.time_stamp - 180, self.time_stamp + 1, 1):
                 if 350 <= self.log_objects[sec].heading <= 360 or 0 <= self.log_objects[sec].heading <= 10 or 170 <= \
                         self.log_objects[sec].heading <= 190:
                     heading_dict.update({"stem": heading_dict["stem"] + 1})
