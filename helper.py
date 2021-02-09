@@ -14,7 +14,7 @@ angle_pos_key_emergency = {"top": ["top_center", "btm_left_vessel"], "bottom": [
                            "top_left": ["top_center", "btm_left_vessel"],
                            "top_right": ["btm_right_vessel", "top_center"],
                            "bottom_left": ["top_center", "btm_right_vessel"], "bottom_right":
-                               ["btm_right_vessel", "top_center"]}
+                               ["btm_right_vessel", "top_center"], "alongside": ["top_center", "btm_left"]}
 
 coordinates = {
     "emergency_circumference": {
@@ -163,14 +163,18 @@ def angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, downrange
 # points it should consider from 'coordinates' dictionary. for the pushing scenario it use the 'pushing_zone' dictionary
 # to get the points for determining the angle range
 def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, ownship_pos, orientation_mode):
-    down_key, up_key = angle_pos_key[ownship_pos]
-    down_key_emg, up_key_emg = angle_pos_key_emergency[ownship_pos]
+    if scenario in ["pushing", "leeway"]:
+        down_key, up_key = angle_pos_key[ownship_pos]
+    else:
+        down_key_emg, up_key_emg = angle_pos_key_emergency[ownship_pos]
 
     if scenario == "pushing":
         if orientation_mode:
             coord_dict_key = scenario
         else:
             coord_dict_key = scenario + "_zone"
+    else:
+        coord_dict_key = scenario
 
         # downrange_rad_angle = math.atan(
         #     abs(ownship_lattitude - (coordinates[coord_dict_key]["lat_" + down_key])) / abs(
@@ -305,26 +309,35 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
         ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longitude)
         ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longitude)
         if ownship_zone_pos == "z":
+
             area_of_focus_dict.update({"z": area_of_focus_dict["z"] + 1})
-        elif ownship_zone_pos == "left":
-            area_of_focus_dict.update({"along_zone": area_of_focus_dict["along_zone"] + 1})
         elif "top" in ownship_zone_pos and ownship_target_pos == "left":
             area_of_focus_dict.update({"az": area_of_focus_dict["az"] + 1})
+
+        elif ownship_zone_pos == "left":
+            area_of_focus_dict.update({"along_zone": area_of_focus_dict["along_zone"] + 1})
+
         elif "top" in ownship_target_pos:
             area_of_focus_dict.update({"av": area_of_focus_dict["av"] + 1})
+        else:
+            area_of_focus_dict.update({"unknown": area_of_focus_dict["unknown"] + 1})
         return area_of_focus_dict
 
     elif scenario == "pushing":
         ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longitude)
         ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longitude)
-        if ownship_zone_pos == "z":
+        if ownship_zone_pos == "z" and ("top" in ownship_target_pos):
+            area_of_focus_dict.update({"av": area_of_focus_dict["av"] + 1})
+        elif ownship_zone_pos == "z":
             area_of_focus_dict.update({"z": area_of_focus_dict["z"] + 1})
         elif "top" in ownship_zone_pos:
             area_of_focus_dict.update({"az": area_of_focus_dict["az"] + 1})
-        elif "top" in ownship_zone_pos and "top" in ownship_target_pos:
-            area_of_focus_dict.update({"av": area_of_focus_dict["av"] + 1})
+        # elif ownship_zone_pos == "z" and ("top" in ownship_target_pos):
+        #     area_of_focus_dict.update({"av": area_of_focus_dict["av"] + 1})
         elif ownship_zone_pos == "left":
             area_of_focus_dict.update({"along_zone": area_of_focus_dict["along_zone"] + 1})
+        else:
+            area_of_focus_dict.update({"unknown": area_of_focus_dict["unknown"] + 1})
 
         return area_of_focus_dict
 
@@ -340,6 +353,8 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
             area_of_focus_dict.update({"av": area_of_focus_dict["av"] + 1})
         elif ownship_zone_pos in ["left"]:
             area_of_focus_dict.update({"along_zone": area_of_focus_dict["along_zone"] + 1})
+        else:
+            area_of_focus_dict.update({"unknown": area_of_focus_dict["unknown"] + 1})
 
         return area_of_focus_dict
 

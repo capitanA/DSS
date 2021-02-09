@@ -21,20 +21,27 @@ class Features:
         self.heading = None
         self.speed = None
         self.maneuver = None
+        self.ice_technique_determinor()
+        self.heading_calculator()
         self.aspect_calculator()
         self.orientation_calculator()
         self.distance_calculator()
         self.area_of_focus_determinor()
-        self.heading_calculator()
-        self.ice_technique_determinor()
         self.speed_calculator()
+
+    # The Aspect shows the vessel pathway in relation to the target. the options for this feature could be:
+    # "J_approach": getting close to the target from bellow the zone.
+    # "Direct": getting close to the target directly.
+    # "Up_current": getting close to the target from up_current of the target.
+    # Aspect_calculator considers the first 240 seconds of the log_file (based on the replay videos this feature
+    # can be determined at the first 240s). If the user ask for assistance before 240, the code will go through
+    # all the seconds from the beginning until the end.
 
     def aspect_calculator(self):
 
         aspect_vot_dict = {"up_current": 0, "J_approach": 0, "direct": 0}
-        # this 241 is for 4 minutes of the logfile to be considered for determining the aspect of the ownship
 
-        # if self.scenario=="":
+        # if self.scenario==" emergency":
         #     i = 0
         #     while self.log_objects[i].longitude > 146.35541:
         #         ownship_pos = ownship_position(self.scenario, self.log_objects[i].latitude,
@@ -56,7 +63,13 @@ class Features:
         #         self.logger.info("The dictionary for aspect_calculation didn't get updated!(Check features.py module)")
         #     self.aspect = max(paires)[1]
         # else:
-        for sec in range(0, 240, 1):
+
+        # the code will check only 240 second of the log_file to determine the orientation of the ownship.
+        # If the assistance occurred before 240 secconds the code will consider the last seccond of the log_file.
+        checking_secconds = 240
+        if self.time_stamp < 240:
+            checking_secconds = self.time_stamp
+        for sec in range(0, checking_secconds, 1):
             ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
                                            self.log_objects[sec].longitude)
             down_heading, up_heading = updown_rannge_calculator(self.log_objects[sec].latitude,
@@ -75,98 +88,70 @@ class Features:
             self.logger.info("The dictionary for aspect_calculation didn't get updated!(Check features.py module)")
         self.aspect = max(paires)[1]
 
-    def orientation_calculator(self):
-        orientation_dict = {"bow": 0, "stern": 0}
+    # to calculate the distance between two coordinates(lat,long), first, we need to convert the (lat,long) to (x,y)
+    # which is the cartesian coordinates. with that said, the equation "the calc_dist_from_target" had been used to
+    # get the distance between two (lat,long) coordinates directly.
 
-        for sec in range(self.time_stamp):
+    # Distance _calculator considers the mean distance from the target when seafarers are performing their main technique
+    # (according to the replay video main techniques are conducted from 400s until the end of the scenario).
+    # if the user asks for assistance before 400s, then the distance would be calculated based on that time instantly,
+    # but if they ask for help after 400, the mean distance would be calculated from 400 to the end of the log_file.
 
-            ownship_pos = ownship_position(self.scenario, self.log_objects[self.time_stamp].latitude,
-                                           self.log_objects[self.time_stamp].longitude)
-            down_heading, up_heading = updown_rannge_calculator(self.log_objects[self.time_stamp].latitude,
-                                                                self.log_objects[self.time_stamp].longitude,
-                                                                self.scenario, ownship_pos, True)
-
-            thresh = abs((up_heading - down_heading)) / 2
-            new_range = [down_heading - thresh, up_heading + thresh]
-            # if the down_heading is less than thresh, so it placed in the fourth quarter so need to have a different
-            # calculation for  determining the range
-            if new_range[0] <= 0:
-                new_ang = 360 - abs(new_range[0])
-                new_range = [new_range[1], new_ang]
-                if abs(new_range[0] - self.log_objects[sec].heading) < new_range[1] - self.log_objects[
-                    sec].heading:
-                    new_range = [new_range[0] - 10, new_range[1]]
-                else:
-                    new_range = [new_range[0] + 10, new_range[1] + 10]
-                if 0 <= self.log_objects[sec].heading <= new_range[0] or new_range[1] <= self.log_objects[
-                    sec].heading <= 360:
-                    orientation_dict.update({"bow": orientation_dict["bow"] + 1})
-                    self.orientation = "bow"
-
-
-                else:
-                    orientation_dict.update({"stern": orientation_dict["stern"] + 1})
-                    self.orientation = "stern"
-
-
-            else:
-                # this part want to understand if the ownship heading is close to the down_heading range or up_heading range!
-                # this 10 achived by experiments and make the code work correctly!
-                if (abs(new_range[0] - self.log_objects[sec].heading)) < (new_range[1] - self.log_objects[
-                    sec].heading):
-                    new_range = [new_range[0] - 10, new_range[1]]
-                else:
-                    new_range = [new_range[0] + 10, new_range[1] + 10]
-
-                if new_range[0] <= self.log_objects[sec].heading <= new_range[1]:
-                    orientation_dict.update({"bow": orientation_dict["bow"] + 1})
-                    self.orientation = "bow"
-                else:
-                    orientation_dict.update({"stern": orientation_dict["stern"] + 1})
-                    self.orientation = "stern"
-        paires = [(value, key) for key, value in orientation_dict.items()]
-        orientation = max(paires)[1]
-        print(orientation_dict)
-        self.orientation = orientation
-
-    # to calculate the distance between two coordinates(lat,long). first we need to convert the (lat,long) to (x,y)
-    # which is the cartesian coordinates. then calculate the distance. with that said, the equation "the calc_dist_from_target"
-    # had used to get the distance between two (lat,long) coordinates directly.
     def distance_calculator(self):
         count = 0
-        for num in range(self.time_stamp - 400, self.time_stamp, 1):
+        if self.time_stamp - 400 <= 0:
+            starting_sec = self.time_stamp
+            ending_sec = self.time_stamp + 1
+            total = 1
+        else:
+            starting_sec = 400
+            ending_sec = self.time_stamp
+            total = (self.time_stamp - 400) + 1
+
+        for num in range(starting_sec, ending_sec, 1):
             distances_list = calc_dist_from_target(self.log_objects[num].latitude,
                                                    self.log_objects[num].longitude,
                                                    self.scenario)
 
             self.distance_from_target = min(distances_list)
             count += self.distance_from_target
-        print(f"this is distance {count / 400}")
+        print(f"this is distance {count / total}")
 
     def area_of_focus_determinor(self):
-        area_of_focus_dict = {"av": 0, "z": 0, "az": 0, "along_zone": 0}
-        # it checks every 5 seconds to determine the position of the ownship respect to the target and zone and bot up the "area_of_focus_dict"
-        for timeslip in range(0, self.time_stamp + 1, 1):
+        area_of_focus_dict = {"av": 0, "z": 0, "az": 0, "along_zone": 0,"unknown":0}
+        # it checks every seconds from minutes 3 to determine the position of the ownship respect to the target and zone and bot up the "area_of_focus_dict"
+        for timeslip in range(0, self.time_stamp, 1):
             area_of_focus_dict = area_focus_votter(self.scenario, self.log_objects[timeslip], area_of_focus_dict)
         paires = [(value, key) for key, value in area_of_focus_dict.items()]
         print(area_of_focus_dict)
 
         self.area_of_focus = max(paires)[1]
 
-    # Thi function will create a dictionary to check what was the ownship heading from 3 minutes before requesting assistance.
-    # Then based on this dictionary, the most occurance will be considered as the ownship heading!
+    # heading _calculator will create a dictionary to check what was the ownship heading either in time of assistance
+    # or from the 400 to the end of the log_file. Then based on this dictionary, the most occurrence will be considered
+    # as the ownship heading! if the user asks for assistance before 400s, then the heading would be calculated based on
+    # that time instantly, but if they ask for help after 400, the heading would be determined from 400 to the end of the log_file.
     def heading_calculator(self):
-        if self.time_stamp - 180 < 0:
+        if self.time_stamp - 400 <= 0:
+            starting_sec = self.time_stamp
+            ending_sec = self.time_stamp + 1
+        else:
+            starting_sec = 400
+            ending_sec = self.time_stamp
+
+        if self.time_stamp - 360 < 0:
             self.logger.info("the user asked an assistance at a n inappropriate time! (Not recommended)")
         heading_dict = {"perpendicular": 0, "stem": 0, "angle": 0}
         if self.scenario == "emergency":
             # when the scenario is emergency the coordinates should be rotated by 23 degree to get the correct answer.
-            for sec in range(self.time_stamp - 360, self.time_stamp + 1, 1):
-                angle = self.log_objects[self.time_stamp].heading + 23
+            for sec in range(starting_sec, ending_sec, 1):
+                angle = self.log_objects[sec].heading + 23
                 self.log_objects[sec].heading = angle
-                if angle < 0:
-                    angle = 360 + angle
-                    self.log_objects[sec].heading = angle
+                print(self.log_objects[sec].heading)
+
+                # if angle < 0:
+                #     angle = 360 + angle
+                #     self.log_objects[sec].heading = angle
                 if 103 <= self.log_objects[sec].heading <= 123 or 283 <= self.log_objects[
                     sec].heading <= 303:
                     heading_dict.update({"perpendicular": heading_dict["perpendicular"] + 1})
@@ -176,7 +161,7 @@ class Features:
                 else:
                     heading_dict.update({"angle": heading_dict["angle"] + 1})
         else:
-            for sec in range(self.time_stamp - 180, self.time_stamp + 1, 1):
+            for sec in range(starting_sec, ending_sec + 1, 1):
                 if 350 <= self.log_objects[sec].heading <= 360 or 0 <= self.log_objects[sec].heading <= 10 or 170 <= \
                         self.log_objects[sec].heading <= 190:
                     heading_dict.update({"stem": heading_dict["stem"] + 1})
@@ -188,6 +173,57 @@ class Features:
         heading = max(paires)[1]
         print(heading_dict)
         self.heading = (heading, self.log_objects[self.time_stamp].heading)
+
+    def orientation_calculator(self):
+        orientation_dict = {"bow": 0, "stern": 0, "parallel": 0}
+
+        if self.time_stamp <= 180:
+            starting_sec = self.time_stamp
+            ending_sec = self.time_stamp + 1
+        else:
+            starting_sec = 180
+            ending_sec = self.time_stamp
+
+        for sec in range(starting_sec, ending_sec, 1):
+            if self.heading[0] == "stem":
+                orientation_dict.update({"parallel": orientation_dict["parallel"] + 1})
+            else:
+                ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
+                                               self.log_objects[sec].longitude)
+                down_heading, up_heading = updown_rannge_calculator(self.log_objects[sec].latitude,
+                                                                    self.log_objects[sec].longitude,
+                                                                    self.scenario, ownship_pos, True)
+
+                thresh = abs((up_heading - down_heading)) / 2
+                new_range = [down_heading - thresh, up_heading + thresh]
+                # if the down_heading is less than thresh, so it was placed in the fourth quarter. so it needs to have a different
+                # calculation for determining the range.
+                if new_range[0] <= 0:
+                    new_ang = 360 + new_range[0]
+                    new_range = [new_range[1], new_ang]
+                # This line will check the heading is closer to which point (UP or Down).
+                # This number 10 was achieved by experiments and makes the code work correctly!
+                if abs(new_range[0] - self.log_objects[sec].heading) < new_range[1] - self.log_objects[
+                    sec].heading:
+                    new_range = [new_range[0] - 10, new_range[1]]
+                else:
+                    new_range = [new_range[0] + 10, new_range[1] + 10]
+                #
+                if 270 <= new_range[1] <= 360:
+                    if 0 <= self.log_objects[sec].heading <= new_range[0] or new_range[1] <= self.log_objects[
+                        sec].heading <= 360:
+                        orientation_dict.update({"bow": orientation_dict["bow"] + 1})
+                    else:
+                        orientation_dict.update({"stern": orientation_dict["stern"] + 1})
+                else:
+                    if new_range[0] <= self.log_objects[sec].heading <= new_range[1]:
+                        orientation_dict.update({"bow": orientation_dict["bow"] + 1})
+                    else:
+                        orientation_dict.update({"stern": orientation_dict["stern"] + 1})
+        paires = [(value, key) for key, value in orientation_dict.items()]
+        orientation = max(paires)[1]
+        print(orientation_dict)
+        self.orientation = orientation
 
     def speed_calculator(self):
 

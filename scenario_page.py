@@ -156,7 +156,7 @@ class PlayScenario:
             print(instant_second)
             self.generate_csv_file(log_objects)  # this will generate a csv file based on DataTrace file
             self.features = Features(log_objects, self.scenario, self.logger,
-                                     instant_second)  # this line will create the features at the time of asking asssistance
+                                     100)  # this line will create the features at the time of asking asssistance
 
             # filling the suggested ownship status variables
             self.suggested_speed.config(text="N/A")
