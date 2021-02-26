@@ -104,10 +104,16 @@ coordinates = {
                                                                      "lat_btm_right": 60.51624,
                                                                      "long_btm_right": 146.35993}}
 
+# This dictionary will help to create a feature row, corresponding to status of ownship at the time of assistance request
+feature_keys = {"solo": 0, "combo": 1, "P": 5, "L": 1, "PW": 2, "S": 3, "C": 4, "other": 7, "N/A_technique": 6,
+                "J_approach": 1,
+                "direct": 2, "up_current": 0, "N/A_aspect": 3, "av": 1, "z": 2, "az": 0, "along_zone": 3,
+                "unknown": 4, "angle": 2, "perpendicular": 1, "stem": 0,
+                "N/A_heading": 3, "stern": 2, "bow": 0, "rotating": 1, "parallel": 4, "N/A_orientation": 3, "safe": 0,
+                "dangerous": 1, "N/A_speed": 2}
+
 
 # This function determine in which quarter the ship got located. Then calculated the correct angle proportional in relation to the start point.
-
-
 def angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, downrange, uprange, scenario):
     if scenario == "emergency":
         if ownship_pos == "top_left":
@@ -207,7 +213,10 @@ def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, own
     correct_uprange_degree = correct_angle(uprange_degree)
     angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, correct_downrange_degree,
                                   correct_uprange_degree, scenario)
-    return angle_range
+    if scenario == "emergency":
+        return angle_range[0], angle_range[1], down_key_emg, up_key_emg
+    else:
+        return angle_range[0], angle_range[1], down_key, up_key
 
 
 # This function determine the location of ownship vessel in relation to target!
@@ -319,8 +328,7 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
 
         elif "top" in ownship_target_pos:
             area_of_focus_dict.update({"av": area_of_focus_dict["av"] + 1})
-        else:
-            area_of_focus_dict.update({"unknown": area_of_focus_dict["unknown"] + 1})
+
         return area_of_focus_dict
 
     elif scenario == "pushing":
@@ -336,8 +344,6 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
         #     area_of_focus_dict.update({"av": area_of_focus_dict["av"] + 1})
         elif ownship_zone_pos == "left":
             area_of_focus_dict.update({"along_zone": area_of_focus_dict["along_zone"] + 1})
-        else:
-            area_of_focus_dict.update({"unknown": area_of_focus_dict["unknown"] + 1})
 
         return area_of_focus_dict
 
@@ -353,8 +359,6 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
             area_of_focus_dict.update({"av": area_of_focus_dict["av"] + 1})
         elif ownship_zone_pos in ["left"]:
             area_of_focus_dict.update({"along_zone": area_of_focus_dict["along_zone"] + 1})
-        else:
-            area_of_focus_dict.update({"unknown": area_of_focus_dict["unknown"] + 1})
 
         return area_of_focus_dict
 
@@ -433,7 +437,15 @@ def get_point(scenario, ownship_lattitude, ownship_longitude):
         return coordinates[scenario]["center_trgt_lat"], coordinates[scenario]["center_trgt_long"]
 
 
-def calc_dist_from_target(ownship_lat, ownship_long, scenario):
+def distance_formula(ownship_lat, ownship_long, dist_long, dist_lat):
+    dx = abs((dist_long - ownship_long) * 40000 * math.cos(
+        (ownship_lat + dist_lat) * math.pi / 360) / 360)
+    dy = abs((ownship_lat - dist_lat) * 40000 / 360)
+    distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+    return distance
+
+
+def calc_dists_from_target(ownship_lat, ownship_long, scenario):
     # to calculate the distance between two coordinates the below equation was used:
     # dx = (long1 - long2) * 40000 * math.cos((lat1 + lat2) * math.pi / 360) / 360
     # dy = (lat1- lat2) * 40000 / 360
@@ -442,20 +454,17 @@ def calc_dist_from_target(ownship_lat, ownship_long, scenario):
     # then the minimum of those distances considered as the  distance of ownship from target.
     # In the pushing scenario the distance of ownship from the target centre calculated.
     # then determine what the ownship position to subtract a certain amount as it is in the coordinates["pushing"] DICT
+
     dist_list = []
     if scenario in ["emergency", "leeway"]:
 
         for i in range(12):
-            dx = abs((coordinates[scenario + "_circumference"]["long"][i] - ownship_long) * 40000 * math.cos(
-                (ownship_lat + coordinates[scenario + "_circumference"]["lat"][i]) * math.pi / 360) / 360)
-            dy = abs((ownship_lat - coordinates[scenario + "_circumference"]["lat"][i]) * 40000 / 360)
-            distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+            distance = distance_formula(ownship_lat, ownship_long, coordinates[scenario + "_circumference"]["long"][i],
+                                        coordinates[scenario + "_circumference"]["lat"][i])
             dist_list.append(round(distance * 1000, 2))
     else:  # when the scenario is pushing
-        dx = abs((coordinates[scenario + "_circumference"]["long"] - ownship_long) * 40000 * math.cos(
-            (ownship_lat + coordinates[scenario + "_circumference"]["lat"]) * math.pi / 360) / 360)
-        dy = abs((ownship_lat - coordinates[scenario + "_circumference"]["lat"]) * 40000 / 360)
-        distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+        distance = distance_formula(ownship_lat, ownship_long, coordinates[scenario + "_circumference"]["long"],
+                                    coordinates[scenario + "_circumference"]["lat"])
         ownship_pos = ownship_position(scenario, ownship_lat, ownship_long)
         if ownship_pos in ["top_left", "top_right", "bottom_right", "bottom_left"]:
 
@@ -465,6 +474,235 @@ def calc_dist_from_target(ownship_lat, ownship_long, scenario):
             dist_list.append(
                 round((distance * 1000) - coordinates[scenario + "_circumference"]["df_from_circumference"], 2))
     return dist_list
+
+
+def bow_stern_checker(scenario,ownship_pos, up_heading, down_heading, orientation_dict, down_distance, up_distance, heading):
+    thresh = abs((up_heading - down_heading)) / 2
+    if ownship_pos == "top_left":
+        if down_distance > up_distance:
+            down_heading -= 10
+        else:
+            up_heading += 10
+        new_range = [down_heading - thresh, up_heading + thresh]
+
+        # if down_heading - thresh <= 0:
+        #     new_ang = 360 + (down_heading - thresh)
+        #     new_range = [up_heading + thresh, new_ang]
+        # else:
+        #     new_range = [down_heading - thresh, up_heading + thresh]
+        # if down_heading - thresh <= 0:
+        #     if 0 <= heading <= new_range[0] or new_range[1] <= heading <= 360:
+        #
+        #         return "bow"
+        #     else:
+        #         return "stern"
+        # else:
+        if new_range[0] <= heading <= new_range[1]:
+            return "bow"
+        else:
+            return "stern"
+
+    elif ownship_pos == "left" or ownship_pos == "alongside":
+        if down_distance > up_distance:
+            down_heading -= 10
+        else:
+            up_heading += 10
+        if down_heading - thresh <= 0:
+            new_ang = 360 + (down_heading - thresh)
+            new_range = [up_heading + thresh, new_ang]
+        else:
+            new_range = [down_heading - thresh, up_heading + thresh]
+        if down_heading - thresh <= 0:
+            if 0 <= heading <= new_range[0] or new_range[1] <= heading <= 360:
+
+                return "bow"
+            else:
+                return "stern"
+        else:
+            if new_range[0] <= heading <= new_range[1]:
+                return "bow"
+            else:
+                return "stern"
+
+    elif ownship_pos == "bottom_left":
+        if down_distance > up_distance:
+            down_heading -= 10
+        else:
+            up_heading += 10
+        if 355 < down_heading < 360:
+            down_heading = 0
+        if up_heading > 90:
+            up_heading = 90
+        if down_heading - thresh <= 0:
+            new_ang = 360 + (down_heading - thresh)
+            new_range = [up_heading + thresh, new_ang]
+        else:
+            new_range = [down_heading - thresh, up_heading + thresh]
+
+        if down_heading - thresh <= 0:
+            if 0 <= heading <= new_range[0] or new_range[1] <= heading <= 360:
+                print("az bottom_left bow dad")
+                return "bow"
+            else:
+                print("az bottom_left stern dad")
+                return "stern"
+        else:
+            if new_range[0] <= heading <= new_range[1]:
+                print("az bottom_left bow dad")
+                return "bow"
+            else:
+                print("az bottom_left stern dad")
+                return "stern"
+    elif ownship_pos == "bottom_right":
+        if down_distance > up_distance:
+            down_heading -= 10
+        else:
+            up_heading += 10
+        if 0 <= up_heading < 5:
+            up_heading = 360
+        if up_heading + thresh > 360:
+            new_ang = (up_heading + thresh) - 360
+            new_range = [new_ang, down_heading - thresh]
+        else:
+            new_range = [down_heading - thresh, up_heading + thresh]
+
+        if up_heading + thresh > 360:
+            if 0 <= heading <= new_range[0] or new_range[1] <= heading <= 360:
+                print("az bottom_right bow dad")
+                return "bow"
+
+            else:
+                print("az bottom_right stern dad")
+                return "stern"
+        else:
+            if new_range[0] <= heading <= new_range[1]:
+                print("az bottom_right bow dad")
+                return "bow"
+
+            else:
+                print("az bottom_right stern dad")
+                return "stern"
+
+    elif ownship_pos == "top_right":
+        if down_distance > up_distance:
+            down_heading -= 10
+        else:
+            up_heading += 10
+        new_range = [down_heading - thresh, up_heading + thresh]
+        if new_range[0] <= heading <= new_range[1]:
+            print("az top_right bow dad")
+            return "bow"
+        else:
+            print("az top_right stern dad")
+            return "stern"
+
+    elif ownship_pos == "right":
+        if down_distance > up_distance:
+            down_heading -= 10
+        else:
+            up_heading += 10
+
+        if up_heading + thresh > 360:
+            new_ang = (up_heading + thresh) - 360
+            new_range = [new_ang, down_heading - thresh]
+        else:
+            new_range = [down_heading - thresh, up_heading + thresh]
+
+        if up_heading + thresh > 360:
+            if 0 <= heading <= new_range[0] or new_range[1] <= heading <= 360:
+                print("az right bow dad")
+                return "bow"
+            else:
+                print("az right stern dad")
+                return "stern"
+        else:
+            if new_range[0] <= heading <= new_range[1]:
+                print("az right bow dad")
+                return "bow"
+            else:
+                print("az right stern dad")
+                return "stern"
+
+
+
+    elif ownship_pos == "top":
+        if down_distance > up_distance:
+            down_heading -= 10
+        else:
+            up_heading += 10
+        new_range = [down_heading - thresh, up_heading + thresh]
+        if new_range[0] <= heading <= new_range[1]:
+            print("too top bow dad")
+            return "bow"
+        else:
+            print("too top stern dad")
+            return "stern"
+
+    elif ownship_pos == "bottom":
+        if 0 <= up_heading < 5:
+            up_heading = 360
+        if 355 < down_heading <= 360:
+            down_heading = 0
+        if down_distance > up_distance:
+            down_heading += 10
+        else:
+            up_heading -= 10
+
+        if 0 <= heading <= down_heading or up_heading <= heading <= 360:
+            print("az bottom bow dad")
+            return "bow"
+        else:
+            print("az bottom stern dad")
+            return "stern"
+
+
+def stem_angle_checker(scenario, heading):
+    if scenario == "emergency":
+        heading = heading + 23
+        if 103 <= heading <= 123 or 283 <= heading <= 303:
+            return "perpendicular"
+        elif 13 <= heading <= 33 or 193 <= heading <= 213:
+            return "stem"
+        else:
+            return "angle"
+    else:
+        if 350 <= heading <= 360 or 0 <= heading <= 10 or 170 <= heading <= 190:
+            return "stem"
+        elif 80 <= heading <= 100 or 260 <= heading <= 280:
+            return "perpendicular"
+        else:
+            return "angle"
+
+
+def generate_feature_array(features, scenario):
+    features_array = list()
+    Area_of_focus = feature_keys[features.area_of_focus]
+    heading = feature_keys[features.heading[0]]
+
+    orientation = feature_keys[features.orientation]
+    if features.distance_from_target <= 35:  # This range has been assumed for the ownship to be in a close distance to the target!
+        vessel_Distance_from_target = 0
+    elif features.distance_from_target > 75:  # When the ownship is in a normal distance to the target!
+        vessel_Distance_from_target = 1
+    else:
+        vessel_Distance_from_target = 2
+
+    speed = feature_keys[features.speed[0]]
+    technique = feature_keys[features.maneuver]
+    aspect = feature_keys[features.aspect]
+    if "+" in features.aspect:
+        combination_of_technique = 1
+    else:
+        combination_of_technique = 0
+    if scenario == "emergency":
+        features_array.append(
+            [Area_of_focus, heading, orientation, vessel_Distance_from_target, speed, technique, aspect,
+             combination_of_technique])
+    else:
+        features_array.append(
+            [heading, orientation,Area_of_focus,speed, vessel_Distance_from_target, technique, aspect,
+             combination_of_technique])
+    return features_array
 
 
 class BLabel(object):

@@ -1,6 +1,6 @@
 """
 This scripts is for safety at sea project design to help seafarer to drive the ships better
-Created on Fr 6 Nov 8:27:27 2020
+Created on Dec 6 Nov 8:27:27 2020
 @author:Fatemeh Yazdanpanah and Arash Fassihozzaman  <a.fassihozzamanlangroudi@mun.ca>
 """
 
@@ -11,17 +11,17 @@ import os
 import xml.etree.cElementTree as ET
 import csv
 from tkinter import messagebox
+from helper import generate_feature_array
 import logging
+import pandas as pd
+import os
+import numpy as np
+from sklearn import tree
+from PIL import ImageTk, Image
 import ipdb
 
 engine_dic = {"pEngine": 0, "fTunnelThruster": 0, "sEngine": 0, "aTunnelThruster": 0}
 rudder_dic = {"pRudder": 0, "sRudder": 0}
-
-# This dictionary will help to create a feature row, corresponding to status of ownship at the time of assistance request
-feature_keis = {"solo": 0, "combo": 1, "p": 0, "pw+l": 1, "l": 2, "p+l": 3, "pw": 4, "l+pw": 5, "j_approach": 0,
-                "direct": 1, "up_current": 2, "av": 0, "z": 1, "az": 2, "angle": 0, "perpendicular": 1, "stem": 2,
-                "angle_stem": 3, "stem_angle": 4, "stern": 0, "bow": 1, "safe": 0,
-                "dangerous": 1}
 
 
 class PlayScenario:
@@ -107,7 +107,7 @@ class PlayScenario:
         try:
             xml_file = ET.parse(well_formed_filename).getroot()
         except IOError:
-        # except FileNotFoundError as fnf_error:
+            # except FileNotFoundError as fnf_error:
             self.logger.info("The well_formed_TraceData.log cannot be parsed! it seems there is no such a file!")
 
         for log_entity in xml_file.iter("log_entity"):
@@ -156,7 +156,8 @@ class PlayScenario:
             print(instant_second)
             self.generate_csv_file(log_objects)  # this will generate a csv file based on DataTrace file
             self.features = Features(log_objects, self.scenario, self.logger,
-                                     100)  # this line will create the features at the time of asking asssistance
+                                     instant_second)  # this line will create the features at the time of asking asssistance
+            feature_array = generate_feature_array(self.features, self.scenario)
 
             # filling the suggested ownship status variables
             self.suggested_speed.config(text="N/A")
@@ -176,11 +177,20 @@ class PlayScenario:
             self.entry_area_focus.insert(0, self.features.area_of_focus)
             self.entry_orientation_target.insert(0, self.features.orientation)
             self.entry_technique.insert(0, self.features.maneuver)
-            self.decision_tree_classifire(self.features)
             self.entry_heading.insert(0, self.features.heading[0])
+            # class_id = self.decision_tree_classifire([[1, 0, 2, 0, 2, 5, 1, 0]], self.scenario)
 
-    def decision_tree_classifire(self, features):
-        pass
+    def decision_tree_classifire(self, features, scenario):
+        current_path = os.getcwd()
+        df_x_train = pd.read_excel(current_path + "/Training_DataSet/" + scenario + "/" + scenario + "_Training.xls")
+        x_train = np.array(df_x_train.astype(float))
+        df_y_train = pd.read_excel(current_path + "/Training_DataSet/" + scenario + "/" + scenario + "_ID.xls")
+        y_train = np.array(df_y_train)
+        y_train = y_train.ravel()
+        clf = tree.DecisionTreeClassifier(splitter="best", random_state=0)
+        clf.fit(x_train, y_train)
+        class_id = clf.predict(features)
+        return class_id
 
     def reset_properties(self):
         self.scale_speed.set(0)
@@ -344,7 +354,13 @@ class PlayScenario:
         reset_vessel_properties_btn.place(relx=.5, rely=.95, anchor="center")
 
         canvas = tk.Canvas(suggested_approach_frame, bg='#765729')
+
         suggested_approach_frame.winfo_screenwidth()
+
         canvas.place(relx=0.5, rely=0.5, width=self.main_frame_width * 0.25,
                      height=self.main_frame_height * 0.4,
                      anchor="center")
+        # img = ImageTk.PhotoImage(Image.open("image_desc.jpg"))
+        #
+        # canvas.create_image(352.5, 360, anchor="se", image=img)
+        # self.root.mainloop()

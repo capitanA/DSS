@@ -20,3 +20,4 @@ build/
 *.xlsx
 classifier.py
 test.py
+Training_DataSet/

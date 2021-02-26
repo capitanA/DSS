@@ -2,7 +2,8 @@ import csv
 import ipdb
 import math
 from helper import ownship_position, area_focus_votter, updown_rannge_calculator, aspect_votter, \
-    collision_time_determinor, get_point, calc_dist_from_target
+    collision_time_determinor, get_point, calc_dists_from_target, distance_formula, coordinates, bow_stern_checker, \
+    stem_angle_checker
 from tkinter import messagebox
 import numpy as np
 
@@ -21,6 +22,8 @@ class Features:
         self.heading = None
         self.speed = None
         self.maneuver = None
+        self.ownship_tracker = list()
+        self.route_sequence_creator()
         self.ice_technique_determinor()
         self.heading_calculator()
         self.aspect_calculator()
@@ -29,6 +32,19 @@ class Features:
         self.area_of_focus_determinor()
         self.speed_calculator()
 
+    def route_sequence_creator(self):
+        previous_pos = ""
+        route_mapper_dict = {"top_left": "_TL", "top": "_T", "top_right": "_TR", "left": "_L", "right": "_R",
+                             "bottom_left": "_BL", "bottom": "_B", "bottom_right": "_BR"}
+        for sec in range(180, self.time_stamp):
+            ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
+                                           self.log_objects[sec].longitude)
+            if sec > 180:  # This is for creating the string sequence of ownship position after seccond of 180!
+                if previous_pos != ownship_pos:
+                    if ownship_pos != "alongside":
+                        self.ownship_tracker.append(route_mapper_dict[ownship_pos])
+                        previous_pos = ownship_pos
+
     # The Aspect shows the vessel pathway in relation to the target. the options for this feature could be:
     # "J_approach": getting close to the target from bellow the zone.
     # "Direct": getting close to the target directly.
@@ -36,9 +52,7 @@ class Features:
     # Aspect_calculator considers the first 240 seconds of the log_file (based on the replay videos this feature
     # can be determined at the first 240s). If the user ask for assistance before 240, the code will go through
     # all the seconds from the beginning until the end.
-
     def aspect_calculator(self):
-
         aspect_vot_dict = {"up_current": 0, "J_approach": 0, "direct": 0}
 
         # if self.scenario==" emergency":
@@ -72,9 +86,9 @@ class Features:
         for sec in range(0, checking_secconds, 1):
             ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
                                            self.log_objects[sec].longitude)
-            down_heading, up_heading = updown_rannge_calculator(self.log_objects[sec].latitude,
-                                                                self.log_objects[sec].longitude,
-                                                                self.scenario, ownship_pos, False)
+            down_heading, up_heading, down_key, up_key = updown_rannge_calculator(self.log_objects[sec].latitude,
+                                                                                  self.log_objects[sec].longitude,
+                                                                                  self.scenario, ownship_pos, False)
             degree = (down_heading, up_heading)
 
             updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree, self.scenario)
@@ -98,6 +112,7 @@ class Features:
     # but if they ask for help after 400, the mean distance would be calculated from 400 to the end of the log_file.
 
     def distance_calculator(self):
+
         count = 0
         if self.time_stamp - 400 <= 0:
             starting_sec = self.time_stamp
@@ -109,121 +124,131 @@ class Features:
             total = (self.time_stamp - 400) + 1
 
         for num in range(starting_sec, ending_sec, 1):
-            distances_list = calc_dist_from_target(self.log_objects[num].latitude,
-                                                   self.log_objects[num].longitude,
-                                                   self.scenario)
+            distances_list = calc_dists_from_target(self.log_objects[num].latitude,
+                                                    self.log_objects[num].longitude,
+                                                    self.scenario)
 
-            self.distance_from_target = min(distances_list)
+            if self.heading[0] == "perpendicular":
+
+                distances = min(distances_list) - 40
+            else:
+                distances = min(distances_list) - 8.5
+
+            if distances < 0:
+                print("You hit the target. please make your distance further not to have a crash!")
+                distances = 0
+
+            self.distance_from_target = distances
             count += self.distance_from_target
         print(f"this is distance {count / total}")
 
     def area_of_focus_determinor(self):
-        area_of_focus_dict = {"av": 0, "z": 0, "az": 0, "along_zone": 0,"unknown":0}
-        # it checks every seconds from minutes 3 to determine the position of the ownship respect to the target and zone and bot up the "area_of_focus_dict"
+        area_of_focus_dict = {"av": 0, "z": 0, "az": 0, "along_zone": 0}
+        # it checks every seconds to determine the position of the ownship respect to the target and zone and vot up the "area_of_focus_dict"
         for timeslip in range(0, self.time_stamp, 1):
             area_of_focus_dict = area_focus_votter(self.scenario, self.log_objects[timeslip], area_of_focus_dict)
+
+        if self.scenario == "pushing":
+            area_of_focus_dict.update(
+                {"z": int(area_of_focus_dict["z"] * 1.15), "av": int(area_of_focus_dict["av"] * 1.1),
+                 "az": int(area_of_focus_dict["az"] * 0.85)})
         paires = [(value, key) for key, value in area_of_focus_dict.items()]
         print(area_of_focus_dict)
+        if area_of_focus_dict["z"] == 0 and area_of_focus_dict["av"] == 0 and area_of_focus_dict["az"] == 0 and \
+                area_of_focus_dict["along_zone"] == 0:
+            self.area_of_focus = "unkonwn"
 
-        self.area_of_focus = max(paires)[1]
+        else:
+
+            self.area_of_focus = max(paires)[1]
 
     # heading _calculator will create a dictionary to check what was the ownship heading either in time of assistance
     # or from the 400 to the end of the log_file. Then based on this dictionary, the most occurrence will be considered
     # as the ownship heading! if the user asks for assistance before 400s, then the heading would be calculated based on
     # that time instantly, but if they ask for help after 400, the heading would be determined from 400 to the end of the log_file.
     def heading_calculator(self):
-        if self.time_stamp - 400 <= 0:
-            starting_sec = self.time_stamp
-            ending_sec = self.time_stamp + 1
+        heading_dict = {"perpendicular": 0, "stem": 0, "angle": 0, "rotating": 0}
+        if self.maneuver == "C":
+            self.heading = ("rotating", 0)
         else:
-            starting_sec = 400
-            ending_sec = self.time_stamp
+            if self.time_stamp - 400 <= 0:
+                starting_sec = self.time_stamp
+                ending_sec = self.time_stamp + 1
+            else:
+                starting_sec = 400
+                ending_sec = self.time_stamp
 
-        if self.time_stamp - 360 < 0:
-            self.logger.info("the user asked an assistance at a n inappropriate time! (Not recommended)")
-        heading_dict = {"perpendicular": 0, "stem": 0, "angle": 0}
-        if self.scenario == "emergency":
-            # when the scenario is emergency the coordinates should be rotated by 23 degree to get the correct answer.
+            if self.time_stamp - 400 < 0:
+                self.logger.info("the user asked an assistance at an inappropriate time! (Not recommended)")
+
             for sec in range(starting_sec, ending_sec, 1):
-                angle = self.log_objects[sec].heading + 23
-                self.log_objects[sec].heading = angle
-                print(self.log_objects[sec].heading)
-
-                # if angle < 0:
-                #     angle = 360 + angle
-                #     self.log_objects[sec].heading = angle
-                if 103 <= self.log_objects[sec].heading <= 123 or 283 <= self.log_objects[
-                    sec].heading <= 303:
-                    heading_dict.update({"perpendicular": heading_dict["perpendicular"] + 1})
-                elif 13 <= self.log_objects[sec].heading <= 33 or 193 <= self.log_objects[
-                    sec].heading <= 213:
-                    heading_dict.update({"stem": heading_dict["stem"] + 1})
-                else:
-                    heading_dict.update({"angle": heading_dict["angle"] + 1})
-        else:
-            for sec in range(starting_sec, ending_sec + 1, 1):
-                if 350 <= self.log_objects[sec].heading <= 360 or 0 <= self.log_objects[sec].heading <= 10 or 170 <= \
-                        self.log_objects[sec].heading <= 190:
-                    heading_dict.update({"stem": heading_dict["stem"] + 1})
-                elif 80 <= self.log_objects[sec].heading <= 100 or 260 <= self.log_objects[sec].heading <= 280:
-                    heading_dict.update({"perpendicular": heading_dict["perpendicular"] + 1})
-                else:
-                    heading_dict.update({"angle": heading_dict["angle"] + 1})
-        paires = [(value, key) for key, value in heading_dict.items()]
-        heading = max(paires)[1]
-        print(heading_dict)
-        self.heading = (heading, self.log_objects[self.time_stamp].heading)
+                instant_heading = stem_angle_checker(self.scenario, self.log_objects[sec].heading)
+                heading_dict.update({instant_heading: heading_dict[instant_heading] + 1})
+            paires = [(value, key) for key, value in heading_dict.items()]
+            heading = max(paires)[1]
+            print(heading_dict)
+            self.heading = (heading, self.log_objects[self.time_stamp].heading)
 
     def orientation_calculator(self):
         orientation_dict = {"bow": 0, "stern": 0, "parallel": 0}
 
-        if self.time_stamp <= 180:
-            starting_sec = self.time_stamp
-            ending_sec = self.time_stamp + 1
+        if self.maneuver == "circular":  # if the technique is 'circular', the orientation would be changing because it al
+            self.orientation = "changing"
         else:
-            starting_sec = 180
-            ending_sec = self.time_stamp
-
-        for sec in range(starting_sec, ending_sec, 1):
-            if self.heading[0] == "stem":
-                orientation_dict.update({"parallel": orientation_dict["parallel"] + 1})
+            if self.time_stamp <= 180:
+                starting_sec = self.time_stamp
+                ending_sec = self.time_stamp + 1
             else:
+                starting_sec = 180
+                ending_sec = self.time_stamp
+
+            for sec in range(starting_sec, ending_sec, 1):
+
                 ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
                                                self.log_objects[sec].longitude)
-                down_heading, up_heading = updown_rannge_calculator(self.log_objects[sec].latitude,
-                                                                    self.log_objects[sec].longitude,
-                                                                    self.scenario, ownship_pos, True)
 
-                thresh = abs((up_heading - down_heading)) / 2
-                new_range = [down_heading - thresh, up_heading + thresh]
-                # if the down_heading is less than thresh, so it was placed in the fourth quarter. so it needs to have a different
-                # calculation for determining the range.
-                if new_range[0] <= 0:
-                    new_ang = 360 + new_range[0]
-                    new_range = [new_range[1], new_ang]
-                # This line will check the heading is closer to which point (UP or Down).
-                # This number 10 was achieved by experiments and makes the code work correctly!
-                if abs(new_range[0] - self.log_objects[sec].heading) < new_range[1] - self.log_objects[
-                    sec].heading:
-                    new_range = [new_range[0] - 10, new_range[1]]
+                instant_heading = stem_angle_checker(self.scenario, self.log_objects[sec].heading)
+                if instant_heading == "stem" and ownship_pos not in ["bottom", "top"]:
+                    orientation_dict.update({"parallel": orientation_dict["parallel"] + 1})
+                elif instant_heading == "perpendicular" and ownship_pos in ["bottom","top"] and self.scenario == "pushing":
+
+                    orientation_dict.update({"parallel": orientation_dict["parallel"] + 1})
                 else:
-                    new_range = [new_range[0] + 10, new_range[1] + 10]
-                #
-                if 270 <= new_range[1] <= 360:
-                    if 0 <= self.log_objects[sec].heading <= new_range[0] or new_range[1] <= self.log_objects[
-                        sec].heading <= 360:
-                        orientation_dict.update({"bow": orientation_dict["bow"] + 1})
+
+                    down_heading, up_heading, down_key, up_key = updown_rannge_calculator(
+                        self.log_objects[sec].latitude,
+                        self.log_objects[sec].longitude,
+                        self.scenario, ownship_pos, True)
+
+                    if self.scenario in ["emergency", "leeway"]:
+                        dist_long_up = coordinates[self.scenario]["long_" + up_key]
+                        dist_lat_up = coordinates[self.scenario]["lat_" + up_key]
+                        dist_long_down = coordinates[self.scenario]["long_" + down_key]
+                        dist_lat_down = coordinates[self.scenario]["lat_" + down_key]
                     else:
-                        orientation_dict.update({"stern": orientation_dict["stern"] + 1})
-                else:
-                    if new_range[0] <= self.log_objects[sec].heading <= new_range[1]:
-                        orientation_dict.update({"bow": orientation_dict["bow"] + 1})
-                    else:
-                        orientation_dict.update({"stern": orientation_dict["stern"] + 1})
-        paires = [(value, key) for key, value in orientation_dict.items()]
-        orientation = max(paires)[1]
-        print(orientation_dict)
-        self.orientation = orientation
+                        dist_long_up = coordinates[self.scenario + "_zone"]["long_" + up_key]
+                        dist_lat_up = coordinates[self.scenario + "_zone"]["lat_" + up_key]
+                        dist_long_down = coordinates[self.scenario + "_zone"]["long_" + down_key]
+                        dist_lat_down = coordinates[self.scenario + "_zone"]["lat_" + down_key]
+
+                    down_distance = distance_formula(self.log_objects[sec].latitude, self.log_objects[sec].longitude,
+                                                     dist_long_down, dist_lat_down)
+
+                    up_distance = distance_formula(self.log_objects[sec].latitude, self.log_objects[sec].longitude,
+                                                   dist_long_up, dist_lat_up)
+
+                    instant_orientation = bow_stern_checker(self.scenario,ownship_pos, up_heading, down_heading, orientation_dict,
+                                                            down_distance, up_distance,
+                                                            self.log_objects[sec].heading)
+                    orientation_dict.update({instant_orientation: orientation_dict[instant_orientation] + 1})
+            # orientation_dict.update(
+            #     {"parallel": int(orientation_dict["parallel"] * 1.2), "bow": int(orientation_dict["bow"] * 0.9),
+            #      "stern": int(orientation_dict["stern"] * 1.1)})
+
+            paires = [(value, key) for key, value in orientation_dict.items()]
+            orientation = max(paires)[1]
+            print(orientation_dict)
+            self.orientation = orientation
 
     def speed_calculator(self):
 
@@ -237,44 +262,134 @@ class Features:
             count += self.log_objects[num].sog
         print(f"this is speed average{count / self.time_stamp} and is {self.speed[0]}")
 
-    def ice_technique_determinor(self):
-        technique_dict = {"prop_wash": 0, "leeway": 0, "pushing": 0, "other": 0}
+    # def ice_technique_determinor(self):
+    #     technique_dict = {"PW": 0, "L": 0, "P": 0, "other": 0}
+    #     start_loc_ice = {"emergency": 146.3655880, "pushing": 146.36156890, "leeway": self.log_objects[0].longitude}
+    #     colision_time = collision_time_determinor(self.scenario)
+    #     for sec in range(self.time_stamp - 320, self.time_stamp + 1, 5):
+    #         heading_delta = abs(self.log_objects[sec].heading - self.log_objects[sec].cog)
+    #         # vessel is not in contact with ice or is not in ice field.
+    #         if sec not in colision_time or self.log_objects[sec].longitude > start_loc_ice[
+    #             self.scenario]:
+    #             # Heading and course are in the opposite direction    and   Engines are in forward direction
+    #             if 135 <= heading_delta <= 225 and abs(self.log_objects[sec].portengine) > 0 and \
+    #                     abs(self.log_objects[
+    #                         sec].stbdengine) > 0:
+    #                 self.maneuver = "PW"
+    #                 technique_dict.update({"PW": technique_dict["PW"] + 1})
+    #             # if not propwashing in open water,must just be maneuvering in open water
+    #             else:
+    #                 pass
+    #                 # technique_dict.update({"other": technique_dict["other"] + 1})
+    #         else:  # vessel is in contact with iced
+    #             if 135 <= heading_delta <= 225:  # Heading and course are in the opposite direction
+    #                 if self.log_objects[sec].sog <= 0.3:
+    #                     if self.log_objects[sec].portengine > 0 and self.log_objects[
+    #                         sec].stbdengine > 0:
+    #                         self.maneuver = "PW"
+    #                         technique_dict.update({"PW": technique_dict["PW"] + 1})
+    #                     else:
+    #                         self.maneuver = "L"
+    #                         technique_dict.update({"L": technique_dict["L"] + 1})
+    #                 else:  # moving above 0.3 knots in reverse while in contact with ice
+    #                     pass
+    #                     # self.maneuver = "other"
+    #                     # technique_dict.update({"other": technique_dict["other"] + 1})
+    #             elif self.log_objects[sec].sog <= 0.3:
+    #                 self.maneuver = "L"
+    #                 technique_dict.update({"L": technique_dict["L"] + 1})
+    #             else:  # if heading and course are alligned
+    #                 self.maneuver = "P"
+    #                 technique_dict.update({"P": technique_dict["P"] + 1})
+    #     print(technique_dict)
+    #     paires = [(value, key) for key, value in technique_dict.items()]
+    #     self.maneuver = max(paires)[1]
+    #     print(technique_dict)
+
+    def ice_technique_determinor_1(self):
         start_loc_ice = {"emergency": 146.3655880, "pushing": 146.36156890, "leeway": self.log_objects[0].longitude}
         colision_time = collision_time_determinor(self.scenario)
-        for sec in range(self.time_stamp - 320, self.time_stamp + 1, 5):
-            heading_delta = abs(self.log_objects[self.time_stamp].heading - self.log_objects[self.time_stamp].cog)
-            # vessel is not in contact with ice or is not in ice field.
-            if self.time_stamp not in colision_time or self.log_objects[self.time_stamp].longitude > start_loc_ice[
-                self.scenario]:
-                # Heading and course are in the opposite direction    and   Engines are in forward direction
-                if 135 <= heading_delta <= 225 and self.log_objects[self.time_stamp].portengine > 0 and \
-                        self.log_objects[
-                            self.time_stamp].stbdengine > 0:
-                    self.maneuver = "prop_wash"
-                    technique_dict.update({"prop_wash": technique_dict["prop_wash"] + 1})
-                # if not propwashing in open water,must just be maneuvering in open water
-                else:
-                    self.maneuver = "other"
-                    technique_dict.update({"other": technique_dict["other"] + 1})
-            else:  # vessel is in contact with iced
-                if 135 <= heading_delta <= 225:  # Heading and course are in the opposite direction
-                    if self.log_objects[self.time_stamp].sog <= 0.3:
-                        if self.log_objects[self.time_stamp].portengine > 0 and self.log_objects[
-                            self.time_stamp].stbdengine > 0:
-                            self.maneuver = "prop_wash"
-                            technique_dict.update({"prop_wash": technique_dict["prop_wash"] + 1})
-                        else:
-                            self.maneuver = "leeway"
-                            technique_dict.update({"leeway": technique_dict["leeway"] + 1})
-                    else:  # moving above 0.3 knots in reverse while in contact with ice
+        if self.time_stamp < colision_time[0]:
+            self.maneuver = "N/A_maneuver"
+        else:
+            for sec in range(colision_time[0], self.time_stamp, 5):
+                heading_delta = abs(self.log_objects[sec].heading - self.log_objects[sec].cog)
+                if self.time_stamp not in colision_time:
+                    pass
+                else:  # ownship is in contact with ice!
+                    pass
 
-                        self.maneuver = "other"
-                        technique_dict.update({"other": technique_dict["other"] + 1})
-                elif self.log_objects[self.time_stamp].sog <= 0.3:
-                    self.maneuver = "leeway"
-                    technique_dict.update({"leeway": technique_dict["leeway"] + 1})
-                else:  # if heading and course are alligned
-                    self.maneuver = "pushing"
-                    technique_dict.update({"pushing": technique_dict["pushing"] + 1})
+    def check_for_sector(self, root_sequence):
+        tr_occurance = root_sequence.count("_TR")
+        t_occurance = root_sequence.count("_T")
+        tl_occurance = root_sequence.count("_TL")
+        if tr_occurance >= 2 and t_occurance >= 3:
+            return True
+        elif tl_occurance >= 2 and t_occurance >= 3:
+            return True
+        elif tl_occurance >= 3 and tr_occurance >= 2:
+            return True
+        else:
+            return False
+
+    def ice_technique_determinor(self):
+        technique_dict = {"PW": 0, "L": 0, "P": 0, "C": 0, "S": 0}
+        start_loc_ice = {"emergency": 146.3655880, "pushing": 146.36156890, "leeway": self.log_objects[0].longitude}
+        colision_time = collision_time_determinor(self.scenario)
+        if self.time_stamp <= 180:
+            self.maneuver = "N/A_maneuver"
+        else:
+            root_sequence = ""
+            for item in self.ownship_tracker:
+                root_sequence += item
+            for sec in range(180, self.time_stamp):
+                heading_delta = abs(self.log_objects[sec].heading - self.log_objects[sec].cog)
+                # vessel is not in contact with ice or is not in ice field.
+
+                if sec not in colision_time or self.log_objects[sec].longitude > start_loc_ice[
+                    self.scenario]:
+                    # Heading and course are in the opposite direction    and   Engines are in forward direction
+                    if 135 <= heading_delta <= 225 and abs(self.log_objects[sec].portengine) > 0 and \
+                            abs(self.log_objects[
+                                    sec].stbdengine) > 0:
+                        technique_dict.update({"PW": technique_dict["PW"] + 1})
+                    # if not propwashing in open water,must just be maneuvering in open water
+                else:  # vessel is in contact with iced
+                    if 135 <= heading_delta <= 225:  # Heading and course are in the opposite direction
+                        if abs(self.log_objects[sec].aftthruster) == 0 and abs(
+                                self.log_objects[
+                                    sec].forethruster) == 0 and abs(self.log_objects[sec].portengine) > 0 and \
+                                abs(self.log_objects[
+                                        sec].stbdengine) > 0:
+                            technique_dict.update({"PW": technique_dict["PW"] + 1})
+                    elif len(set(self.ownship_tracker)) > 4 and self.scenario == "pushing":
+                        technique_dict.update({"C": technique_dict["C"] + 1})
+                    elif len(set(
+                            self.ownship_tracker)) == 4 and "_R_TR" not in root_sequence and "_B_BL" not in root_sequence and self.scenario == "pushing":
+                        print(root_sequence)
+                        technique_dict.update({"C": technique_dict["C"] + 1})
+
+                    elif (self.log_objects[sec].sog > 0.4 and abs(self.log_objects[sec].aftthruster) > 0 and
+                          self.log_objects[sec].forethruster > 0) or (
+                            self.log_objects[sec].sog > 0.4 and abs(self.log_objects[sec].portengine) > 0 and abs(
+                        self.log_objects[sec].stbdengine) > 0):  # if heading and course are alligned
+                        technique_dict.update({"P": technique_dict["P"] + 1})
+                    elif (abs(self.log_objects[sec].portrudder) > 0 or abs(
+                            self.log_objects[sec].stbdrudder) > 0) and self.scenario == "pushing":
+                        technique_dict.update({"C": technique_dict["C"] + 1})
+
+                    if self.log_objects[sec].sog <= 0.4 and abs(self.log_objects[sec].aftthruster) > 0 and abs(
+                            self.log_objects[
+                                sec].forethruster) > 0:
+                        technique_dict.update({"L": technique_dict["L"] + 1})
+                if self.scenario == "pushing" and (  # when the technique is circular it couldn't be sector as well.
+                        ("_T" and "_TR") or ("_TL" and "_T") or ("_TL" and "_T" and "_TR") in set(
+                    self.ownship_tracker)) and \
+                        technique_dict["C"] == 0:
+
+                    result = self.check_for_sector(root_sequence)
+                    if result:
+                        technique_dict.update({"S": technique_dict["S"] + 1})
         paires = [(value, key) for key, value in technique_dict.items()]
         self.maneuver = max(paires)[1]
+        print(technique_dict)
