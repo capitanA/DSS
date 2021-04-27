@@ -46,7 +46,6 @@ class Features:
                         self.ownship_tracker.append(route_mapper_dict[ownship_pos])
                         previous_pos = ownship_pos
 
-
     # The Aspect shows the vessel pathway in relation to the target. the options for this feature could be:
     # "J_approach": getting close to the target from bellow the zone.
     # "Direct": getting close to the target directly.
@@ -212,7 +211,8 @@ class Features:
                 instant_heading = stem_angle_checker(self.scenario, self.log_objects[sec].heading)
                 if instant_heading == "stem" and ownship_pos not in ["bottom", "top"]:
                     orientation_dict.update({"parallel": orientation_dict["parallel"] + 1})
-                elif instant_heading == "perpendicular" and ownship_pos in ["bottom","top"] and self.scenario == "pushing":
+                elif instant_heading == "perpendicular" and ownship_pos in ["bottom",
+                                                                            "top"] and self.scenario == "pushing":
 
                     orientation_dict.update({"parallel": orientation_dict["parallel"] + 1})
                 else:
@@ -239,7 +239,8 @@ class Features:
                     up_distance = distance_formula(self.log_objects[sec].latitude, self.log_objects[sec].longitude,
                                                    dist_long_up, dist_lat_up)
 
-                    instant_orientation = bow_stern_checker(self.scenario,ownship_pos, up_heading, down_heading, orientation_dict,
+                    instant_orientation = bow_stern_checker(self.scenario, ownship_pos, up_heading, down_heading,
+                                                            orientation_dict,
                                                             down_distance, up_distance,
                                                             self.log_objects[sec].heading)
                     orientation_dict.update({instant_orientation: orientation_dict[instant_orientation] + 1})
@@ -393,5 +394,12 @@ class Features:
                     if result:
                         technique_dict.update({"S": technique_dict["S"] + 1})
         paires = [(value, key) for key, value in technique_dict.items()]
-        self.maneuver = max(paires)[1]
-        print(technique_dict)
+        first_tech = max(paires)[1]
+        first_tech_occure_num = max(paires)[0]
+        paires.pop(paires.index(first_tech))
+        second_tech = max(paires)[1]
+        second_tech_occure_num = max(paires)[0]
+        if first_tech_occure_num - second_tech_occure_num > 200:
+            self.maneuver = first_tech
+        else:
+            self.maneuver = first_tech + second_tech

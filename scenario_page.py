@@ -203,20 +203,21 @@ class PlayScenario:
                                                     self.entry_aspect.get(), self.entry_area_focus.get(),
                                                     self.entry_orientation_target.get(), self.entry_technique.get(),
                                                     self.scenario)
-            output = self.decision_tree_classifier(feature_array)
+            output_case, case_ID = self.decision_tree_classifier(feature_array)
 
-            if self.scenario == "emergency":
-                suggested_approach = feature_array_convertor(False, output[4], output[1],
-                                                             (self.scale_distance_target.get(), output[3]), output[6],
-                                                             output[0],
-                                                             output[2], output[5],
+            if self.scenario == "emergency":  # the features priority is different in 'emergency' than other scenarios.
+                suggested_approach = feature_array_convertor(False, output_case[4], output_case[1],
+                                                             (self.scale_distance_target.get(), output_case[3]),
+                                                             output_case[6],
+                                                             output_case[0],
+                                                             output_case[2], output_case[5],
                                                              self.scenario)
             else:
 
-                suggested_approach = feature_array_convertor(False, output[3], output[0],
-                                                             output[4], output[6],
-                                                             output[2],
-                                                             output[1], output[5],
+                suggested_approach = feature_array_convertor(False, output_case[3], output_case[0],
+                                                             output_case[4], output_case[6],
+                                                             output_case[2],
+                                                             output_case[1], output_case[5],
                                                              self.scenario)
 
             # filling the suggested ownship status variables
@@ -228,27 +229,45 @@ class PlayScenario:
             self.suggested_distance_target.config(text=suggested_approach[2])
             self.suggested_maneuver.config(text=suggested_approach[6])
 
+            self.load_image(case_ID)
+
+    def load_image(self, case_ID):
+        current_path = os.getcwd()
+        cases_name = pd.read_excel(
+            current_path + "/Training_DataSet/" + self.scenario + "/" + self.scenario + "_class_Name.xls")
+        np.array(cases_name)
+        case_name = cases_name.values[case_ID][0]
+        suggested_image = Image.open(current_path + "/images/output_images/" + self.scenario + case_name + ".png")
+        resized_suggested_image = suggested_image.resize((354, 369), Image.ANTIALIAS)
+        img = ImageTk.PhotoImage(resized_suggested_image)
+        self.suggested_image_id = self.canvas.create_image(352.5, 360, anchor="se", image=img)
+        self.root.mainloop()
+
     def more_info(self):
         messagebox.showinfo(title="information",
                             message="1. Create a direct route to get close ahead of the FPSO (speed under 3 knots. If the FPSO was on fire choose 5 knots)\n\n 2. Position the support vessel as a block (heading=60 degrees, distance=100m above the FPSO, and position the vessel's bow far enough towards the bowline/centerline of the FPSO to avoid the ice come between the vessels). let some ice flow and then give some prop-wash flushing at the same time.\n\n 3. Once the zone is clearing from the ice, move from DP2 (leeway) to DP3 (broadside pushing). (position to the North with distance=100m)\n\n 4. Thrust to the west, try to clear out the zone, then go back and forth to make a couple of thrust passes (The range for the broadside pushing depends on the situation, but try to clear the area closer to the FPSO in the zone).")
 
     def get_selected_rows(self, class_id):
         rows = []
+        cases_ID = []
         current_path = os.getcwd()
         data_path = current_path + "/Training_DataSet/" + self.scenario + "/" + self.scenario + "_Training_withclassID.csv"
         with open(data_path, newline='', encoding="ISO-8859-1") as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',', quotechar='|')
-            for row in csv_reader:
+            for line_num, row in enumerate(csv_reader):
+
                 if row[0] == str(class_id):
                     rows.append([row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]])
+                    cases_ID.append(line_num + 1)
         datarows = np.array(rows)
-        return datarows
+        return datarows, cases_ID
 
-    def similarity_measure(self, selected_rows, features_array):
+    def similarity_measure(self, selected_rows, cases_number, features_array):
         res = pairwise_distances_argmin_min(selected_rows, features_array, metric='cosine')
-        dist_min_value = min(np.ndarray.tolist(res[1]))
-        min_index = np.ndarray.tolist(res[1]).index(dist_min_value)
-        return selected_rows[min_index]
+        print(res[1])
+        min_dist_value = min(np.ndarray.tolist(res[1]))
+        min_index = np.ndarray.tolist(res[1]).index(min_dist_value)
+        return selected_rows[min_index], cases_number[min_index]
 
     def decision_tree_classifier(self, features_array):
         current_path = os.getcwd()
@@ -262,11 +281,12 @@ class PlayScenario:
         clf = tree.DecisionTreeClassifier(splitter="best", random_state=0)
         clf.fit(x_train, y_train)
         class_id = clf.predict(features_array)
-        selected_rows = self.get_selected_rows(int(class_id[0]))
-        output_array = self.similarity_measure(selected_rows, features_array)
-        return output_array
+        selected_rows, cases_ID = self.get_selected_rows(int(class_id[0]))
+        output_array, case_ID = self.similarity_measure(selected_rows, cases_ID, features_array)
+        return output_array, case_ID
 
     def reset_properties(self):
+        # Resetting ownship status
         self.scale_speed.set(0)
         self.scale_heading.set(0)
         self.scale_ice_load.set(0)
@@ -277,9 +297,17 @@ class PlayScenario:
         self.entry_technique.delete(0, 100)
         self.entry_heading.delete(0, 100)
 
-    # def get_back(self):
-    #     self.simReceiver.__del__()
-    #     init_main_page(self.root)
+        # Resetting suggested approach attributes
+        self.suggested_speed.config(text="")
+        self.suggested_area_focus.config(text="")
+        self.suggested_aspect.config(text="")
+        self.suggested_distance_target.config(text="")
+        self.suggested_heading.config(text="")
+        self.suggested_maneuver.config(text="")
+        self.suggested_orientation.config(text="")
+
+        # Resetting output_image
+        self.canvas.delete(self.suggested_image_id)
 
     def init_page(self):
         container = tk.Frame(self.root, width=self.main_frame_width * 0.94, height=self.main_frame_height * 0.67,
@@ -440,13 +468,13 @@ class PlayScenario:
         more_info_btn.config(relief="groove", font=("helvetica", 12, "bold"), fg="green")
         more_info_btn.place(relx=.5, rely=.99, anchor="center")
 
-        canvas = tk.Canvas(suggested_approach_frame, bg='#000000')
+        self.canvas = tk.Canvas(suggested_approach_frame, bg='#000000')
 
         suggested_approach_frame.winfo_screenwidth()
 
-        canvas.place(relx=0.5, rely=0.5, width=self.main_frame_width * 0.25,
-                     height=self.main_frame_height * 0.4,
-                     anchor="center")
+        self.canvas.place(relx=0.5, rely=0.5, width=self.main_frame_width * 0.25,
+                          height=self.main_frame_height * 0.4,
+                          anchor="center")
 
         # The labels for suggested own ship attributes description!
         img = ImageTk.PhotoImage(Image.open("images/MoreInfo.png"))
@@ -487,5 +515,5 @@ class PlayScenario:
         manouver_moreinfo.place(relx=0.19, rely=0.715, anchor="center")
         HoverText(manouver_moreinfo, "This is a sample hover text")
 
-        canvas.create_image(352.5, 360, anchor="se", image=img_desc)
+        self.canvas.create_image(352.5, 360, anchor="se", image=img_desc)
         self.root.mainloop()
