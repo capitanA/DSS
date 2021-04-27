@@ -37,6 +37,7 @@ class Features:
         route_mapper_dict = {"top_left": "_TL", "top": "_T", "top_right": "_TR", "left": "_L", "right": "_R",
                              "bottom_left": "_BL", "bottom": "_B", "bottom_right": "_BR"}
         for sec in range(180, self.time_stamp):
+
             ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
                                            self.log_objects[sec].longitude)
             if sec > 180:  # This is for creating the string sequence of ownship position after seccond of 180!
@@ -44,6 +45,7 @@ class Features:
                     if ownship_pos != "alongside":
                         self.ownship_tracker.append(route_mapper_dict[ownship_pos])
                         previous_pos = ownship_pos
+
 
     # The Aspect shows the vessel pathway in relation to the target. the options for this feature could be:
     # "J_approach": getting close to the target from bellow the zone.
@@ -156,7 +158,7 @@ class Features:
         print(area_of_focus_dict)
         if area_of_focus_dict["z"] == 0 and area_of_focus_dict["av"] == 0 and area_of_focus_dict["az"] == 0 and \
                 area_of_focus_dict["along_zone"] == 0:
-            self.area_of_focus = "unkonwn"
+            self.area_of_focus = "unknown"
 
         else:
 
@@ -306,18 +308,18 @@ class Features:
     #     self.maneuver = max(paires)[1]
     #     print(technique_dict)
 
-    def ice_technique_determinor_1(self):
-        start_loc_ice = {"emergency": 146.3655880, "pushing": 146.36156890, "leeway": self.log_objects[0].longitude}
-        colision_time = collision_time_determinor(self.scenario)
-        if self.time_stamp < colision_time[0]:
-            self.maneuver = "N/A_maneuver"
-        else:
-            for sec in range(colision_time[0], self.time_stamp, 5):
-                heading_delta = abs(self.log_objects[sec].heading - self.log_objects[sec].cog)
-                if self.time_stamp not in colision_time:
-                    pass
-                else:  # ownship is in contact with ice!
-                    pass
+    # def ice_technique_determinor_1(self):
+    #     start_loc_ice = {"emergency": 146.3655880, "pushing": 146.36156890, "leeway": self.log_objects[0].longitude}
+    #     colision_time = collision_time_determinor(self.scenario)
+    #     if self.time_stamp < colision_time[0]:
+    #         self.maneuver = "N/A_maneuver"
+    #     else:
+    #         for sec in range(colision_time[0], self.time_stamp, 5):
+    #             heading_delta = abs(self.log_objects[sec].heading - self.log_objects[sec].cog)
+    #             if self.time_stamp not in colision_time:
+    #                 pass
+    #             else:  # ownship is in contact with ice!
+    #                 pass
 
     def check_for_sector(self, root_sequence):
         tr_occurance = root_sequence.count("_TR")

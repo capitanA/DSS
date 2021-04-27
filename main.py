@@ -3,7 +3,9 @@ from PIL import ImageTk, Image
 from helper import BLabel
 from functools import partial
 from scenario_page import PlayScenario
+from simReceiver import SimReceiver
 import logging
+import sys
 import ipdb
 
 
@@ -28,10 +30,15 @@ def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_
     pushing_frame.destroy()
     leeway_frame.destroy()
     emergency_frame.destroy()
-    go_back_button = tk.Button(root, text="Back To Main Menue", width=20, height=3, anchor="c", command=get_back,
+
+    scenario_obj = PlayScenario(root, main_frame, scenario, logger, isRealTime)
+
+    back_command = partial(get_back, scenario_obj)
+
+    go_back_button = tk.Button(root, text="Back To Main Menue", width=20, height=3, anchor="c",
+                               command=back_command,
                                bg="gray")
     go_back_button.place(relx=0.5, rely=0.05, anchor="center")
-    scenario_obj = PlayScenario(root, main_frame, scenario, logger)
     scenario_obj.init_page()
 
 
@@ -51,13 +58,13 @@ def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_
 #     ff.place(relx=0.5, rely=0.03, anchor="n")
 
 
-def get_back():
-    init_page(root)
+def get_back(scenario_obj):
+    if arg == "-realTime":
+        scenario_obj.simReceiver.close_port()
+    init_main_page(root)
 
 
-
-
-def init_page(root):
+def init_main_page(root):
     frame_width = root.winfo_screenwidth()
     frame_height = root.winfo_screenheight()
     main_frame = tk.Frame(root, width=frame_width - 30, height=frame_height)
@@ -155,36 +162,59 @@ def init_page(root):
     # label.add_option("Wind: Light")
     # label.add_option("Ice: 0.3-0.7m first year ice, 4-tenths concentration")
     # label.l.place(relx=0.5, rely=0.5, anchor="center")
+
+    # llbb = tk.Label(dsc_frame_sce_1,
+    #                 text="Objective: Clear the encroaching pack ice from the indicated area\n\tusing the pushing technique\n Time: 15min\nVessel heading: 120deg\nCurrent direction: 180deg\nwind: light\nIce: 0.3-0.7m first year ice, 4-tenths concentration",
+    #                 bg="white", justify="left")
     llbb = tk.Label(dsc_frame_sce_1,
-                    text="Objective: Clear the indicated area aft of\n\tmidships using the leeway technique\n Time: 15min\nVessel heading: 60deg\nTarget heading: 0deg!\nCurrent: 1kn",
+                    text="Objective: Clear the encroaching pack ice from the\n\tindicated area using pushing technique\nTime: 15min\nVessel heading: 120deg\nCurrent direction: 180deg\nIce: 0.3-0.7m first year ice, 4-tenths concentration",
+                    bg="white", justify="left")
+    llbb.place(relx=0.5, rely=0.5, anchor="center")
+
+    # llbb = tk.Label(dsc_frame_sce_2,
+    #                 text="Objective: Clear the indicated area aft of \n\tmidships using the leeway technique\n Time: 15min\nVessel heading: 60deg\nTarget heading: 0deg!\nCurrent: 1kn\nCurrent direction: 180deg\n Wind: Light\nIce: 0.3-0.7m first year ice, 5-tenths concentration ",
+    #                 bg="white", justify="left")
+    llbb = tk.Label(dsc_frame_sce_2,
+                    text="Objective: Clear the indicated area aft of\n\tmidships using the leeway technique\nTime: 15min\nVessel heading: 60deg\nCurrent direction: 180deg\nIce: 0.3-0.7m first year ice, 5-tenths concentration ",
+                    bg="white", justify="left")
+
+    llbb.place(relx=0.5, rely=0.5, anchor="center")
+
+    # llbb = tk.Label(dsc_frame_sce_3,
+    #                 text="Objective: Clear the encroaching pack ice from the boxed area\n Time: 30min\nTarget heading: 0deg!\nCurrent: 0.5kn\nCurrent direction: 180deg\n Wind: Light\nIce: 0.3-0.7m first year ice, 7-tenths concentration",
+    #                 bg="white", justify="left")
+    llbb = tk.Label(dsc_frame_sce_3,
+                    text="Objective: Clear the encroaching pack ice from the\n\tboxed area\nTime: 30min\nCurrent: 0.5kn\nCurrent direction: 180deg\nIce: 0.3-0.7m first year ice, 7-tenths concentration",
                     bg="white", justify="left")
     llbb.place(relx=0.5, rely=0.5, anchor="center")
 
     ######   The description for leeway scenario   ######
-    label = BLabel(dsc_frame_sce_2)
-    label.add_option("Objective: Clear the indicated area aft of midships using the leeway technique")
-    label.add_option("Time: 15min")
-    label.add_option("Vessel heading: 60deg")
-    label.add_option("Target heading: 0deg!")
-    label.add_option("Current: 1kn")
-    label.add_option("Current direction: 180deg S")
-    label.add_option("Wind: Light")
-    label.add_option("Ice: 0.3-0.7m first year ice, 5-tenths concentration")
-    label.l.place(relx=0.5, rely=0.5, anchor="center")
+    # label = BLabel(dsc_frame_sce_2)
+    # label.add_option("Objective: Clear the indicated area aft of midships using the leeway technique")
+    # label.add_option("Time: 15min")
+    # label.add_option("Vessel heading: 60deg")
+    # label.add_option("Target heading: 0deg!")
+    # label.add_option("Current: 1kn")
+    # label.add_option("Current direction: 180deg S")
+    # label.add_option("Wind: Light")
+    # label.add_option("Ice: 0.3-0.7m first year ice, 5-tenths concentration")
+    # label.l.place(relx=0.5, rely=0.5, anchor="center")
 
     ######   The description for emergency scenario   ######
-    label = BLabel(dsc_frame_sce_3)
-    label.add_option("Objective: Clear encroaching pack ice from the boxed area shown")
-    label.add_option("Time: 30min")
-    label.add_option("Current: 0.5kn")
-    label.add_option("Current direction: 180deg S")
-    label.add_option("Wind: Light")
-    label.add_option("Ice: 0.3-0.7m first year ice")
-    label.l.place(relx=0.5, rely=0.5, anchor="center")
+    # label = BLabel(dsc_frame_sce_3)
+    # label.add_option("Objective: Clear the encroaching pack ice from the boxed area shown")
+    # label.add_option("Time: 30min")
+    # label.add_option("Current: 0.5kn")
+    # label.add_option("Current direction: 180deg S")
+    # label.add_option("Wind: Light")
+    # label.add_option("Ice: 0.3-0.7m first year ice")
+    # label.l.place(relx=0.5, rely=0.5, anchor="center")
+
     root.mainloop()
 
 
 if __name__ == "__main__":
+    global arg
     """ setting looger for programmer"""
     logging.basicConfig(filename="logs.log",
                         format='%(asctime)s %(message)s',
@@ -196,7 +226,13 @@ if __name__ == "__main__":
     console.setLevel(logging.INFO)
     logger.addHandler(console)
 
+    isRealTime = False
+    for i, arg in enumerate(sys.argv):
+        if arg == "-realTime":
+            isRealTime = True
+            print("Command Arg -realTime detected " + str(isRealTime))
+
     root = tk.Tk()
     root.title("DSS")
     root.geometry("1200x800")
-    init_page(root)
+    init_main_page(root)

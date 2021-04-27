@@ -4,7 +4,7 @@ import csv
 class CsvFile:
     def __init__(self, simtime=0, latitude=0, longitude=0, sog=0, cog=0, heading=0, aftthruster=0, forethruster=0,
                  portengine=0,
-                 stbdengine=0, portrudder=0, stbdrudder=0):
+                 stbdengine=0, portrudder=0, stbdrudder=0, iceload=0):
         self.simtime = simtime
         self.latitude = latitude
         self.longitude = longitude
@@ -17,6 +17,18 @@ class CsvFile:
         self.stbdengine = stbdengine
         self.portrudder = portrudder
         self.stbdrudder = stbdrudder
+        self.iceload = iceload
+
+    ## Populate a CsvFile from the contents of a Python dictionary (dict)
+    @classmethod
+    def fromDict(cls, dict):
+        return cls(dict["SimTime"],
+                   abs(dict["Lat"]), abs(dict["Long"]),
+                   dict["SOG"], dict["COG"], dict["Heading"],
+                   dict["Aft"], dict["Fore"],
+                   dict["PortE"], dict["StbdE"],
+                   dict["PortR"], dict["StbdR"],
+                   dict["IceLoad"])
 
 
 class CsvRowsOperator:

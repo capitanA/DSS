@@ -2,6 +2,7 @@ import math
 import tkinter as tk
 import xml.etree.cElementTree as ET
 import os
+import numpy as np
 import ipdb
 
 angle_pos_key = {"top": ["top_right", "top_left"], "bottom": ["btm_right", "btm_left"],
@@ -104,13 +105,27 @@ coordinates = {
                                                                      "lat_btm_right": 60.51624,
                                                                      "long_btm_right": 146.35993}}
 
-# This dictionary will help to create a feature row, corresponding to status of ownship at the time of assistance request
-feature_keys = {"solo": 0, "combo": 1, "P": 5, "L": 1, "PW": 2, "S": 3, "C": 4, "other": 7, "N/A_technique": 6,
-                "J_approach": 1,
-                "direct": 2, "up_current": 0, "N/A_aspect": 3, "av": 1, "z": 2, "az": 0, "along_zone": 3,
-                "unknown": 4, "angle": 2, "perpendicular": 1, "stem": 0,
-                "N/A_heading": 3, "stern": 2, "bow": 0, "rotating": 1, "parallel": 4, "N/A_orientation": 3, "safe": 0,
-                "dangerous": 1, "N/A_speed": 2}
+# This dictionary will help to create a numerical feature row using the index of the corresponding feature's list bellow,
+features_codec = {"combination_of_techniques": ["solo", "combo"],
+                  "technique": ["N/A_maneuver", "P", "L", "PW", "S", "C"],
+                  "aspect": ["up_current", "J_approach", "direct", "N/A_aspect"],
+                  "area_of_focus": ["az", "av", "z", "along_zone", "unknown"],
+
+                  "heading": ["stem", "perpendicular", "angle", "rotating", "N/A_heading"],
+                  "orientation": ["bow", "changing", "stern", "N/A_orientation", "parallel"],
+                  "speed": ["safe", "dangerous", "N/A_speed"],
+                  "distance": ["Close_To_Target", "Normal_Range", "Far_From_Target"]
+                  }
+
+
+# This dictionary will help to create a numerical feature row using the index of the corresponding feature's list bellow,
+# feature_keys = {"solo": 0, "combo": 1, "P": 5, "L": 1, "PW": 2, "S": 3, "C": 4, "N/A_maneuver": 6,
+#                 "J_approach": 1,
+#                 "direct": 2, "up_current": 0, "N/A_aspect": 3, "av": 1, "z": 2, "az": 0, "along_zone": 3,
+#                 "unknown": 4, "angle": 2, "perpendicular": 1, "stem": 0,
+#                 "N/A_heading": 3, "stern": 2, "bow": 0, "rotating": 1, "parallel": 4, "N/A_orientation": 3,
+#                 "safe": 0,
+#                 "dangerous": 1, "N/A_speed": 2}
 
 
 # This function determine in which quarter the ship got located. Then calculated the correct angle proportional in relation to the start point.
@@ -476,7 +491,8 @@ def calc_dists_from_target(ownship_lat, ownship_long, scenario):
     return dist_list
 
 
-def bow_stern_checker(scenario,ownship_pos, up_heading, down_heading, orientation_dict, down_distance, up_distance, heading):
+def bow_stern_checker(scenario, ownship_pos, up_heading, down_heading, orientation_dict, down_distance, up_distance,
+                      heading):
     thresh = abs((up_heading - down_heading)) / 2
     if ownship_pos == "top_left":
         if down_distance > up_distance:
@@ -674,34 +690,51 @@ def stem_angle_checker(scenario, heading):
             return "angle"
 
 
-def generate_feature_array(features, scenario):
-    features_array = list()
-    Area_of_focus = feature_keys[features.area_of_focus]
-    heading = feature_keys[features.heading[0]]
+def feature_array_convertor(encode, speed, heading, distance, aspect, area_focus, orientation, technique, scenario):
+    if encode:
+        features_array = list()
 
-    orientation = feature_keys[features.orientation]
-    if features.distance_from_target <= 35:  # This range has been assumed for the ownship to be in a close distance to the target!
-        vessel_Distance_from_target = 0
-    elif features.distance_from_target > 75:  # When the ownship is in a normal distance to the target!
-        vessel_Distance_from_target = 1
-    else:
-        vessel_Distance_from_target = 2
+        if "+" in technique:
+            combination_of_technique = 1
+        else:
+            combination_of_technique = 0
+        Area_of_focus = features_codec["area_of_focus"].index(area_focus)
+        heading = features_codec["heading"].index(heading)
+        orientation = features_codec["orientation"].index(orientation)
 
-    speed = feature_keys[features.speed[0]]
-    technique = feature_keys[features.maneuver]
-    aspect = feature_keys[features.aspect]
-    if "+" in features.aspect:
-        combination_of_technique = 1
+
+        if distance <= 35:  # This range has been assumed for the ownship to be in a close distance to the target!
+            vessel_Distance_from_target = 0
+        elif distance >= 75:  # When the ownship is in a far distance to the target!
+
+            vessel_Distance_from_target = 2
+        else:
+            vessel_Distance_from_target = 1  # When the ownship is in a normal distance to the target!
+
+        speed = features_codec["speed"].index(speed)
+        technique = features_codec["technique"].index(technique)
+        aspect = features_codec["aspect"].index(aspect)
+
+        if scenario == "emergency":
+            features_array.append([Area_of_focus, heading, orientation, vessel_Distance_from_target, speed, technique,
+                                   aspect,
+                                   combination_of_technique])
+        else:
+            features_array.append([heading, orientation, Area_of_focus, speed, vessel_Distance_from_target, technique,
+                                   aspect,
+                                   combination_of_technique])
+        features_array = np.array(features_array)
     else:
-        combination_of_technique = 0
-    if scenario == "emergency":
-        features_array.append(
-            [Area_of_focus, heading, orientation, vessel_Distance_from_target, speed, technique, aspect,
-             combination_of_technique])
-    else:
-        features_array.append(
-            [heading, orientation,Area_of_focus,speed, vessel_Distance_from_target, technique, aspect,
-             combination_of_technique])
+        speed = features_codec["speed"][int(speed)]
+        heading = features_codec["heading"][int(heading)]
+        print(f"dfadfsfsfsfss{distance}")
+        distance = features_codec["distance"][int(distance[1])]
+        aspect = features_codec["aspect"][int(aspect)]
+        area_focus = features_codec["area_of_focus"][int(area_focus)]
+        orientation = features_codec["orientation"][int(orientation)]
+        technique = features_codec["technique"][int(technique)]
+        features_array = [speed, heading, distance, aspect, area_focus, orientation, technique]
+
     return features_array
 
 
