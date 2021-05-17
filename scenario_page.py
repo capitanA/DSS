@@ -180,11 +180,11 @@ class PlayScenario:
             self.scale_heading.set(int(self.features.heading[1]))
             self.scale_ice_load.set(10)
             self.scale_distance_target.set(round(self.features.distance_from_target, 4))
-            self.entry_aspect.insert(0, self.features.aspect)
-            self.entry_area_focus.insert(0, self.features.area_of_focus)
-            self.entry_orientation_target.insert(0, self.features.orientation)
-            self.entry_technique.insert(0, self.features.maneuver)
-            self.entry_heading.insert(0, self.features.heading[0])
+            # self.entry_aspect.insert(0, self.features.aspect)
+            # self.entry_area_focus.insert(0, self.features.area_of_focus)
+            # self.entry_orientation_target.insert(0, self.features.orientation)
+            # self.entry_technique.insert(0, self.features.maneuver)
+            # self.entry_heading.insert(0, self.features.heading[0])
 
             # this is just for capturing the snapshot of the DSS for fatemes's thesis. Example
             # self.scale_speed.set(1.5)
@@ -198,49 +198,47 @@ class PlayScenario:
             # self.entry_heading.insert(0, "Angle")
 
             '''creating passing the feature_array to the classifier for classification'''
-            feature_array = feature_array_convertor(True, self.features.speed[0], self.entry_heading.get(),
-                                                    int(self.scale_distance_target.get()),
-                                                    self.entry_aspect.get(), self.entry_area_focus.get(),
-                                                    self.entry_orientation_target.get(), self.entry_technique.get(),
-                                                    self.scenario)
-            output_case, case_ID = self.decision_tree_classifier(feature_array)
+            feature_array = feature_array_convertor(True, self.features.speed[1],
+                                                    int(self.scale_distance_target.get()), self.features.heading[1],
+                                                    self.features.aspect, self.features.area_of_focus,
+                                                    self.features.orientation, self.features.maneuver)
 
-            if self.scenario == "emergency":  # the features priority is different in 'emergency' than other scenarios.
-                suggested_approach = feature_array_convertor(False, output_case[4], output_case[1],
-                                                             (self.scale_distance_target.get(), output_case[3]),
-                                                             output_case[6],
-                                                             output_case[0],
-                                                             output_case[2], output_case[5],
-                                                             self.scenario)
-            else:
+            suggested_case, case_ID, case_name, suggested_technique = self.decision_tree_classifier(feature_array,
+                                                                                                    self.scenario)
 
-                suggested_approach = feature_array_convertor(False, output_case[3], output_case[0],
-                                                             output_case[4], output_case[6],
-                                                             output_case[2],
-                                                             output_case[1], output_case[5],
-                                                             self.scenario)
-
+            suggested_approach_dict = feature_array_convertor(False, suggested_case[0], suggested_case[1],
+                                                         suggested_case[2], suggested_case[4],
+                                                         suggested_case[5],
+                                                         suggested_case[6],
+                                                         suggested_technique)
             # filling the suggested ownship status variables
-            self.suggested_speed.config(text=suggested_approach[0])
-            self.suggested_heading.config(text=suggested_approach[1])
-            self.suggested_area_focus.config(text=suggested_approach[4])
-            self.suggested_aspect.config(text=suggested_approach[3])
-            self.suggested_orientation.config(text=suggested_approach[5])
-            self.suggested_distance_target.config(text=suggested_approach[2])
-            self.suggested_maneuver.config(text=suggested_approach[6])
+            self.suggested_speed.config(text=suggested_approach_dict["speed"])
+            self.suggested_heading.config(text=suggested_approach_dict["heading"])
+            self.suggested_area_focus.config(text=suggested_approach_dict["area_of_focus"])
+            self.suggested_aspect.config(text=suggested_approach_dict["aspect"])
+            self.suggested_orientation.config(text=suggested_approach_dict["orientation"])
+            self.suggested_distance_target.config(text=suggested_approach_dict["distance"])
+            self.suggested_maneuver.config(text=suggested_technique)
 
+            print(f"this is the name for that specific case{case_ID}")
             self.load_image(case_ID)
 
     def load_image(self, case_ID):
+
         current_path = os.getcwd()
         cases_name = pd.read_excel(
             current_path + "/Training_DataSet/" + self.scenario + "/" + self.scenario + "_class_Name.xls")
         np.array(cases_name)
         case_name = cases_name.values[case_ID][0]
-        suggested_image = Image.open(current_path + "/images/output_images/" + self.scenario + case_name + ".png")
-        resized_suggested_image = suggested_image.resize((354, 369), Image.ANTIALIAS)
-        img = ImageTk.PhotoImage(resized_suggested_image)
-        self.suggested_image_id = self.canvas.create_image(352.5, 360, anchor="se", image=img)
+        print(f"this is the number of the predicted  case  {case_name}")
+        try:
+            suggested_image = Image.open(
+                current_path + "/images/output_images/" + self.scenario + "/" + case_name + ".png")
+            resized_suggested_image = suggested_image.resize((354, 369), Image.ANTIALIAS)
+            img = ImageTk.PhotoImage(resized_suggested_image)
+            self.suggested_image_id = self.canvas.create_image(352.5, 360, anchor="se", image=img)
+        except:
+            self.logger.info("couldn't find such a file")
         self.root.mainloop()
 
     def more_info(self):
@@ -251,39 +249,51 @@ class PlayScenario:
         rows = []
         cases_ID = []
         current_path = os.getcwd()
-        data_path = current_path + "/Training_DataSet/" + self.scenario + "/" + self.scenario + "_Training_withclassID.csv"
+        data_path = current_path + "/Training_DataSet/" + self.scenario + "_N/" + self.scenario + "_Training_withclassID.csv"
         with open(data_path, newline='', encoding="ISO-8859-1") as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',', quotechar='|')
             for line_num, row in enumerate(csv_reader):
 
                 if row[0] == str(class_id):
-                    rows.append([row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]])
+                    rows.append([row[1], row[2], row[3], row[4], row[5], row[6], row[7]])
                     cases_ID.append(line_num + 1)
         datarows = np.array(rows)
         return datarows, cases_ID
 
     def similarity_measure(self, selected_rows, cases_number, features_array):
         res = pairwise_distances_argmin_min(selected_rows, features_array, metric='cosine')
-        print(res[1])
         min_dist_value = min(np.ndarray.tolist(res[1]))
         min_index = np.ndarray.tolist(res[1]).index(min_dist_value)
         return selected_rows[min_index], cases_number[min_index]
 
-    def decision_tree_classifier(self, features_array):
+    def decision_tree_classifier(self, features_array, scenario):
+        print(features_array)
         current_path = os.getcwd()
+        case_techniques = pd.read_excel(
+            current_path + "/Training_DataSet/" + self.scenario + "_N" + "/" + self.scenario + "_techniques.xls")
+        case_techniques = case_techniques.to_numpy()
+
+        case_names = pd.read_excel(
+            current_path + "/Training_DataSet/" + self.scenario + "_N" + "/" + self.scenario + "_className.xls")
+        case_names = case_names.to_numpy()
+
         df_x_train = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "/" + self.scenario + "_Training.xls")
+            current_path + "/Training_DataSet/" + self.scenario + "_N" + "/" + self.scenario + "_Training.xls")
         x_train = np.array(df_x_train.astype(float))
         df_y_train = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "/" + self.scenario + "_ID.xls")
-        y_train = np.array(df_y_train)
-        y_train = y_train.ravel()
-        clf = tree.DecisionTreeClassifier(splitter="best", random_state=0)
-        clf.fit(x_train, y_train)
+            current_path + "/Training_DataSet/" + self.scenario + "_N" + "/" + self.scenario + "_ID.xls")
+        if scenario == "emergency":
+            max_depth = 4
+        else:
+            max_depth = 3
+        clf = tree.DecisionTreeClassifier(random_state=42, max_depth=max_depth)
+
+        clf.fit(x_train, df_y_train)
         class_id = clf.predict(features_array)
         selected_rows, cases_ID = self.get_selected_rows(int(class_id[0]))
         output_array, case_ID = self.similarity_measure(selected_rows, cases_ID, features_array)
-        return output_array, case_ID
+        print(f"this is case ID for out put case{case_ID}")
+        return output_array, case_ID, case_names[case_ID][0], case_techniques[case_ID][0]
 
     def reset_properties(self):
         # Resetting ownship status
@@ -291,20 +301,20 @@ class PlayScenario:
         self.scale_heading.set(0)
         self.scale_ice_load.set(0)
         self.scale_distance_target.set(0)
-        self.entry_aspect.delete(0, 100)
-        self.entry_area_focus.delete(0, 100)
-        self.entry_orientation_target.delete(0, 100)
-        self.entry_technique.delete(0, 100)
-        self.entry_heading.delete(0, 100)
+        # self.entry_aspect.delete(0, 100)
+        # self.entry_area_focus.delete(0, 100)
+        # self.entry_orientation_target.delete(0, 100)
+        # self.entry_technique.delete(0, 100)
+        # self.entry_heading.delete(0, 100)
 
         # Resetting suggested approach attributes
         self.suggested_speed.config(text="")
-        self.suggested_area_focus.config(text="")
-        self.suggested_aspect.config(text="")
+        # self.suggested_area_focus.config(text="")
+        # self.suggested_aspect.config(text="")
         self.suggested_distance_target.config(text="")
         self.suggested_heading.config(text="")
-        self.suggested_maneuver.config(text="")
-        self.suggested_orientation.config(text="")
+        # self.suggested_maneuver.config(text="")
+        # self.suggested_orientation.config(text="")
 
         # Resetting output_image
         self.canvas.delete(self.suggested_image_id)
@@ -350,11 +360,11 @@ class PlayScenario:
         self.scale_heading.config(length=240)
         self.scale_heading.place(relx=0.6, rely=0.16, anchor="center")
 
-        lbl_head = tk.Label(own_vessel_frame, text="Heading status", font=("helvetica", 12, "bold"))
-        lbl_head.place(relx=0.1, rely=0.88, anchor="center")
-        self.entry_heading = tk.Entry(own_vessel_frame)
-        self.entry_heading.place(relx=0.60, rely=0.88, anchor="center")
-        self.entry_heading.config(width=26, justify="center", relief="groove")
+        # lbl_head = tk.Label(own_vessel_frame, text="Heading status", font=("helvetica", 12, "bold"))
+        # lbl_head.place(relx=0.1, rely=0.88, anchor="center")
+        # self.entry_heading = tk.Entry(own_vessel_frame)
+        # self.entry_heading.place(relx=0.60, rely=0.88, anchor="center")
+        # self.entry_heading.config(width=26, justify="center", relief="groove")
 
         scale_ice_load = tk.Label(own_vessel_frame, text="Ice Load", font=("helvetica", 12, "bold"))
         scale_ice_load.place(relx=0.06, rely=0.28, anchor="center")
@@ -370,29 +380,29 @@ class PlayScenario:
         self.scale_distance_target.config(length=240)
         self.scale_distance_target.place(relx=0.6, rely=0.36, anchor="center")
 
-        lbl_aspect = tk.Label(own_vessel_frame, text="Aspect", font=("helvetica", 12, "bold"))
-        lbl_aspect.place(relx=0.06, rely=0.48, anchor="center")
-        self.entry_aspect = tk.Entry(own_vessel_frame)
-        self.entry_aspect.place(relx=0.60, rely=0.48, anchor="center")
-        self.entry_aspect.config(width=26, justify="center", relief="groove")
+        # lbl_aspect = tk.Label(own_vessel_frame, text="Aspect", font=("helvetica", 12, "bold"))
+        # lbl_aspect.place(relx=0.06, rely=0.48, anchor="center")
+        # self.entry_aspect = tk.Entry(own_vessel_frame)
+        # self.entry_aspect.place(relx=0.60, rely=0.48, anchor="center")
+        # self.entry_aspect.config(width=26, justify="center", relief="groove")
 
-        lbl_area_focus = tk.Label(own_vessel_frame, text="Area of Focus", font=("helvetica", 12, "bold"))
-        lbl_area_focus.place(relx=0.1, rely=0.58, anchor="center")
-        self.entry_area_focus = tk.Entry(own_vessel_frame)
-        self.entry_area_focus.place(relx=0.60, rely=0.58, anchor="center")
-        self.entry_area_focus.config(width=26, justify="center", relief="groove")
+        # lbl_area_focus = tk.Label(own_vessel_frame, text="Area of Focus", font=("helvetica", 12, "bold"))
+        # lbl_area_focus.place(relx=0.1, rely=0.58, anchor="center")
+        # self.entry_area_focus = tk.Entry(own_vessel_frame)
+        # self.entry_area_focus.place(relx=0.60, rely=0.58, anchor="center")
+        # self.entry_area_focus.config(width=26, justify="center", relief="groove")
 
-        lbl_orientation = tk.Label(own_vessel_frame, text="Orientation to Target", font=("helvetica", 12, "bold"))
-        lbl_orientation.place(relx=0.13, rely=0.68, anchor="center")
-        self.entry_orientation_target = tk.Entry(own_vessel_frame)
-        self.entry_orientation_target.place(relx=0.60, rely=0.68, anchor="center")
-        self.entry_orientation_target.config(width=26, justify="center", relief="groove")
+        # lbl_orientation = tk.Label(own_vessel_frame, text="Orientation to Target", font=("helvetica", 12, "bold"))
+        # lbl_orientation.place(relx=0.13, rely=0.68, anchor="center")
+        # self.entry_orientation_target = tk.Entry(own_vessel_frame)
+        # self.entry_orientation_target.place(relx=0.60, rely=0.68, anchor="center")
+        # self.entry_orientation_target.config(width=26, justify="center", relief="groove")
 
-        lbl_technique = tk.Label(own_vessel_frame, text="Technique", font=("helvetica", 12, "bold"))
-        lbl_technique.place(relx=0.07, rely=0.78, anchor="center")
-        self.entry_technique = tk.Entry(own_vessel_frame)
-        self.entry_technique.place(relx=0.60, rely=0.78, anchor="center")
-        self.entry_technique.config(width=26, justify="center", relief="groove")
+        # lbl_technique = tk.Label(own_vessel_frame, text="Technique", font=("helvetica", 12, "bold"))
+        # lbl_technique.place(relx=0.07, rely=0.78, anchor="center")
+        # self.entry_technique = tk.Entry(own_vessel_frame)
+        # self.entry_technique.place(relx=0.60, rely=0.78, anchor="center")
+        # self.entry_technique.config(width=26, justify="center", relief="groove")
 
         ####### create the widgets for the suggested own ship status  ######
 

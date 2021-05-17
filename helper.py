@@ -107,12 +107,12 @@ coordinates = {
 
 # This dictionary will help to create a numerical feature row using the index of the corresponding feature's list bellow,
 features_codec = {"combination_of_techniques": ["solo", "combo"],
-                  "technique": ["N/A_maneuver", "P", "L", "PW", "S", "C"],
+                  "technique": ["L", "PW", "S", "C", "P", "N/A_maneuver"],
                   "aspect": ["up_current", "J_approach", "direct", "N/A_aspect"],
                   "area_of_focus": ["az", "av", "z", "along_zone", "unknown"],
 
-                  "heading": ["stem", "perpendicular", "angle", "rotating", "N/A_heading"],
-                  "orientation": ["bow", "changing", "stern", "N/A_orientation", "parallel"],
+                  "heading": ["stem", "perpendicular", "angle", "changing", "N/A_heading"],
+                  "orientation": ["bow", "rotating", "stern", "N/A_orientation", "parallel"],
                   "speed": ["safe", "dangerous", "N/A_speed"],
                   "distance": ["Close_To_Target", "Normal_Range", "Far_From_Target"]
                   }
@@ -495,6 +495,7 @@ def bow_stern_checker(scenario, ownship_pos, up_heading, down_heading, orientati
                       heading):
     thresh = abs((up_heading - down_heading)) / 2
     if ownship_pos == "top_left":
+        # ipdb.set_trace()
         if down_distance > up_distance:
             down_heading -= 10
         else:
@@ -519,6 +520,7 @@ def bow_stern_checker(scenario, ownship_pos, up_heading, down_heading, orientati
             return "stern"
 
     elif ownship_pos == "left" or ownship_pos == "alongside":
+        # ipdb.set_trace()
         if down_distance > up_distance:
             down_heading -= 10
         else:
@@ -541,6 +543,7 @@ def bow_stern_checker(scenario, ownship_pos, up_heading, down_heading, orientati
                 return "stern"
 
     elif ownship_pos == "bottom_left":
+        # ipdb.set_trace()
         if down_distance > up_distance:
             down_heading -= 10
         else:
@@ -557,19 +560,16 @@ def bow_stern_checker(scenario, ownship_pos, up_heading, down_heading, orientati
 
         if down_heading - thresh <= 0:
             if 0 <= heading <= new_range[0] or new_range[1] <= heading <= 360:
-                print("az bottom_left bow dad")
                 return "bow"
             else:
-                print("az bottom_left stern dad")
                 return "stern"
         else:
             if new_range[0] <= heading <= new_range[1]:
-                print("az bottom_left bow dad")
                 return "bow"
             else:
-                print("az bottom_left stern dad")
                 return "stern"
     elif ownship_pos == "bottom_right":
+        # ipdb.set_trace()
         if down_distance > up_distance:
             down_heading -= 10
         else:
@@ -584,35 +584,31 @@ def bow_stern_checker(scenario, ownship_pos, up_heading, down_heading, orientati
 
         if up_heading + thresh > 360:
             if 0 <= heading <= new_range[0] or new_range[1] <= heading <= 360:
-                print("az bottom_right bow dad")
                 return "bow"
 
             else:
-                print("az bottom_right stern dad")
                 return "stern"
         else:
             if new_range[0] <= heading <= new_range[1]:
-                print("az bottom_right bow dad")
                 return "bow"
 
             else:
-                print("az bottom_right stern dad")
                 return "stern"
 
     elif ownship_pos == "top_right":
+        # ipdb.set_trace()
         if down_distance > up_distance:
             down_heading -= 10
         else:
             up_heading += 10
         new_range = [down_heading - thresh, up_heading + thresh]
         if new_range[0] <= heading <= new_range[1]:
-            print("az top_right bow dad")
             return "bow"
         else:
-            print("az top_right stern dad")
             return "stern"
 
     elif ownship_pos == "right":
+        # ipdb.set_trace()
         if down_distance > up_distance:
             down_heading -= 10
         else:
@@ -626,35 +622,31 @@ def bow_stern_checker(scenario, ownship_pos, up_heading, down_heading, orientati
 
         if up_heading + thresh > 360:
             if 0 <= heading <= new_range[0] or new_range[1] <= heading <= 360:
-                print("az right bow dad")
                 return "bow"
             else:
-                print("az right stern dad")
                 return "stern"
         else:
             if new_range[0] <= heading <= new_range[1]:
-                print("az right bow dad")
                 return "bow"
             else:
-                print("az right stern dad")
                 return "stern"
 
 
 
     elif ownship_pos == "top":
+        # ipdb.set_trace()
         if down_distance > up_distance:
             down_heading -= 10
         else:
             up_heading += 10
         new_range = [down_heading - thresh, up_heading + thresh]
         if new_range[0] <= heading <= new_range[1]:
-            print("too top bow dad")
             return "bow"
         else:
-            print("too top stern dad")
             return "stern"
 
     elif ownship_pos == "bottom":
+        # ipdb.set_trace()
         if 0 <= up_heading < 5:
             up_heading = 360
         if 355 < down_heading <= 360:
@@ -665,32 +657,33 @@ def bow_stern_checker(scenario, ownship_pos, up_heading, down_heading, orientati
             up_heading -= 10
 
         if 0 <= heading <= down_heading or up_heading <= heading <= 360:
-            print("az bottom bow dad")
             return "bow"
         else:
-            print("az bottom stern dad")
             return "stern"
 
 
 def stem_angle_checker(scenario, heading):
     if scenario == "emergency":
-        heading = heading + 23
+        heading = + 23
         if 103 <= heading <= 123 or 283 <= heading <= 303:
-            return "perpendicular"
+            heading = "perpendicular"
         elif 13 <= heading <= 33 or 193 <= heading <= 213:
-            return "stem"
+            heading = "stem"
         else:
-            return "angle"
+            heading = "angle"
     else:
         if 350 <= heading <= 360 or 0 <= heading <= 10 or 170 <= heading <= 190:
-            return "stem"
+            heading = "stem"
         elif 80 <= heading <= 100 or 260 <= heading <= 280:
-            return "perpendicular"
+            heading = "perpendicular"
         else:
-            return "angle"
+            heading = "angle"
+    return heading
 
 
-def feature_array_convertor(encode, speed, heading, distance, aspect, area_focus, orientation, technique, scenario):
+def feature_array_convertor(encode, speed, distance, heading, aspect, area_focus, orientation, technique):
+    features_dict = {"speed": 0, "distance": 0, "heading": 0, "aspect": 0, "area_of_focus": 0, "orientation": 0,
+                     "technique": 0}
     if encode:
         features_array = list()
 
@@ -699,43 +692,92 @@ def feature_array_convertor(encode, speed, heading, distance, aspect, area_focus
         else:
             combination_of_technique = 0
         Area_of_focus = features_codec["area_of_focus"].index(area_focus)
-        heading = features_codec["heading"].index(heading)
+        # heading = features_codec["heading"].index(heading)
         orientation = features_codec["orientation"].index(orientation)
 
+        # if distance <= 35:  # This range has been assumed for the ownship to be in a close distance to the target!
+        #     vessel_Distance_from_target = 0
+        # elif distance >= 75:  # When the ownship is in a far distance to the target!
+        #
+        #     vessel_Distance_from_target = 2
+        # else:
+        #     vessel_Distance_from_target = 1  # When the ownship is in a normal distance to the target!
 
-        if distance <= 35:  # This range has been assumed for the ownship to be in a close distance to the target!
-            vessel_Distance_from_target = 0
-        elif distance >= 75:  # When the ownship is in a far distance to the target!
-
-            vessel_Distance_from_target = 2
-        else:
-            vessel_Distance_from_target = 1  # When the ownship is in a normal distance to the target!
-
-        speed = features_codec["speed"].index(speed)
-        technique = features_codec["technique"].index(technique)
+        # speed = features_codec["speed"].index(speed)
+        # technique = features_codec["technique"].index(technique)
         aspect = features_codec["aspect"].index(aspect)
 
-        if scenario == "emergency":
-            features_array.append([Area_of_focus, heading, orientation, vessel_Distance_from_target, speed, technique,
-                                   aspect,
-                                   combination_of_technique])
-        else:
-            features_array.append([heading, orientation, Area_of_focus, speed, vessel_Distance_from_target, technique,
-                                   aspect,
-                                   combination_of_technique])
+        # if scenario == "emergency":
+        #     features_array.append([Area_of_focus, heading, orientation, distance, speed, technique,
+        #                            aspect,
+        #                            combination_of_technique])
+        # else:
+        #     features_array.append([heading, orientation, Area_of_focus, speed, distance, technique,
+        #                            aspect,
+        #                            combination_of_technique])
+        features_array.append(
+            [int(speed), int(distance), int(heading), int(combination_of_technique), int(aspect), int(Area_of_focus),
+             int(orientation)])
         features_array = np.array(features_array)
+
     else:
-        speed = features_codec["speed"][int(speed)]
-        heading = features_codec["heading"][int(heading)]
-        print(f"dfadfsfsfsfss{distance}")
-        distance = features_codec["distance"][int(distance[1])]
         aspect = features_codec["aspect"][int(aspect)]
         area_focus = features_codec["area_of_focus"][int(area_focus)]
         orientation = features_codec["orientation"][int(orientation)]
-        technique = features_codec["technique"][int(technique)]
-        features_array = [speed, heading, distance, aspect, area_focus, orientation, technique]
+        features_dict.update(
+            {"speed": speed, "distance": distance, "heading": heading, "aspect": aspect, "area_of_focus": area_focus,
+             "orientation": orientation, "technique": technique})
 
-    return features_array
+        features_array = [speed, distance, heading, aspect, area_focus, orientation]
+
+    return features_array if encode else features_dict
+
+
+# def feature_array_convertor(encode, speed, heading, distance, aspect, area_focus, orientation, technique, scenario):
+#     if encode:
+#         features_array = list()
+#
+#         if "+" in technique:
+#             combination_of_technique = 1
+#         else:
+#             combination_of_technique = 0
+#         Area_of_focus = features_codec["area_of_focus"].index(area_focus)
+#         heading = features_codec["heading"].index(heading)
+#         orientation = features_codec["orientation"].index(orientation)
+#
+#         if distance <= 35:  # This range has been assumed for the ownship to be in a close distance to the target!
+#             vessel_Distance_from_target = 0
+#         elif distance >= 75:  # When the ownship is in a far distance to the target!
+#
+#             vessel_Distance_from_target = 2
+#         else:
+#             vessel_Distance_from_target = 1  # When the ownship is in a normal distance to the target!
+#
+#         speed = features_codec["speed"].index(speed)
+#         technique = features_codec["technique"].index(technique)
+#         aspect = features_codec["aspect"].index(aspect)
+#
+#         if scenario == "emergency":
+#             features_array.append([Area_of_focus, heading, orientation, vessel_Distance_from_target, speed, technique,
+#                                    aspect,
+#                                    combination_of_technique])
+#         else:
+#             features_array.append([heading, orientation, Area_of_focus, speed, vessel_Distance_from_target, technique,
+#                                    aspect,
+#                                    combination_of_technique])
+#         features_array = np.array(features_array)
+#     else:
+#         # speed = features_codec["speed"][int(speed)]
+#         # heading = features_codec["heading"][int(heading)]
+#         # distance = features_codec["distance"][int(distance[1])]
+#         technique = features_codec["technique"][int(technique)]
+#         aspect = features_codec["aspect"][int(aspect)]
+#         area_focus = features_codec["area_of_focus"][int(area_focus)]
+#         orientation = features_codec["orientation"][int(orientation)]
+#
+#         features_array = [speed, heading, distance, aspect, area_focus, orientation, technique]
+#
+#     return features_array
 
 
 class BLabel(object):
