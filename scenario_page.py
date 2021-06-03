@@ -21,6 +21,7 @@ from sklearn import tree
 from PIL import ImageTk, Image
 from HoverInfo import HoverText
 from simReceiver import SimReceiver
+from helper import Decorator
 import ipdb
 
 engine_dic = {"pEngine": 0, "fTunnelThruster": 0, "sEngine": 0, "aTunnelThruster": 0}
@@ -29,17 +30,18 @@ rudder_dic = {"pRudder": 0, "sRudder": 0}
 
 class PlayScenario:
 
-    def __init__(self, root, main_frame, scenario, logger, isRealTime):
+    def __init__(self, root, main_frame, scenario, excep_logger, User_logger, isRealTime):
         self.root = root
         self.main_frame = main_frame
         self.scenario = scenario
-        self.logger = logger
+        self.logger = excep_logger
+        self.user_logger = User_logger
         self.main_frame_width = self.main_frame.winfo_width()
         self.main_frame_height = self.main_frame.winfo_height()
         self.features = None
         self.log_objects = []
         self.isRealTime = isRealTime
-        self.name = "arash"
+        self.suggested_image_id = None
 
         if isRealTime:
             self.simReceiver = SimReceiver(self)
@@ -112,6 +114,7 @@ class PlayScenario:
     # this function is aimed to parse the log file and iterate into the file to  fill the log_objects list in which,
     # each object is a row for our csv file to be generated
     def assist(self):
+        global case_name
         if not self.isRealTime:
             i = 0
             well_formed_filename = self.log_reader()
@@ -166,51 +169,51 @@ class PlayScenario:
         #     log_objects = logrowsoperator.read_file(myFile)
 
         instant_second = self.log_objects[-1].simtime  # this line get the last second when the user needs an assist
+        print(self.log_objects[0].simtime)
+        print(self.log_objects[1].simtime)
+        if self.log_objects[0].simtime == 0 and self.log_objects[1].simtime == 0:
+            self.log_objects.pop(0)
+
         if instant_second < 180:
             self.logger.info(f"Assistance occurred at: {instant_second} seconds which is too soon!(Not recommended)")
             answer = messagebox.askokcancel(title="Proceed OR Quit",
-                                            message="getting Assistance at a early time is not recommended! Do you still want to get help?")
+                                            message="It is too soon for getting assistance which is not recommended! Do you still want to get help?")
         if (instant_second < 180 and answer) or instant_second > 180:
-            self.generate_csv_file(self.log_objects)  # this will generate a csv file based on DataTrace file
+            self.generate_csv_file(self.log_objects)  # This will generate a csv file based on self.log_objects list.
             self.features = Features(self.log_objects, self.scenario, self.logger,
-                                     instant_second)  # this line will create the features at the time of asking asssistance
+                                     instant_second)  # This line will create the features once the user asks asssistance
 
             # filling the own vessel properties attributes
             self.scale_speed.set(self.features.speed[1])
-            self.scale_heading.set(int(self.features.heading[1]))
+            self.scale_instant_speed.set(self.features.speed[2])
+            self.scale_heading_avg.set(self.features.heading[1])
+            self.scale_instant_heading.set(self.features.heading[2])
             self.scale_ice_load.set(10)
-            self.scale_distance_target.set(round(self.features.distance_from_target, 4))
-            # self.entry_aspect.insert(0, self.features.aspect)
-            # self.entry_area_focus.insert(0, self.features.area_of_focus)
-            # self.entry_orientation_target.insert(0, self.features.orientation)
-            # self.entry_technique.insert(0, self.features.maneuver)
-            # self.entry_heading.insert(0, self.features.heading[0])
-
-            # this is just for capturing the snapshot of the DSS for fatemes's thesis. Example
-            # self.scale_speed.set(1.5)
-            # self.scale_heading.set(77)
-            # self.scale_ice_load.set(0)
-            # self.scale_distance_target.set(66)
-            # self.entry_aspect.insert(0,"Up_Current")
-            # self.entry_area_focus.insert(0, "AV")
-            # self.entry_orientation_target.insert(0, "Stern")
-            # self.entry_technique.insert(0, "L + PW")
-            # self.entry_heading.insert(0, "Angle")
+            self.scale_distance_target_avg.set(round(self.features.distance_from_target[0], 4))
+            self.scale_instant_distance.set(round(self.features.distance_from_target[1], 4))
 
             '''creating passing the feature_array to the classifier for classification'''
-            feature_array = feature_array_convertor(True, self.features.speed[1],
-                                                    int(self.scale_distance_target.get()), self.features.heading[1],
+            feature_array = feature_array_convertor(True, self.scale_speed.get(),
+                                                    int(self.features.distance_from_target[0]),
+                                                    self.features.heading[1],
                                                     self.features.aspect, self.features.area_of_focus,
                                                     self.features.orientation, self.features.maneuver)
 
+            # feature_array = feature_array_convertor(True, self.features.speed[1],
+            #                                         int(self.scale_distance_target.get()), self.features.heading[1],
+            #                                         self.features.aspect, self.features.area_of_focus,
+            #                                         self.features.orientation, self.features.maneuver)
+
             suggested_case, case_ID, case_name, suggested_technique = self.decision_tree_classifier(feature_array,
                                                                                                     self.scenario)
+            self.user_logger.info(
+                f" User requested assistance at time={instant_second}s and the suggested approach was case {case_name}")
 
             suggested_approach_dict = feature_array_convertor(False, suggested_case[0], suggested_case[1],
-                                                         suggested_case[2], suggested_case[4],
-                                                         suggested_case[5],
-                                                         suggested_case[6],
-                                                         suggested_technique)
+                                                              suggested_case[2], suggested_case[4],
+                                                              suggested_case[5],
+                                                              suggested_case[6],
+                                                              suggested_technique)
             # filling the suggested ownship status variables
             self.suggested_speed.config(text=suggested_approach_dict["speed"])
             self.suggested_heading.config(text=suggested_approach_dict["heading"])
@@ -219,18 +222,18 @@ class PlayScenario:
             self.suggested_orientation.config(text=suggested_approach_dict["orientation"])
             self.suggested_distance_target.config(text=suggested_approach_dict["distance"])
             self.suggested_maneuver.config(text=suggested_technique)
+            self.load_image(case_ID, case_name)
 
-            print(f"this is the name for that specific case{case_ID}")
-            self.load_image(case_ID)
+            # this will show up some direction for the suggested approach
 
-    def load_image(self, case_ID):
+    def load_image(self, case_ID, case_name):
 
         current_path = os.getcwd()
-        cases_name = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "/" + self.scenario + "_class_Name.xls")
-        np.array(cases_name)
-        case_name = cases_name.values[case_ID][0]
-        print(f"this is the number of the predicted  case  {case_name}")
+        # cases_name = pd.read_excel(
+        #     current_path + "/Training_DataSet/" + self.scenario + "/" + self.scenario + "_class_Name.xls")
+        # np.array(cases_name)
+        # case_name = cases_name.values[case_ID][0]
+        print(f"this is the name of the predicted case{case_name} for {self.scenario} scenario")
         try:
             suggested_image = Image.open(
                 current_path + "/images/output_images/" + self.scenario + "/" + case_name + ".png")
@@ -238,18 +241,25 @@ class PlayScenario:
             img = ImageTk.PhotoImage(resized_suggested_image)
             self.suggested_image_id = self.canvas.create_image(352.5, 360, anchor="se", image=img)
         except:
-            self.logger.info("couldn't find such a file")
+            self.logger.info(f"The image with the name {case_name} couldn't be found")
         self.root.mainloop()
 
     def more_info(self):
-        messagebox.showinfo(title="information",
-                            message="1. Create a direct route to get close ahead of the FPSO (speed under 3 knots. If the FPSO was on fire choose 5 knots)\n\n 2. Position the support vessel as a block (heading=60 degrees, distance=100m above the FPSO, and position the vessel's bow far enough towards the bowline/centerline of the FPSO to avoid the ice come between the vessels). let some ice flow and then give some prop-wash flushing at the same time.\n\n 3. Once the zone is clearing from the ice, move from DP2 (leeway) to DP3 (broadside pushing). (position to the North with distance=100m)\n\n 4. Thrust to the west, try to clear out the zone, then go back and forth to make a couple of thrust passes (The range for the broadside pushing depends on the situation, but try to clear the area closer to the FPSO in the zone).")
+        try:
+            more_inf_file = open(f"description_files/{self.scenario}/{case_name}.txt", mode="r")
+            content = more_inf_file.read()
+            messagebox.showinfo(title="information",
+                                message=content)
+        except:
+            messagebox.showinfo(title="information",
+                                message="There is no more information for this case yet!")
+            self.logger.info(f"The description file with the name {case_name} couldn't be opened")
 
     def get_selected_rows(self, class_id):
         rows = []
         cases_ID = []
         current_path = os.getcwd()
-        data_path = current_path + "/Training_DataSet/" + self.scenario + "_N/" + self.scenario + "_Training_withclassID.csv"
+        data_path = current_path + "/Training_DataSet/" + self.scenario + "_N2/" + self.scenario + "_Training_withclassID.csv"
         with open(data_path, newline='', encoding="ISO-8859-1") as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',', quotechar='|')
             for line_num, row in enumerate(csv_reader):
@@ -261,46 +271,51 @@ class PlayScenario:
         return datarows, cases_ID
 
     def similarity_measure(self, selected_rows, cases_number, features_array):
-        res = pairwise_distances_argmin_min(selected_rows, features_array, metric='cosine')
+        res = pairwise_distances_argmin_min(selected_rows, features_array, metric='euclidean')
         min_dist_value = min(np.ndarray.tolist(res[1]))
         min_index = np.ndarray.tolist(res[1]).index(min_dist_value)
         return selected_rows[min_index], cases_number[min_index]
 
     def decision_tree_classifier(self, features_array, scenario):
-        print(features_array)
         current_path = os.getcwd()
         case_techniques = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "_N" + "/" + self.scenario + "_techniques.xls")
+            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_techniques.xls")
         case_techniques = case_techniques.to_numpy()
 
         case_names = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "_N" + "/" + self.scenario + "_className.xls")
+            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_className.xls")
         case_names = case_names.to_numpy()
 
         df_x_train = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "_N" + "/" + self.scenario + "_Training.xls")
+            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_Training.xls")
         x_train = np.array(df_x_train.astype(float))
         df_y_train = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "_N" + "/" + self.scenario + "_ID.xls")
-        if scenario == "emergency":
-            max_depth = 4
-        else:
+            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_ID.xls")
+        if scenario == "leeway":
             max_depth = 3
-        clf = tree.DecisionTreeClassifier(random_state=42, max_depth=max_depth)
+        else:
+            max_depth = 4
+        clf = tree.DecisionTreeClassifier(random_state=0, max_depth=max_depth)
 
         clf.fit(x_train, df_y_train)
         class_id = clf.predict(features_array)
+
         selected_rows, cases_ID = self.get_selected_rows(int(class_id[0]))
         output_array, case_ID = self.similarity_measure(selected_rows, cases_ID, features_array)
-        print(f"this is case ID for out put case{case_ID}")
-        return output_array, case_ID, case_names[case_ID][0], case_techniques[case_ID][0]
+        print(f" This is case ID for out put case{case_ID}")
+        print(case_ID)
+        return output_array, case_ID, case_names[case_ID - 2][0], case_techniques[case_ID - 2][0]
 
     def reset_properties(self):
         # Resetting ownship status
         self.scale_speed.set(0)
-        self.scale_heading.set(0)
+        self.scale_heading_avg.set(0)
+        self.scale_instant_heading.set(0)
         self.scale_ice_load.set(0)
-        self.scale_distance_target.set(0)
+        self.scale_distance_target_avg.set(0)
+        self.scale_instant_distance.set(0)
+        self.scale_instant_speed.set(0)
+
         # self.entry_aspect.delete(0, 100)
         # self.entry_area_focus.delete(0, 100)
         # self.entry_orientation_target.delete(0, 100)
@@ -309,15 +324,17 @@ class PlayScenario:
 
         # Resetting suggested approach attributes
         self.suggested_speed.config(text="")
-        # self.suggested_area_focus.config(text="")
-        # self.suggested_aspect.config(text="")
         self.suggested_distance_target.config(text="")
         self.suggested_heading.config(text="")
-        # self.suggested_maneuver.config(text="")
-        # self.suggested_orientation.config(text="")
+
+        self.suggested_area_focus.config(text="")
+        self.suggested_aspect.config(text="")
+        self.suggested_maneuver.config(text="")
+        self.suggested_orientation.config(text="")
 
         # Resetting output_image
-        self.canvas.delete(self.suggested_image_id)
+        if self.suggested_image_id:
+            self.canvas.delete(self.suggested_image_id)
 
     def init_page(self):
         container = tk.Frame(self.root, width=self.main_frame_width * 0.94, height=self.main_frame_height * 0.67,
@@ -329,36 +346,38 @@ class PlayScenario:
                                     height=self.main_frame_height * 0.61)
         own_vessel_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
         own_vessel_frame.place(relx=0.2, rely=0.5, anchor="center")
-        own_vessel_lbl = tk.Label(own_vessel_frame, text="Ownship Properties")
-        own_vessel_lbl.place(relx=0.2, rely=-0.001, anchor="center")
+        own_vessel_lbl = tk.Label(own_vessel_frame, text="Ownship Properties", font=('Helvetica 18 bold'))
+        own_vessel_lbl.place(relx=0.2, rely=-0, anchor="center")
 
         suggested_status_frame = tk.Frame(container, bg="white", width=self.main_frame_width * 0.22,
                                           height=self.main_frame_height * 0.61)
-        suggested_status_frame.config(borderwidth=3, relief="groove", padx=25, pady=25)
+        suggested_status_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
         suggested_status_frame.place(relx=0.5, rely=0.5, anchor="center")
-        suggested_own_ship_status_lbl = tk.Label(suggested_status_frame, text="Suggested Solution", bg="white")
-        suggested_own_ship_status_lbl.place(relx=0.3, rely=0, anchor="center")
+        suggested_own_ship_status_lbl = tk.Label(suggested_status_frame, text="Suggested Solution", bg="white",
+                                                 font=('Helvetica 18 bold'))
+        suggested_own_ship_status_lbl.place(relx=0.3, rely=0.001, anchor="center")
 
         suggested_approach_frame = tk.Frame(container, bg="white", width=self.main_frame_width * 0.32,
                                             height=self.main_frame_height * 0.61)
         suggested_approach_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
         suggested_approach_frame.place(relx=0.8, rely=0.5, anchor="center")
-        suggested_approach_lbl = tk.Label(suggested_approach_frame, text="Suggested Approach", bg="white")
-        suggested_approach_lbl.place(relx=0.2, rely=-0.001, anchor="center")
+        suggested_approach_lbl = tk.Label(suggested_approach_frame, text="Suggested Approach", bg="white",
+                                          font=('Helvetica 18 bold'))
+        suggested_approach_lbl.place(relx=0.22, rely=0.001, anchor="center")
 
         ####### create the widgets for the own vessel properties frame ######
 
-        scale_speed = tk.Label(own_vessel_frame, text="Vessel Speed", font=("helvetica", 12, "bold"))
-        scale_speed.place(relx=0.1, rely=0.08, anchor="center")
+        scale_speed = tk.Label(own_vessel_frame, text=" Average Vessel Speed", font=("helvetica", 12, "bold"))
+        scale_speed.place(relx=0.15, rely=0.08, anchor="center")
         self.scale_speed = tk.Scale(own_vessel_frame, from_=0, to=10.0, resolution=0.01, orient="horizontal")
         self.scale_speed.config(length=240, tickinterval=0.001)
         self.scale_speed.place(relx=0.6, rely=0.06, anchor="center")
 
-        scale_heading = tk.Label(own_vessel_frame, text="Vessel Heading", font=("helvetica", 12, "bold"))
-        scale_heading.place(relx=0.11, rely=0.18, anchor="center")
-        self.scale_heading = tk.Scale(own_vessel_frame, from_=0, to=500, resolution=0.01, orient="horizontal")
-        self.scale_heading.config(length=240)
-        self.scale_heading.place(relx=0.6, rely=0.16, anchor="center")
+        scale_heading_avg = tk.Label(own_vessel_frame, text=" Average Vessel Heading", font=("helvetica", 12, "bold"))
+        scale_heading_avg.place(relx=0.16, rely=0.18, anchor="center")
+        self.scale_heading_avg = tk.Scale(own_vessel_frame, from_=0, to=500, resolution=0.01, orient="horizontal")
+        self.scale_heading_avg.config(length=240)
+        self.scale_heading_avg.place(relx=0.6, rely=0.16, anchor="center")
 
         # lbl_head = tk.Label(own_vessel_frame, text="Heading status", font=("helvetica", 12, "bold"))
         # lbl_head.place(relx=0.1, rely=0.88, anchor="center")
@@ -366,19 +385,40 @@ class PlayScenario:
         # self.entry_heading.place(relx=0.60, rely=0.88, anchor="center")
         # self.entry_heading.config(width=26, justify="center", relief="groove")
 
+        scale_distance_target_avg = tk.Label(own_vessel_frame, text="Average Distance(m)",
+                                             font=("helvetica", 12, "bold"))
+        scale_distance_target_avg.place(relx=0.14, rely=0.28, anchor="center")
+        self.scale_distance_target_avg = tk.Scale(own_vessel_frame, from_=0, to=500, resolution=0.01,
+                                                  orient="horizontal")
+        self.scale_distance_target_avg.config(length=240)
+        self.scale_distance_target_avg.place(relx=0.6, rely=0.26, anchor="center")
+
         scale_ice_load = tk.Label(own_vessel_frame, text="Ice Load", font=("helvetica", 12, "bold"))
-        scale_ice_load.place(relx=0.06, rely=0.28, anchor="center")
+        scale_ice_load.place(relx=0.06, rely=0.38, anchor="center")
         self.scale_ice_load = tk.Scale(own_vessel_frame, from_=0, to=500, orient="horizontal")
         self.scale_ice_load.config(length=240)
-        self.scale_ice_load.place(relx=0.6, rely=0.26, anchor="center")
+        self.scale_ice_load.place(relx=0.6, rely=0.36, anchor="center")
 
-        scale_distance_target = tk.Label(own_vessel_frame, text="Distance from Target(m)",
+        scale_instant_speed = tk.Label(own_vessel_frame, text="Instant Vessel Speed", font=("helvetica", 12, "bold"))
+        scale_instant_speed.place(relx=0.13, rely=0.48, anchor="center")
+        self.scale_instant_speed = tk.Scale(own_vessel_frame, from_=0, to=10.0, resolution=0.01, orient="horizontal")
+        self.scale_instant_speed.config(length=240, tickinterval=0.001)
+        self.scale_instant_speed.place(relx=0.6, rely=0.46, anchor="center")
+
+        scale_instant_heading = tk.Label(own_vessel_frame, text="Instant Vessel Heading",
                                          font=("helvetica", 12, "bold"))
-        scale_distance_target.place(relx=0.15, rely=0.38, anchor="center")
-        self.scale_distance_target = tk.Scale(own_vessel_frame, from_=0, to=300, resolution=0.01,
-                                              orient="horizontal")
-        self.scale_distance_target.config(length=240)
-        self.scale_distance_target.place(relx=0.6, rely=0.36, anchor="center")
+        scale_instant_heading.place(relx=0.15, rely=0.58, anchor="center")
+        self.scale_instant_heading = tk.Scale(own_vessel_frame, from_=0, to=500.0, resolution=0.01, orient="horizontal")
+        self.scale_instant_heading.config(length=240, tickinterval=0.001)
+        self.scale_instant_heading.place(relx=0.6, rely=0.56, anchor="center")
+
+        scale_instant_distance = tk.Label(own_vessel_frame, text="Instant Distance",
+                                          font=("helvetica", 12, "bold"))
+        scale_instant_distance.place(relx=0.11, rely=0.68, anchor="center")
+        self.scale_instant_distance = tk.Scale(own_vessel_frame, from_=0, to=500.0, resolution=0.01,
+                                               orient="horizontal")
+        self.scale_instant_distance.config(length=240, tickinterval=0.001)
+        self.scale_instant_distance.place(relx=0.6, rely=0.66, anchor="center")
 
         # lbl_aspect = tk.Label(own_vessel_frame, text="Aspect", font=("helvetica", 12, "bold"))
         # lbl_aspect.place(relx=0.06, rely=0.48, anchor="center")
@@ -405,10 +445,9 @@ class PlayScenario:
         # self.entry_technique.config(width=26, justify="center", relief="groove")
 
         ####### create the widgets for the suggested own ship status  ######
-
         speed_lbl = tk.Label(suggested_status_frame, text="Vessel Speed", font=("helvetica", 12, "bold"),
                              justify="left")
-        speed_lbl.place(relx=0.1, rely=0.12, anchor="center")
+        speed_lbl.place(relx=0.15, rely=0.12, anchor="center")
 
         self.suggested_speed = tk.Label(suggested_status_frame, text="N/A", font=("helvetica", 12, "bold"),
                                         justify="left")
@@ -416,28 +455,28 @@ class PlayScenario:
 
         heading_lbl = tk.Label(suggested_status_frame, text="Vessel Heading", font=("helvetica", 12, "bold"),
                                justify="left")
-        heading_lbl.place(relx=0.1, rely=0.23, anchor="center")
+        heading_lbl.place(relx=0.15, rely=0.23, anchor="center")
         self.suggested_heading = tk.Label(suggested_status_frame, text="N/A", font=("helvetica", 12, "bold"),
                                           justify="left")
         self.suggested_heading.place(relx=0.75, rely=0.23, anchor="center")
 
         area_focus_lbl = tk.Label(suggested_status_frame, text="Area of Focus", font=("helvetica", 12, "bold"),
                                   justify="left")
-        area_focus_lbl.place(relx=0.09, rely=0.32, anchor="center")
+        area_focus_lbl.place(relx=0.15, rely=0.32, anchor="center")
         self.suggested_area_focus = tk.Label(suggested_status_frame, text="N/A", font=("helvetica", 12, "bold"),
                                              justify="left")
         self.suggested_area_focus.place(relx=0.75, rely=0.32, anchor="center")
 
         aspect_lbl = tk.Label(suggested_status_frame, text="Aspect", font=("helvetica", 12, "bold"),
                               justify="left")
-        aspect_lbl.place(relx=0.02, rely=0.42, anchor="center")
+        aspect_lbl.place(relx=0.08, rely=0.42, anchor="center")
         self.suggested_aspect = tk.Label(suggested_status_frame, text="N/A", font=("helvetica", 12, "bold"),
                                          justify="left")
         self.suggested_aspect.place(relx=0.75, rely=0.42, anchor="center")
 
         oriantation_target_lbl = tk.Label(suggested_status_frame, text="Orientation to Target",
                                           font=("helvetica", 12, "bold"), justify="left")
-        oriantation_target_lbl.place(relx=0.14, rely=0.52, anchor="center")
+        oriantation_target_lbl.place(relx=0.2, rely=0.52, anchor="center")
         self.suggested_orientation = tk.Label(suggested_status_frame, text="N/A", font=("helvetica", 12, "bold"),
                                               justify="left")
         self.suggested_orientation.place(relx=0.75, rely=0.52, anchor="center")
@@ -445,14 +484,14 @@ class PlayScenario:
         distance_target_lbl = tk.Label(suggested_status_frame, text="Distance from Target",
                                        font=("helvetica", 12, "bold"),
                                        justify="left")
-        distance_target_lbl.place(relx=0.14, rely=0.62, anchor="center")
+        distance_target_lbl.place(relx=0.2, rely=0.62, anchor="center")
         self.suggested_distance_target = tk.Label(suggested_status_frame, text="N/A", font=("helvetica", 12, "bold"),
                                                   justify="left")
         self.suggested_distance_target.place(relx=0.75, rely=0.62, anchor="center")
 
         maneuver_lbl = tk.Label(suggested_status_frame, text="Maneuver", font=("helvetica", 12, "bold"),
                                 justify="left")
-        maneuver_lbl.place(relx=0.04, rely=0.72, anchor="center")
+        maneuver_lbl.place(relx=0.1, rely=0.72, anchor="center")
         self.suggested_maneuver = tk.Label(suggested_status_frame, text="N/A", font=("helvetica", 12, "bold"),
                                            justify="left")
         self.suggested_maneuver.place(relx=0.75, rely=0.72, anchor="center")
@@ -476,7 +515,7 @@ class PlayScenario:
         more_info_btn = tk.Button(suggested_status_frame, text="More Info!", bg="green", width=32, height=2, anchor="c",
                                   command=self.more_info)
         more_info_btn.config(relief="groove", font=("helvetica", 12, "bold"), fg="green")
-        more_info_btn.place(relx=.5, rely=.99, anchor="center")
+        more_info_btn.place(relx=.5, rely=.95, anchor="center")
 
         self.canvas = tk.Canvas(suggested_approach_frame, bg='#000000')
 
@@ -488,42 +527,48 @@ class PlayScenario:
 
         # The labels for suggested own ship attributes description!
         img = ImageTk.PhotoImage(Image.open("images/MoreInfo.png"))
-        img_desc = ImageTk.PhotoImage(Image.open("images/Emergency_desc.png"))
+        # the image for description section must be the size of 353*360 pixels
+        img_desc = ImageTk.PhotoImage(Image.open("images/" + self.scenario + "_image.png"))
         speed_moreinfo = tk.Label(suggested_status_frame, image=img)
         speed_moreinfo.image = img
-        speed_moreinfo.place(relx=0.28, rely=0.115, anchor="center")
-        HoverText(speed_moreinfo, "This is a sample hover text")
+        speed_moreinfo.place(relx=0.32, rely=0.115, anchor="center")
+        HoverText(speed_moreinfo, "Keep your vessel speed at this rate!")
 
         heading_moreinfo = tk.Label(suggested_status_frame, image=img)
         heading_moreinfo.image = img
-        heading_moreinfo.place(relx=0.305, rely=0.225, anchor="center")
-        HoverText(heading_moreinfo, "This is a sample hover text")
+        heading_moreinfo.place(relx=0.340, rely=0.225, anchor="center")
+        HoverText(heading_moreinfo,
+                  "Vessel heading in relation to target: \n   Stem: Making headway against the current(0 Degrees).\n   Prependicular: Perpendicular to the target(90 degrees).\n   Angle: All other degrees but not changing during the execution.\n   Changing: In the case of the circular technique, the heading changes constantly, so it was converted to the changing option.")
 
         area_of_focus_moreinfo = tk.Label(suggested_status_frame, image=img)
         area_of_focus_moreinfo.image = img
-        area_of_focus_moreinfo.place(relx=0.28, rely=0.315, anchor="center")
+        area_of_focus_moreinfo.place(relx=0.32, rely=0.315, anchor="center")
         HoverText(area_of_focus_moreinfo,
-                  "Where seafarer is focusing most of the ice clearing time!\nAZ: Above Zone\nAV: Above Vessel or Target\nZ: In Zone")
+                  f"Where seafarer is focusing most of the ice clearing time:\n AZ: Above Zone.\n AV: Above Vessel or Target.\n Z: In Zone.\n Along_Zone: Left side of the zone.")
+        print(Decorator.BOLD + "HelLo Arash" + Decorator.END)
 
         aspect_moreinfo = tk.Label(suggested_status_frame, image=img)
         aspect_moreinfo.image = img
-        aspect_moreinfo.place(relx=0.14, rely=0.415, anchor="center")
-        HoverText(aspect_moreinfo, "This is a sample hover text")
+        aspect_moreinfo.place(relx=0.2, rely=0.415, anchor="center")
+        HoverText(aspect_moreinfo,
+                  "The vessel pathway in relation to the target:\n J-approach: Getting close to the target from below the zone.\n Direct: Getting close to the target directly.\n Up-current: Getting close to the target from up-current of the target.")
 
         orientation_moreinfo = tk.Label(suggested_status_frame, image=img)
         orientation_moreinfo.image = img
-        orientation_moreinfo.place(relx=0.41, rely=0.515, anchor="center")
-        HoverText(orientation_moreinfo, "This is a sample hover text")
+        orientation_moreinfo.place(relx=0.43, rely=0.515, anchor="center")
+        HoverText(orientation_moreinfo,
+                  "The ownship vessel’s orientation in relation to the target:\n Bow: Ownship vessel’s bow facing the target.\n Stern: Ownship vessel’s stern facing the target.\n Parallel: Ownship is parallel with the target.\n Changing: Ownship’s orientation is constantly changing.")
 
         distance_moreinfo = tk.Label(suggested_status_frame, image=img)
         distance_moreinfo.image = img
-        distance_moreinfo.place(relx=0.41, rely=0.615, anchor="center")
-        HoverText(distance_moreinfo, "This is a sample hover text")
+        distance_moreinfo.place(relx=0.43, rely=0.615, anchor="center")
+        HoverText(distance_moreinfo, "How far the ownship vessel should be from the target.")
 
         manouver_moreinfo = tk.Label(suggested_status_frame, image=img)
         manouver_moreinfo.image = img
-        manouver_moreinfo.place(relx=0.19, rely=0.715, anchor="center")
-        HoverText(manouver_moreinfo, "This is a sample hover text")
+        manouver_moreinfo.place(relx=0.23, rely=0.715, anchor="center")
+        HoverText(manouver_moreinfo,
+                  "Techniques that each participant used in their ice management performance:\n Pushing: Using the bow or broadside of the vessel to clear ice around the indicated zone.\n Sector: Using the bow or broadside of the vessel and having a back and forth motion at the same time to clear the ice up current from the zone.\n Prop-Wash: Having a maintained position above the zone and flushing the ice from the target using the vessel’s propeller wake wash.\n Leeway: Keeping the position and blocking the flowing ice using the side of the vessel above the target area.\n Circular: Using the pushing and prop-wash techniques and having a circular motion at the same time above the target area")
 
         self.canvas.create_image(352.5, 360, anchor="se", image=img_desc)
         self.root.mainloop()

@@ -22,6 +22,10 @@ class CsvFile:
     ## Populate a CsvFile from the contents of a Python dictionary (dict)
     @classmethod
     def fromDict(cls, dict):
+        # print(dict)
+        # if not dict["SimTime"]:
+        #     print(f"the server couldn't recive data at time {dict['SimTime']}")
+        # print(dict["SimTime"])
         return cls(dict["SimTime"],
                    abs(dict["Lat"]), abs(dict["Long"]),
                    dict["SOG"], dict["COG"], dict["Heading"],

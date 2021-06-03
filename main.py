@@ -9,6 +9,21 @@ import sys
 import ipdb
 
 
+def setup_logger(name, log_file, level=logging.INFO):
+    """To setup as many loggers as you want"""
+    formatter = logging.Formatter('%(asctime)s %(message)s')
+    handler = logging.FileHandler(log_file, mode="a+")
+    handler.setFormatter(formatter)
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+
+    return logger
+
+
 def resize_image(img, root):
     resized_img = img.resize((int(((root.winfo_screenwidth() - 30) / 3) * 0.5), 200))
     return resized_img
@@ -30,8 +45,10 @@ def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_
     pushing_frame.destroy()
     leeway_frame.destroy()
     emergency_frame.destroy()
+    excep_logger = setup_logger("Exception_log", "exc_log.log")
+    user_logger = setup_logger("User_log", "user_log.log")
 
-    scenario_obj = PlayScenario(root, main_frame, scenario, logger, isRealTime)
+    scenario_obj = PlayScenario(root, main_frame, scenario, exceptio_logger, user_assist_logger, isRealTime)
 
     back_command = partial(get_back, scenario_obj)
 
@@ -215,16 +232,9 @@ def init_main_page(root):
 
 if __name__ == "__main__":
     global arg
-    """ setting looger for programmer"""
-    logging.basicConfig(filename="logs.log",
-                        format='%(asctime)s %(message)s',
-                        filemode='w+',
-                        level=logging.INFO)
-
-    logger = logging.getLogger(__name__)
-    console = logging.StreamHandler()  # this is to let logger knows to write it into log file instead of terminal
-    console.setLevel(logging.INFO)
-    logger.addHandler(console)
+    """ setting loogers for information/exceptions"""
+    exceptio_logger = setup_logger("Exception_log", "exc_log.log")
+    user_assist_logger = setup_logger("User_assist_log", "user_log.log")
 
     isRealTime = False
     for i, arg in enumerate(sys.argv):

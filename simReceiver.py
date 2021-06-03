@@ -21,7 +21,7 @@ class ThreadedUDPServer(socketserver.ThreadingMixIn, socketserver.UDPServer):
 class SimReceiver:
 
     def __init__(self, scenario):
-        ip = "10.10.10.29"
+        ip = "10.10.10.24"
         port = 4000
         self.server = ThreadedUDPServer((ip, port), UDPRequestHandler)
         self.server.scenario = scenario

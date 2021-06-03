@@ -218,7 +218,7 @@ def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, own
                 "long_" + down_key_emg])))
     uprange_rad_angel = math.atan(abs(ownship_lattitude - (
         coordinates[coord_dict_key]["lat_" + up_key] if scenario != "emergency" else coordinates[coord_dict_key][
-            "lat_" + down_key_emg])) / abs(
+            "lat_" + up_key_emg])) / abs(
         abs(ownship_longitude) - (
             coordinates[coord_dict_key]["long_" + up_key] if scenario != "emergency" else coordinates[coord_dict_key][
                 "long_" + up_key_emg])))
@@ -293,7 +293,14 @@ def ownship_position(scenario, ownship_lattitude, ownship_longitude):
                 else:
                     return "bottom"
             else:
-                return "z"
+                if abs(ownship_longitude) >= abs(coordinates[scenario]["long_btm_left"]):
+                    return "left"
+                elif abs(ownship_longitude) <= abs(coordinates[scenario]["long_btm_right"]):
+
+                    return "right"
+                else:
+                    return "z"
+                # return "z"
                 # if abs(ownship_longitude) < abs(coordinates[scenario]["long_btm_left"]):
                 #     return "z"
                 # else:
@@ -383,23 +390,42 @@ def aspect_votter(log_objects, current_sec, aspect_vot_dict, degree_range, scena
     ## I increased and decreased 5 degree to/from the threashold to be in a safe side for making decision.
 
     if scenario == "emergency":
-        if log_objects[current_sec].heading > degree_range[1] + 5 and log_objects[current_sec].heading < 225:
-            aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
-        elif 0 < log_objects[current_sec].heading < degree_range[0] - 5 or 315 < log_objects[current_sec].heading < 360:
-            aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
-        elif log_objects[current_sec].heading <= degree_range[1] + 5 and log_objects[current_sec].heading >= \
+        if log_objects[current_sec].heading <= degree_range[1] + 5 and log_objects[current_sec].heading >= \
                 degree_range[0] - 5:
-            aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
+            if current_sec > 120:
+                aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 2})
+            else:
+                aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
+        elif 0 < log_objects[current_sec].heading < degree_range[0] - 5 or 315 < log_objects[current_sec].heading < 360:
+            if current_sec > 120:
+                aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 2})
+            else:
+                aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
+        elif log_objects[current_sec].heading > degree_range[1] + 5 and log_objects[current_sec].heading < 225:
+            if current_sec > 120:
+                aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 2})
+            else:
+                aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
         return aspect_vot_dict
     else:
 
         if log_objects[current_sec].cog > degree_range[1] + 5 and log_objects[current_sec].cog < 225:
-            aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
+
+            if current_sec > 120:
+                aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 2})
+            else:
+                aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
         elif 0 < log_objects[current_sec].cog < degree_range[0] - 5 or 315 < log_objects[current_sec].cog < 360:
-            aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
+            if current_sec > 120:
+                aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 2})
+            else:
+                aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
         elif log_objects[current_sec].cog <= degree_range[1] + 5 and log_objects[current_sec].cog >= degree_range[
             0] - 5:
-            aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
+            if current_sec > 120:
+                aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 2})
+            else:
+                aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
         return aspect_vot_dict
 
 
@@ -663,22 +689,23 @@ def bow_stern_checker(scenario, ownship_pos, up_heading, down_heading, orientati
 
 
 def stem_angle_checker(scenario, heading):
+    heading_stat = None
     if scenario == "emergency":
-        heading = + 23
-        if 103 <= heading <= 123 or 283 <= heading <= 303:
-            heading = "perpendicular"
-        elif 13 <= heading <= 33 or 193 <= heading <= 213:
-            heading = "stem"
-        else:
-            heading = "angle"
+        if 100 <= heading <= 126 or 280 <= heading <= 306:
+            heading_stat = "perpendicular"
+        elif 10 <= heading <= 36 or 190 <= heading <= 216:
+            heading_stat = "stem"
+        elif 54 <= heading <= 82 or 144 <= heading <= 172 or 234 <= heading <= 262 or 324 <= heading <= 352:
+            heading_stat = "angle"
     else:
-        if 350 <= heading <= 360 or 0 <= heading <= 10 or 170 <= heading <= 190:
-            heading = "stem"
-        elif 80 <= heading <= 100 or 260 <= heading <= 280:
-            heading = "perpendicular"
-        else:
-            heading = "angle"
-    return heading
+        if 77 <= heading <= 103 or 257 <= heading <= 283:
+            heading_stat = "perpendicular"
+        elif 347 <= heading <= 360 or 0 <= heading <= 13 or 167 <= heading <= 193:
+            heading_stat = "stem"
+
+        elif 31 <= heading <= 59 or 121 <= heading <= 149 or 211 <= heading <= 239 or 301 <= heading <= 329:
+            heading_stat = "angle"
+    return heading_stat
 
 
 def feature_array_convertor(encode, speed, distance, heading, aspect, area_focus, orientation, technique):
@@ -792,3 +819,14 @@ class BLabel(object):
             self.l.config(text=self.b + " " + text)
         else:
             self.l.config(text=self.l.cget("text") + "\n" + self.b + " " + text, font=("helvetica", 12))
+class Decorator:
+   PURPLE = '\033[95m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   END = '\033[0m'
