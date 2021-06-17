@@ -3,6 +3,7 @@ import tkinter as tk
 import xml.etree.cElementTree as ET
 import os
 import numpy as np
+import tkinter as tk
 import ipdb
 
 angle_pos_key = {"top": ["top_right", "top_left"], "bottom": ["btm_right", "btm_left"],
@@ -805,7 +806,11 @@ def feature_array_convertor(encode, speed, distance, heading, aspect, area_focus
 #         features_array = [speed, heading, distance, aspect, area_focus, orientation, technique]
 #
 #     return features_array
-
+def speed_warning(log_objects, main_frame):
+    spd_wrning_lbl=tk.Label(main_frame,text="Your speed is greater than 3 Knot. be cautious!")
+    while log_objects[-1].sog > 3:
+        spd_wrning_lbl.place()
+    spd_wrning_lbl.grid_forget()
 
 class BLabel(object):
     b = ">>>"
@@ -819,14 +824,16 @@ class BLabel(object):
             self.l.config(text=self.b + " " + text)
         else:
             self.l.config(text=self.l.cget("text") + "\n" + self.b + " " + text, font=("helvetica", 12))
+
+
 class Decorator:
-   PURPLE = '\033[95m'
-   CYAN = '\033[96m'
-   DARKCYAN = '\033[36m'
-   BLUE = '\033[94m'
-   GREEN = '\033[92m'
-   YELLOW = '\033[93m'
-   RED = '\033[91m'
-   BOLD = '\033[1m'
-   UNDERLINE = '\033[4m'
-   END = '\033[0m'
+    PURPLE = '\033[95m'
+    CYAN = '\033[96m'
+    DARKCYAN = '\033[36m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'

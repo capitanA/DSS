@@ -6,6 +6,7 @@ from scenario_page import PlayScenario
 from simReceiver import SimReceiver
 import logging
 import sys
+from tkinter import messagebox
 import ipdb
 
 
@@ -45,9 +46,6 @@ def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_
     pushing_frame.destroy()
     leeway_frame.destroy()
     emergency_frame.destroy()
-    excep_logger = setup_logger("Exception_log", "exc_log.log")
-    user_logger = setup_logger("User_log", "user_log.log")
-
     scenario_obj = PlayScenario(root, main_frame, scenario, exceptio_logger, user_assist_logger, isRealTime)
 
     back_command = partial(get_back, scenario_obj)
@@ -78,7 +76,15 @@ def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_
 def get_back(scenario_obj):
     if arg == "-realTime":
         scenario_obj.simReceiver.close_port()
+
+    if scenario_obj.top_window.winfo_exists():
+        scenario_obj.top_window.destroy()
     init_main_page(root)
+
+    # if scenario_obj.top_window.winfo_exists():
+    #     messagebox.showinfo(message="please first enter your name!")
+    # else:
+    #     init_main_page(root)
 
 
 def init_main_page(root):
@@ -92,9 +98,6 @@ def init_main_page(root):
     img_1_lbl.place(relx=0.5, rely=0.5, anchor="center")
     main_frame.place(relx=.5, rely=.5, anchor="center")
 
-    # label = tk.Label(main_frame, text='DSS for Offshore ships', font=('Helvetica', 60, 'bold'),bg="grey")
-    # label.place(relx=0.5, rely=0.15, anchor="center")
-    # root.wm_attributes("-transparent", root["bg"])
     pushing_frame = tk.Frame(main_frame, width=(frame_width - 100) / 3, height=400, bg="white")
     pushing_frame.config(borderwidth=6, relief="groove")
     pushing_frame.place(relx=0.17, rely=0.5, anchor="center")
@@ -204,29 +207,6 @@ def init_main_page(root):
                     text="Objective: Clear the encroaching pack ice from the\n\tboxed area\nTime: 30min\nCurrent: 0.5kn\nCurrent direction: 180deg\nIce: 0.3-0.7m first year ice, 7-tenths concentration",
                     bg="white", justify="left")
     llbb.place(relx=0.5, rely=0.5, anchor="center")
-
-    ######   The description for leeway scenario   ######
-    # label = BLabel(dsc_frame_sce_2)
-    # label.add_option("Objective: Clear the indicated area aft of midships using the leeway technique")
-    # label.add_option("Time: 15min")
-    # label.add_option("Vessel heading: 60deg")
-    # label.add_option("Target heading: 0deg!")
-    # label.add_option("Current: 1kn")
-    # label.add_option("Current direction: 180deg S")
-    # label.add_option("Wind: Light")
-    # label.add_option("Ice: 0.3-0.7m first year ice, 5-tenths concentration")
-    # label.l.place(relx=0.5, rely=0.5, anchor="center")
-
-    ######   The description for emergency scenario   ######
-    # label = BLabel(dsc_frame_sce_3)
-    # label.add_option("Objective: Clear the encroaching pack ice from the boxed area shown")
-    # label.add_option("Time: 30min")
-    # label.add_option("Current: 0.5kn")
-    # label.add_option("Current direction: 180deg S")
-    # label.add_option("Wind: Light")
-    # label.add_option("Ice: 0.3-0.7m first year ice")
-    # label.l.place(relx=0.5, rely=0.5, anchor="center")
-
     root.mainloop()
 
 

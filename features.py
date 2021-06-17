@@ -25,6 +25,7 @@ class Features:
         self.combination_of_technique = None
         self.time_stamp = len(
             self.log_objects) - 1  # at some seconds the server cannot receive data (with no specific reason!)  so, the assistance time cannot be used for self.log_objects list(list out of range occur)
+        print(self.time_stamp)
         self.ownship_tracker = list()
         self.route_sequence = ""
         self.route_sequence_creator()
@@ -132,6 +133,7 @@ class Features:
         else:
             starting_sec = 400
             ending_sec = self.time_stamp + 1
+            print()
             total = (self.time_stamp - 400) + 1
 
         for num in range(starting_sec, ending_sec, 1):
@@ -194,7 +196,7 @@ class Features:
             instant_heading = stem_angle_checker(self.scenario, self.log_objects[self.time_stamp].heading)
             # If the assitance occure before 400s the average and instant heading will be the same.
             self.heading = (
-            instant_heading, self.log_objects[self.time_stamp].heading, self.log_objects[self.time_stamp].heading)
+                instant_heading, self.log_objects[self.time_stamp].heading, self.log_objects[self.time_stamp].heading)
             self.logger.info("the user asked an assistance at an inappropriate time! (Not recommended)")
         else:
             starting_sec = 400
@@ -281,17 +283,18 @@ class Features:
             orientation = max(paires)[1]
 
             self.orientation = orientation
+
     # This function fill the speed variable in a tuple with this format: (speed_status,average_speed,instant_speed )
     def speed_calculator(self):
         sumed_speed = 0
         for num in range(self.time_stamp + 1):
             sumed_speed += self.log_objects[num].sog
-        self.speed = sumed_speed / (self.time_stamp + 1)
+        avg_speed = sumed_speed / (self.time_stamp + 1)
 
-        if self.speed <= 3:
-            self.speed = ("safe", self.speed,self.log_objects[self.time_stamp].sog)
+        if avg_speed <= 3:
+            self.speed = ("safe", avg_speed, self.log_objects[self.time_stamp].sog)
         else:
-            self.speed = ("dangerous", self.speed,self.log_objects[self.time_stamp].sog)
+            self.speed = ("dangerous", avg_speed, self.log_objects[self.time_stamp].sog)
         print(f"this is speed average{sumed_speed / self.time_stamp} and is {self.speed[0]}")
 
     # def check_for_sector(self, root_sequence):
