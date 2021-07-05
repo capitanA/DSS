@@ -21,10 +21,6 @@ from sklearn import tree
 from PIL import ImageTk, Image
 from HoverInfo import HoverText
 from simReceiver import SimReceiver
-import threading
-from helper import speed_warning
-
-from helper import Decorator
 import ipdb
 
 engine_dic = {"pEngine": 0, "fTunnelThruster": 0, "sEngine": 0, "aTunnelThruster": 0}
@@ -54,8 +50,6 @@ class PlayScenario:
 
         if isRealTime:
             self.simReceiver = SimReceiver(self)
-            # Speed_warning_thread = threading.Thread(target=speed_warning, args=(self.log_objects, self.main_frame,))
-            # Speed_warning_thread.start()
 
         # self.suggested_speed = None
         # self.suggested_heading = None
@@ -361,11 +355,14 @@ class PlayScenario:
                 self.load_image(case_ID, case_name)
 
     def show_instruction(self, case_name):
-        if self.scenario not in ['emergency', 'pushing', 'leeway']:
-            self.scenario = 'emergency'
+        if self.scenario in ["emergency_4tens"]:
+            scenario_name = "emergency"
+        else:
+            scenario_name = self.scenario
 
         try:
-            more_info_file = open(f"description_files/{self.scenario}/{case_name}.txt", mode="r")
+
+            more_info_file = open(f"description_files/{scenario_name}/{case_name}.txt", mode="r")
 
             more_info_content = more_info_file.read()
             if more_info_content:
@@ -377,8 +374,10 @@ class PlayScenario:
             self.specific_Instruction_lbl_text.config(wraplength=480, font=('Helvetica 13 bold'),
                                                       text=f"There is no specific instruction for this approach.\nNote: If you think this in not actually an effective approach, change your current settings and ask for an assistance again.")
         try:
-            not_recomended_cases = open(f"Not_Recommended_Cases/NotRecommendedCases_{self.scenario}.txt",
-                                        mode="r")
+
+            not_recomended_cases = open(f"Not_Recommended_Cases/NotRecommendedCases_{scenario_name}.txt",
+                                            mode="r")
+
             not_recomended_cases = not_recomended_cases.read()
             if case_name in not_recomended_cases.split("\n"):
                 self.not_recommended_lbl.config(bg="orange",
@@ -390,8 +389,10 @@ class PlayScenario:
             self.logger.info(f"The not recommended cases files could'nt be opened!")
 
     def load_image(self, case_ID, case_name):
-        if self.scenario not in ['emergency', 'pushing', 'leeway']:
-            self.scenario = 'emergency'
+        if self.scenario in ["emergency_4tens"]:
+            scenario_name = "emergency"
+        else:
+            scenario_name = self.scenario
 
         current_path = os.getcwd()
         # cases_name = pd.read_excel(
@@ -400,8 +401,9 @@ class PlayScenario:
         # name = cases_name.values[case_ID][0]
         print(f"this is the name of the predicted case{case_name} for {self.scenario} scenario")
         try:
+
             suggested_image = Image.open(
-                current_path + "/images/output_images/" + self.scenario + "/" + case_name + ".png")
+                current_path + "/images/output_images/" + scenario_name + "/" + case_name + ".png")
             resized_suggested_image = suggested_image.resize((354, 369), Image.ANTIALIAS)
             img = ImageTk.PhotoImage(resized_suggested_image)
             self.suggested_image_id = self.canvas.create_image(352.5, 360, anchor="se", image=img)
@@ -421,12 +423,16 @@ class PlayScenario:
     #         self.logger.info(f"The description file with the name {case_name} couldn't be opened")
 
     def get_selected_rows(self, class_id):
-        if self.scenario not in ['emergency', 'pushing', 'leeway']:
-            self.scenario = 'emergency'
+        if self.scenario in ["emergency_4tens"]:
+            scenario_name = "emergency"
+        else:
+            scenario_name = self.scenario
+
         rows = []
         cases_ID = []
         current_path = os.getcwd()
-        data_path = current_path + "/Training_DataSet/" + self.scenario + "_N2/" + self.scenario + "_Training_withclassID.csv"
+
+        data_path = current_path + "/Training_DataSet/" + scenario_name + "_N2/" + scenario_name + "_Training_withclassID.csv"
         with open(data_path, newline='', encoding="ISO-8859-1") as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',', quotechar='|')
             for line_num, row in enumerate(csv_reader):
@@ -444,22 +450,24 @@ class PlayScenario:
         return selected_rows[min_index], cases_number[min_index]
 
     def decision_tree_classifier(self, features_array, scenario):
-        if self.scenario not in ['emergency', 'pushing', 'leeway']:
-            self.scenario = 'emergency'
+        if self.scenario in ["emergency_4tens"]:
+            scenario_name = "emergency"
+        else:
+            scenario_name = self.scenario
         current_path = os.getcwd()
         case_techniques = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_techniques.xls")
+            current_path + "/Training_DataSet/" + scenario_name + "_N2" + "/" + scenario_name + "_techniques.xls")
         case_techniques = case_techniques.to_numpy()
 
         case_names = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_className.xls")
+            current_path + "/Training_DataSet/" + scenario_name + "_N2" + "/" + scenario_name + "_className.xls")
         case_names = case_names.to_numpy()
 
         df_x_train = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_Training.xls")
+            current_path + "/Training_DataSet/" + scenario_name + "_N2" + "/" + scenario_name + "_Training.xls")
         x_train = np.array(df_x_train.astype(float))
         df_y_train = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_ID.xls")
+            current_path + "/Training_DataSet/" + scenario_name + "_N2" + "/" + scenario_name + "_ID.xls")
         if scenario == "leeway":
             max_depth = 3
         else:

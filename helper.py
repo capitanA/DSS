@@ -96,8 +96,8 @@ coordinates = {
                         "long_btm_right": 14637814.,
                         "center_trgt_lat": 60.49632110,
                         "center_trgt_long": 146.37754990,
-                        "center_trgt_btm_lat": 60.49527,
-                        "center_trgt_btm_long": 146.37849,
+                        "lat_center_trgt_btm": 60.49527,
+                        "long_center_trgt_btm": 146.37849,
                         "lat_top_center": 60.49736,
                         "long_top_center": 146.37658
                         },
@@ -402,7 +402,7 @@ def area_focus_votter(scenario, instant_log, area_of_focus_dict):
         return area_of_focus_dict
 
 
-    else:  # this is for emergency
+    else:  # this is for emergency_4tens and emergency_7tens
         ownship_target_pos = ownship_position(scenario, instant_log.latitude, instant_log.longitude)
         ownship_zone_pos = ownship_position(scenario + "_zone", instant_log.latitude, instant_log.longitude)
         if ownship_zone_pos == "z":
@@ -820,11 +820,6 @@ def feature_array_convertor(encode, speed, distance, heading, aspect, area_focus
 #         features_array = [speed, heading, distance, aspect, area_focus, orientation, technique]
 #
 #     return features_array
-def speed_warning(log_objects, main_frame):
-    spd_wrning_lbl = tk.Label(main_frame, text="Your speed is greater than 3 Knot. be cautious!")
-    while log_objects[-1].sog > 3:
-        spd_wrning_lbl.place()
-    spd_wrning_lbl.grid_forget()
 
 
 class BLabel(object):

@@ -94,8 +94,8 @@ class Features:
             ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
                                            self.log_objects[sec].longitude)
             down_heading, up_heading, down_key, up_key = updown_range_calculator(self.log_objects[sec].latitude,
-                                                                                  self.log_objects[sec].longitude,
-                                                                                  self.scenario, ownship_pos, False)
+                                                                                 self.log_objects[sec].longitude,
+                                                                                 self.scenario, ownship_pos, False)
             degree = (down_heading, up_heading)
 
             updated_aspect_vot_dict = aspect_votter(self.log_objects, sec, aspect_vot_dict, degree, self.scenario)
@@ -121,6 +121,20 @@ class Features:
     # the another one is the instante distance of vessel at the time of getting assitance.
 
     def distance_calculator(self):
+
+        # distances_list = calc_dists_from_target(self.log_objects[num].latitude,
+        #                                         self.log_objects[num].longitude,
+        #                                         self.scenario)
+        #
+        # if self.heading[0] == "perpendicular":
+        #
+        #     distances = min(distances_list) - 40
+        # else:
+        #     distances = min(distances_list) - 8.5
+        #
+        # if distances < 0:
+        #     self.logger.info("User hit the target!")
+        #     print("You hit the target. please make your distance further not to have a crash!")
 
         count = 0
         if self.time_stamp - 400 <= 0:
@@ -252,8 +266,10 @@ class Features:
                         self.log_objects[sec].latitude,
                         self.log_objects[sec].longitude,
                         self.scenario, ownship_pos, orientation_mode)
+                    'emergency_4tens'
 
-                    if self.scenario in ["emergency","emergency_4tens" "leeway"]:
+                    if self.scenario in ["emergency", "emergency_4tens", "leeway"]:
+                        print(self.scenario)
                         dist_long_up = coordinates[self.scenario]["long_" + up_key]
                         dist_lat_up = coordinates[self.scenario]["lat_" + up_key]
                         dist_long_down = coordinates[self.scenario]["long_" + down_key]
@@ -321,7 +337,8 @@ class Features:
         excluded_C = ["_BR_B", "_B_BL", "_BL_L", "_R_TR", "_TR_T", "_L_TL"]
         i = 0
         technique_dict = {"PW": 0, "L": 0, "P": 0}
-        start_loc_ice = {"emergency": 146.3655880, "pushing": 146.36156890, "leeway": self.log_objects[0].longitude}
+        start_loc_ice = {"emergency_4tens": 146.38349, "emergency": 146.3655880, "pushing": 146.36156890,
+                         "leeway": self.log_objects[0].longitude}
         colision_time = collision_time_determinor(self.scenario)
         if self.time_stamp <= 180:
             self.maneuver = "N/A_maneuver"

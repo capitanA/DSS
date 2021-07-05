@@ -135,13 +135,13 @@ def init_main_page(root):
     emergency_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "emergency",
                                 main_frame,
                                 root)
-    # emergency_4tens_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "emergency_4tens",
-    #                             main_frame,
-    #                             root)
+    emergency_4tens_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "emergency_4tens",
+                                main_frame,
+                                root)
     emergency_btn = tk.Button(emergency_frame, image=Button_Emergency_img_7tens, anchor="c", command=emergency_command,
                               relief="raised")
 
-    emergency_4tens_btn = tk.Button(emergency_frame, image=Button_Emergency_img_4tens, anchor="c", command="",
+    emergency_4tens_btn = tk.Button(emergency_frame, image=Button_Emergency_img_4tens, anchor="c", command=emergency_4tens_command,
                                     relief="raised")
     emergency_btn.place(relx=0.2, rely=0.03, anchor="n")
     emergency_4tens_btn.place(relx=0.8, rely=0.03, anchor="n")
