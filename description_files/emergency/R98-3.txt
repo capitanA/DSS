@@ -1,0 +1,6 @@
+1.Continue approach towards FPSO.
+2.Maintain vessel position at the midships- forward third point of the FPSO.
+3.Rotate vessel bow or stern towards the FPSO until it is approximately perpendicular.
+4.Maintain position.
+5.Use  current and leeway to block ice from lifeboat zone.
+

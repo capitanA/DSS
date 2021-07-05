@@ -1,0 +1,3 @@
+1.If possible, approach FPSO further up current to position vessel in the upper half or third of the vessel.
+2.Once in position, rotate vessel to port using thrusters or propellers to maintain perpendicular, or >90 degree angle with the FPSO.
+3.Maintain position using current and leeway to block ice from lifeboat zone.

@@ -11,12 +11,12 @@ angle_pos_key = {"top": ["top_right", "top_left"], "bottom": ["btm_right", "btm_
                  "top_left": ["top_right", "btm_left"], "top_right": ["btm_right", "top_left"],
                  "bottom_left": ["top_left", "btm_right"], "bottom_right":
                      ["btm_left", "top_right"]}
-angle_pos_key_emergency = {"top": ["top_center", "btm_left_vessel"], "bottom": ["top_center", "btm_left_vessel"],
-                           "left": ["top_center", "btm_right_vessel"], "right": ["btm_right_vessel", "top_center"],
-                           "top_left": ["top_center", "btm_left_vessel"],
-                           "top_right": ["btm_right_vessel", "top_center"],
-                           "bottom_left": ["top_center", "btm_right_vessel"], "bottom_right":
-                               ["btm_right_vessel", "top_center"], "alongside": ["top_center", "btm_left"]}
+angle_pos_key_emergency = {"top": ["top_center", "center_trgt_btm"], "bottom": ["top_center", "center_trgt_btm"],
+                           "left": ["top_center", "center_trgt_btm"], "right": ["center_trgt_btm", "top_center"],
+                           "top_left": ["top_center", "center_trgt_btm"],
+                           "top_right": ["center_trgt_btm", "top_center"],
+                           "bottom_left": ["top_center", "center_trgt_btm"], "bottom_right":
+                               ["center_trgt_btm", "top_center"], "alongside": ["top_center", "btm_left"]}
 
 coordinates = {
     "emergency_circumference": {
@@ -28,6 +28,15 @@ coordinates = {
             146.35763, 146.35801, 146.35829, 146.35850, 146.35865, 146.35883, 146.35897, 146.35919, 146.35940,
             146.35958,
             146.35969, 146.35953)},
+    "emergency_4tens_circumference": {
+        "lat": (
+            60.49739, 60.49730, 60.49712, 60.49692, 60.49672, 60.49651, 60.49632, 60.49610, 60.49588, 60.49566,
+            60.49547,
+            60.49531),
+        "long": (
+            146.37665, 146.37703, 146.37730, 146.37749, 146.37766, 146.37784, 146.37800, 146.37818, 146.37838,
+            146.37854,
+            146.37864, 146.37869)},
     "leeway_circumference": {"lat": (
         60.51039, 60.51021, 60.50996, 60.50971, 60.50974, 60.50917, 60.50894, 60.50870, 60.50843, 60.50817,
         60.50796, 60.50792), "long": (
@@ -59,8 +68,8 @@ coordinates = {
                "center_trgt_lat": 60.50914510,
                "long_top_center": 146.35116730,
                "lat_top_center": 60.51038,
-               "center_trgt_btm_long": 146.35116730,
-               "center_trgt_btm_lat": 60.50792},
+               "long_center_trgt_btm": 146.35116730,
+               "lat_center_trgt_btm": 60.50792},
 
     "emergency": {"lat_top_left": 60.51833,
                   "long_top_left": 146.35961,
@@ -72,14 +81,26 @@ coordinates = {
                   "long_btm_right": 146.35749,
                   "center_trgt_lat": 60.51724810,
                   "center_trgt_long": 146.35859560,
-                  "center_trgt_btm_lat": 60.49526,
-                  "center_trgt_btm_long": 146.37848,
+                  "lat_center_trgt_btm": 60.51619,
+                  "long_center_trgt_btm": 146.35954,
                   "lat_top_center": 60.51830,
-                  "long_top_center": 146.35769,
-                  "lat_btm_left_vessel": 60.51624,
-                  "long_btm_left_vessel": 146.35972,
-                  "lat_btm_right_vessel": 60.51614,
-                  "long_btm_right_vessel": 146.35929},
+                  "long_top_center": 146.35769
+                  },
+    "emergency_4tens": {"lat_top_left": 60.48750,
+                        "long_top_left": 146.37698,
+                        "lat_top_right": 60.49725,
+                        "long_top_right": 146.37631,
+                        "lat_btm_left": 60.49536,
+                        "long_btm_left": 146.37883,
+                        "lat_btm_right": 60.49513,
+                        "long_btm_right": 14637814.,
+                        "center_trgt_lat": 60.49632110,
+                        "center_trgt_long": 146.37754990,
+                        "center_trgt_btm_lat": 60.49527,
+                        "center_trgt_btm_long": 146.37849,
+                        "lat_top_center": 60.49736,
+                        "long_top_center": 146.37658
+                        },
 
     "pushing_zone": {"lat_top_left": 60.51116,
                      "long_top_left": 146.35677,
@@ -97,14 +118,23 @@ coordinates = {
                     "lat_btm_left": 60.50853,
                     "long_btm_left": 146.35285,
                     "lat_btm_right": 60.50853,
-                    "long_btm_right": 146.35162}, "emergency_zone": {"lat_top_left": 60.51773,
-                                                                     "long_top_left": 146.36102,
-                                                                     "lat_top_right": 60.51731,
-                                                                     "long_top_right": 146.35900,
-                                                                     "lat_btm_left": 60.51667,
-                                                                     "long_btm_left": 146.36194,
-                                                                     "lat_btm_right": 60.51624,
-                                                                     "long_btm_right": 146.35993}}
+                    "long_btm_right": 146.35162},
+    "emergency_zone": {"lat_top_left": 60.51773,
+                       "long_top_left": 146.36102,
+                       "lat_top_right": 60.51731,
+                       "long_top_right": 146.35900,
+                       "lat_btm_left": 60.51667,
+                       "long_btm_left": 146.36194,
+                       "lat_btm_right": 60.51624,
+                       "long_btm_right": 146.35993},
+    "emergency_4tens_zone": {"lat_top_left": 60.49688,
+                             "long_top_left": 146.37990,
+                             "lat_top_right": 60.49639,
+                             "long_top_right": 146.37796,
+                             "lat_btm_left": 60.49584,
+                             "long_btm_left": 146.38080,
+                             "lat_btm_right": 60.49535,
+                             "long_btm_right": 146.37866}}
 
 # This dictionary will help to create a numerical feature row using the index of the corresponding feature's list bellow,
 features_codec = {"combination_of_techniques": ["solo", "combo"],
@@ -131,7 +161,7 @@ features_codec = {"combination_of_techniques": ["solo", "combo"],
 
 # This function determine in which quarter the ship got located. Then calculated the correct angle proportional in relation to the start point.
 def angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, downrange, uprange, scenario):
-    if scenario == "emergency":
+    if scenario in ["emergency", "emergency_4tens"]:
         if ownship_pos == "top_left":
             return downrange + 90, uprange + 90
         elif ownship_pos == "top":
@@ -141,17 +171,17 @@ def angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, downrange
         elif ownship_pos == "bottom":
             return 90 - downrange, 270 + uprange
         # it is on the left side of target
-        elif ownship_lattitude > coordinates[scenario]["lat_btm_left_vessel"] and ownship_lattitude < \
+        elif ownship_lattitude > coordinates[scenario]["lat_center_trgt_btm"] and ownship_lattitude < \
                 coordinates[scenario]["lat_top_left"] and ownship_longitude > coordinates[scenario][
-            "long_btm_left_vessel"]:
+            "long_center_trgt_btm"]:
             return 90 - downrange, 90 + uprange
         # it is on the bottom_left of the target
-        elif ownship_lattitude < coordinates[scenario]["lat_btm_left_vessel"] and ownship_longitude > \
+        elif ownship_lattitude < coordinates[scenario]["lat_center_trgt_btm"] and ownship_longitude > \
                 coordinates[scenario][
-                    "long_btm_left_vessel"]:
+                    "long_center_trgt_btm"]:
             return 90 - downrange, 90 - uprange
         # it is on the right side of the target
-        elif ownship_lattitude > coordinates[scenario]["lat_btm_left_vessel"] and ownship_lattitude < \
+        elif ownship_lattitude > coordinates[scenario]["lat_center_trgt_btm"] and ownship_lattitude < \
                 coordinates[scenario]["lat_top_left"] and ownship_longitude < coordinates[scenario][
             "long_top_center"]:
             return 270 - downrange, 270 + uprange
@@ -184,11 +214,11 @@ def angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, downrange
 # coordinates to calculate the angle based on.  it uses the 'angle_pos_key' and 'angle_pos_key_emergency' to see which
 # points it should consider from 'coordinates' dictionary. for the pushing scenario it use the 'pushing_zone' dictionary
 # to get the points for determining the angle range
-def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, ownship_pos, orientation_mode):
+def updown_range_calculator(ownship_lattitude, ownship_longitude, scenario, ownship_pos, orientation_mode):
     if scenario in ["pushing", "leeway"]:
         down_key, up_key = angle_pos_key[ownship_pos]
     else:
-        down_key_emg, up_key_emg = angle_pos_key_emergency[ownship_pos]
+         down_key_emg, up_key_emg = angle_pos_key_emergency[ownship_pos]
 
     if scenario == "pushing":
         if orientation_mode:
@@ -212,16 +242,20 @@ def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, own
     # else:
 
     downrange_rad_angle = math.atan(abs(ownship_lattitude - (
-        coordinates[coord_dict_key]["lat_" + down_key] if scenario != "emergency" else coordinates[coord_dict_key][
+        coordinates[coord_dict_key]["lat_" + down_key] if scenario not in ["emergency", "emergency_4tens"] else
+        coordinates[coord_dict_key][
             "lat_" + down_key_emg])) / abs(
         abs(ownship_longitude) - (
-            coordinates[coord_dict_key]["long_" + down_key] if scenario != "emergency" else coordinates[coord_dict_key][
+            coordinates[coord_dict_key]["long_" + down_key] if scenario not in ["emergency", "emergency_4tens"] else
+            coordinates[coord_dict_key][
                 "long_" + down_key_emg])))
     uprange_rad_angel = math.atan(abs(ownship_lattitude - (
-        coordinates[coord_dict_key]["lat_" + up_key] if scenario != "emergency" else coordinates[coord_dict_key][
+        coordinates[coord_dict_key]["lat_" + up_key] if scenario not in ["emergency", "emergency_4tens"] else
+        coordinates[coord_dict_key][
             "lat_" + up_key_emg])) / abs(
         abs(ownship_longitude) - (
-            coordinates[coord_dict_key]["long_" + up_key] if scenario != "emergency" else coordinates[coord_dict_key][
+            coordinates[coord_dict_key]["long_" + up_key] if scenario not in ["emergency", "emergency_4tens"] else
+            coordinates[coord_dict_key][
                 "long_" + up_key_emg])))
     downrange_degree = math.degrees(abs(downrange_rad_angle))
     uprange_degree = math.degrees(abs(uprange_rad_angel))
@@ -229,7 +263,7 @@ def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, own
     correct_uprange_degree = correct_angle(uprange_degree)
     angle_range = angle_decorator(ownship_pos, ownship_lattitude, ownship_longitude, correct_downrange_degree,
                                   correct_uprange_degree, scenario)
-    if scenario == "emergency":
+    if scenario in ["emergency", "emergency_4tens"]:
         return angle_range[0], angle_range[1], down_key_emg, up_key_emg
     else:
         return angle_range[0], angle_range[1], down_key, up_key
@@ -239,7 +273,8 @@ def updown_rannge_calculator(ownship_lattitude, ownship_longitude, scenario, own
 def ownship_position(scenario, ownship_lattitude, ownship_longitude):
     if "_zone" in scenario:
 
-        if scenario == "emergency_zone":
+        # if scenario == "emergency_zone":
+        if "emergency" in scenario:  # for the mergency scenario the position needs to be calculated by the slip.
             # Translation of Coordinate axes
 
             x12 = coordinates[scenario]["long_btm_left"] - coordinates[scenario]["long_btm_left"]
@@ -301,11 +336,7 @@ def ownship_position(scenario, ownship_lattitude, ownship_longitude):
                     return "right"
                 else:
                     return "z"
-                # return "z"
-                # if abs(ownship_longitude) < abs(coordinates[scenario]["long_btm_left"]):
-                #     return "z"
-                # else:
-                #     return "alongside"
+
     else:  # this is for determining where the ownship is located in relation to the target
 
         # check if the ownship is upper than the target
@@ -390,7 +421,7 @@ def aspect_votter(log_objects, current_sec, aspect_vot_dict, degree_range, scena
     # it will check if the ownship heading is bigger than uprange , smaller than downrange or in between them. then decide what is the aspect.
     ## I increased and decreased 5 degree to/from the threashold to be in a safe side for making decision.
 
-    if scenario == "emergency":
+    if scenario in ["emergency", "emergency_4tens"]:
         if log_objects[current_sec].heading <= degree_range[1] + 5 and log_objects[current_sec].heading >= \
                 degree_range[0] - 5:
             if current_sec > 120:
@@ -449,7 +480,8 @@ def collision_time_determinor(scenario):
                     if item:
                         dic_entity.update({item[0]: item[1]})
                 if dic_entity["thisEntityID"] == "1" and dic_entity["thisEntityID"] != "10":
-                    if scenario == "emergency" and float(log_event.attrib["SimTime"]) < 1801:
+                    if scenario in ["emergency", "emergency_4tens"] and float(
+                            log_event.attrib["SimTime"]) < 1801:
                         collision_time.append(int(float(log_event.attrib["SimTime"])))
                     elif (scenario == "pushing" or scenario == "leeway") and float(log_event.attrib["SimTime"]) < 901:
                         collision_time.append(int(float(log_event.attrib["SimTime"])))
@@ -460,11 +492,11 @@ def collision_time_determinor(scenario):
 
 def get_point(scenario, ownship_lattitude, ownship_longitude):
     ownship_pos = ownship_position(scenario, ownship_lattitude, ownship_longitude)
-    if scenario == "emergency":
+    if scenario in ["emergency", "emergency_4tens"]:
         if ownship_pos in ["alongside", "left", "right"]:
             return coordinates[scenario]["center_trgt_lat"], coordinates[scenario]["center_trgt_long"]
         elif ownship_pos in ["bottom_left", "bottom_right", "bottom"]:
-            return coordinates[scenario]["center_trgt_btm_lat"], coordinates[scenario]["center_trgt_btm_long"]
+            return coordinates[scenario]["lat_center_trgt_btm"], coordinates[scenario]["long_center_trgt_btm"]
         else:
             return coordinates[scenario]["lat_top_center"], coordinates[scenario]["long_top_center"]
 
@@ -472,7 +504,7 @@ def get_point(scenario, ownship_lattitude, ownship_longitude):
         if ownship_pos in ["left", "right"]:
             return coordinates[scenario]["center_trgt_lat"], coordinates[scenario]["center_trgt_long"]
         elif ownship_pos in ["bottom_left", "bottom_right", "bottom"]:
-            return coordinates[scenario]["center_trgt_btm_lat"], coordinates[scenario]["center_trgt_btm_long"]
+            return coordinates[scenario]["lat_center_trgt_btm"], coordinates[scenario]["long_center_trgt_btm"]
         else:
             return coordinates[scenario]["lat_top_center"], coordinates[scenario]["long_top_center"]
     else:
@@ -488,7 +520,7 @@ def distance_formula(ownship_lat, ownship_long, dist_long, dist_lat):
 
 
 def calc_dists_from_target(ownship_lat, ownship_long, scenario):
-    # to calculate the distance between two coordinates the below equation was used:
+    # to calculate the distance between two coordinates the following equation was used:
     # dx = (long1 - long2) * 40000 * math.cos((lat1 + lat2) * math.pi / 360) / 360
     # dy = (lat1- lat2) * 40000 / 360
     # distance = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
@@ -496,9 +528,8 @@ def calc_dists_from_target(ownship_lat, ownship_long, scenario):
     # then the minimum of those distances considered as the  distance of ownship from target.
     # In the pushing scenario the distance of ownship from the target centre calculated.
     # then determine what the ownship position to subtract a certain amount as it is in the coordinates["pushing"] DICT
-
     dist_list = []
-    if scenario in ["emergency", "leeway"]:
+    if scenario in ["emergency", "leeway","emergency_4tens"]:
 
         for i in range(12):
             distance = distance_formula(ownship_lat, ownship_long, coordinates[scenario + "_circumference"]["long"][i],
@@ -691,7 +722,7 @@ def bow_stern_checker(scenario, ownship_pos, up_heading, down_heading, orientati
 
 def stem_angle_checker(scenario, heading):
     heading_stat = None
-    if scenario == "emergency":
+    if scenario in ["emergency", "emergency_4tens"]:
         if 100 <= heading <= 126 or 280 <= heading <= 306:
             heading_stat = "perpendicular"
         elif 10 <= heading <= 36 or 190 <= heading <= 216:
@@ -720,32 +751,14 @@ def feature_array_convertor(encode, speed, distance, heading, aspect, area_focus
         else:
             combination_of_technique = 0
         Area_of_focus = features_codec["area_of_focus"].index(area_focus)
-        # heading = features_codec["heading"].index(heading)
         orientation = features_codec["orientation"].index(orientation)
-
-        # if distance <= 35:  # This range has been assumed for the ownship to be in a close distance to the target!
-        #     vessel_Distance_from_target = 0
-        # elif distance >= 75:  # When the ownship is in a far distance to the target!
-        #
-        #     vessel_Distance_from_target = 2
-        # else:
-        #     vessel_Distance_from_target = 1  # When the ownship is in a normal distance to the target!
-
-        # speed = features_codec["speed"].index(speed)
-        # technique = features_codec["technique"].index(technique)
         aspect = features_codec["aspect"].index(aspect)
 
-        # if scenario == "emergency":
-        #     features_array.append([Area_of_focus, heading, orientation, distance, speed, technique,
-        #                            aspect,
-        #                            combination_of_technique])
-        # else:
-        #     features_array.append([heading, orientation, Area_of_focus, speed, distance, technique,
-        #                            aspect,
-        #                            combination_of_technique])
         features_array.append(
             [int(speed), int(distance), int(heading), int(combination_of_technique), int(aspect), int(Area_of_focus),
              int(orientation)])
+        # features_array.append([int(distance), int(orientation), int(heading), int(combination_of_technique),
+        #                       int(aspect), int(speed), int(Area_of_focus)])
         features_array = np.array(features_array)
 
     else:
@@ -757,6 +770,7 @@ def feature_array_convertor(encode, speed, distance, heading, aspect, area_focus
              "orientation": orientation, "technique": technique})
 
         features_array = [speed, distance, heading, aspect, area_focus, orientation]
+        # features_array = [distance, orientation, heading, aspect, speed, area_focus]
 
     return features_array if encode else features_dict
 
@@ -807,10 +821,11 @@ def feature_array_convertor(encode, speed, distance, heading, aspect, area_focus
 #
 #     return features_array
 def speed_warning(log_objects, main_frame):
-    spd_wrning_lbl=tk.Label(main_frame,text="Your speed is greater than 3 Knot. be cautious!")
+    spd_wrning_lbl = tk.Label(main_frame, text="Your speed is greater than 3 Knot. be cautious!")
     while log_objects[-1].sog > 3:
         spd_wrning_lbl.place()
     spd_wrning_lbl.grid_forget()
+
 
 class BLabel(object):
     b = ">>>"

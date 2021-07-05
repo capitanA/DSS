@@ -1,7 +1,7 @@
 import csv
 import ipdb
 import math
-from helper import ownship_position, area_focus_votter, updown_rannge_calculator, aspect_votter, \
+from helper import ownship_position, area_focus_votter, updown_range_calculator, aspect_votter, \
     collision_time_determinor, get_point, calc_dists_from_target, distance_formula, coordinates, bow_stern_checker, \
     stem_angle_checker
 from tkinter import messagebox
@@ -67,7 +67,7 @@ class Features:
         #     while self.log_objects[i].longitude > 146.35541:
         #         ownship_pos = ownship_position(self.scenario, self.log_objects[i].latitude,
         #                                        self.log_objects[i].longitude)
-        #         down_heading, up_heading = updown_rannge_calculator(self.log_objects[i].latitude,
+        #         down_heading, up_heading = updown_range_calculator(self.log_objects[i].latitude,
         #                                                             self.log_objects[i].longitude,
         #                                                             self.scenario, ownship_pos)
         #         degree = (down_heading, up_heading)
@@ -93,7 +93,7 @@ class Features:
         for sec in range(0, checking_secconds, 1):
             ownship_pos = ownship_position(self.scenario, self.log_objects[sec].latitude,
                                            self.log_objects[sec].longitude)
-            down_heading, up_heading, down_key, up_key = updown_rannge_calculator(self.log_objects[sec].latitude,
+            down_heading, up_heading, down_key, up_key = updown_range_calculator(self.log_objects[sec].latitude,
                                                                                   self.log_objects[sec].longitude,
                                                                                   self.scenario, ownship_pos, False)
             degree = (down_heading, up_heading)
@@ -133,7 +133,6 @@ class Features:
         else:
             starting_sec = 400
             ending_sec = self.time_stamp + 1
-            print()
             total = (self.time_stamp - 400) + 1
 
         for num in range(starting_sec, ending_sec, 1):
@@ -149,6 +148,7 @@ class Features:
                 distances = min(distances_list) - 8.5
 
             if distances < 0:
+                self.logger.info("User hit the target!")
                 print("You hit the target. please make your distance further not to have a crash!")
                 distances = 0
                 instant_distance = 0
@@ -248,12 +248,12 @@ class Features:
                     orientation_dict.update({"parallel": orientation_dict["parallel"] + 1})
                 else:
 
-                    down_heading, up_heading, down_key, up_key = updown_rannge_calculator(
+                    down_heading, up_heading, down_key, up_key = updown_range_calculator(
                         self.log_objects[sec].latitude,
                         self.log_objects[sec].longitude,
                         self.scenario, ownship_pos, orientation_mode)
 
-                    if self.scenario in ["emergency", "leeway"]:
+                    if self.scenario in ["emergency","emergency_4tens" "leeway"]:
                         dist_long_up = coordinates[self.scenario]["long_" + up_key]
                         dist_lat_up = coordinates[self.scenario]["lat_" + up_key]
                         dist_long_down = coordinates[self.scenario]["long_" + down_key]

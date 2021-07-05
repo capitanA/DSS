@@ -50,7 +50,7 @@ def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_
 
     back_command = partial(get_back, scenario_obj)
 
-    go_back_button = tk.Button(root, text="Back To Main Menue", width=20, height=3, anchor="c",
+    go_back_button = tk.Button(root, text="Back To Main Menu", width=20, height=3, anchor="c",
                                command=back_command,
                                bg="gray")
     go_back_button.place(relx=0.5, rely=0.05, anchor="center")
@@ -114,7 +114,8 @@ def init_main_page(root):
 
     Button_Pushing_img = tk.PhotoImage(file="images/Pushing_look.png")
     Button_Leeway_img = tk.PhotoImage(file="images/Leaway_look.png")
-    Button_Emergency_img = tk.PhotoImage(file="images/Emergency_look.png")
+    Button_Emergency_img_4tens = tk.PhotoImage(file="images/Emergency_look_4tens.png")
+    Button_Emergency_img_7tens = tk.PhotoImage(file="images/Emergency_look_7tens.png")
 
     ######   First button for Pushing scenario  ######
     pushing_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "pushing", main_frame,
@@ -134,9 +135,16 @@ def init_main_page(root):
     emergency_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "emergency",
                                 main_frame,
                                 root)
-    emergency_btn = tk.Button(emergency_frame, image=Button_Emergency_img, anchor="c", command=emergency_command,
+    # emergency_4tens_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "emergency_4tens",
+    #                             main_frame,
+    #                             root)
+    emergency_btn = tk.Button(emergency_frame, image=Button_Emergency_img_7tens, anchor="c", command=emergency_command,
                               relief="raised")
-    emergency_btn.place(relx=0.5, rely=0.03, anchor="n")
+
+    emergency_4tens_btn = tk.Button(emergency_frame, image=Button_Emergency_img_4tens, anchor="c", command="",
+                                    relief="raised")
+    emergency_btn.place(relx=0.2, rely=0.03, anchor="n")
+    emergency_4tens_btn.place(relx=0.8, rely=0.03, anchor="n")
 
     ######   the image for pushing scenario   ######
     opend_img_1 = Image.open("images/pushing.png")

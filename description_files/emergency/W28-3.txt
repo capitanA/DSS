@@ -1,0 +1,5 @@
+1.Match heading to FPSO’s heading and move vessel upstream of midships section.
+2.Use pushing technique to displace ice while moving vessel upstream, positioned between.the midships and forward third sections of the FPSO.
+3.Rotate vessel until heading is perpendicular to that of the FPSO
+4.Hold position.
+5.Use current and leeway to block ice from the lifeboat zone. 

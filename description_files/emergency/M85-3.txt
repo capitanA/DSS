@@ -1,0 +1,3 @@
+1.Commence turn once you are at the closest point to FPSO.
+2.Rotate until the stern is facing the FPSO and your heading is approximately perpendicular to theirs.
+3.Maintain position and use current and leeway to stop ice from entering zone.

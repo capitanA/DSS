@@ -1,0 +1,3 @@
+1.Continue approach closer to FPSO prior to rotating vessel.
+2.Once within 20m of FPSO, begin making the turn using thrusters.
+3.Maintain position approximately perpendicular to vessel to block ice using current and leeway.

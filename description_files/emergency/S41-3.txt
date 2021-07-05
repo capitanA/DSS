@@ -1,0 +1,5 @@
+1.Use prop-wash technique to push ice behind own ship away from FPSO.
+2.Focus on ice downstream of own ship.
+3.Rotate vessel until stern is towards FPSO, and heading is approximately perpendicular to the FPSO.
+4.Maintain position.
+5.Use current and leeway to block ice from lifeboat zone.

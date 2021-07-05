@@ -8,7 +8,7 @@ class CsvFile:
         self.simtime = simtime
         self.latitude = latitude
         self.longitude = longitude
-        self.sog = sog
+        self.sog = sog * 1.944  ### this must be multiply by 1.944 to convert it to knot
         self.cog = cog
         self.heading = heading
         self.aftthruster = aftthruster

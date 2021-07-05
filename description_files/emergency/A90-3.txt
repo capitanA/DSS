@@ -1,0 +1,5 @@
+1.Proceed in J-approach like in the diagram to position vessel bow-first approximately in midships section of the FPSO.
+2.Rotate  vessel stern towards the FPSO
+3.Hold vessel approximately perpendicular to the FPSO, holding in position using thrusters 
+4.Maintain position, using current to block ice from lifeboat station
+
