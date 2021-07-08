@@ -74,11 +74,14 @@ def start_scenario(pushing_frame, leeway_frame, emergency_frame, scenario, main_
 
 
 def get_back(scenario_obj):
+
     if arg == "-realTime":
         scenario_obj.simReceiver.close_port()
 
     if scenario_obj.top_window.winfo_exists():
         scenario_obj.top_window.destroy()
+    user_assist_logger.info(
+        f"{scenario_obj.username if scenario_obj.username else 'Unknown'} user get Back to main menu!")
     init_main_page(root)
 
     # if scenario_obj.top_window.winfo_exists():
@@ -136,12 +139,13 @@ def init_main_page(root):
                                 main_frame,
                                 root)
     emergency_4tens_command = partial(do_the_scenario, pushing_frame, leeway_frame, emergency_frame, "emergency_4tens",
-                                main_frame,
-                                root)
+                                      main_frame,
+                                      root)
     emergency_btn = tk.Button(emergency_frame, image=Button_Emergency_img_7tens, anchor="c", command=emergency_command,
                               relief="raised")
 
-    emergency_4tens_btn = tk.Button(emergency_frame, image=Button_Emergency_img_4tens, anchor="c", command=emergency_4tens_command,
+    emergency_4tens_btn = tk.Button(emergency_frame, image=Button_Emergency_img_4tens, anchor="c",
+                                    command=emergency_4tens_command,
                                     relief="raised")
     emergency_btn.place(relx=0.2, rely=0.03, anchor="n")
     emergency_4tens_btn.place(relx=0.8, rely=0.03, anchor="n")

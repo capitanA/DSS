@@ -1,0 +1,4 @@
+1. Approach is good, proceed closer to FPSO to remove all ice prior to rotating
+2. Use pushing method closer to FPSO so that side is clear of ice. Ask for distances from Mate
+3. Position vessel upstream from lifeboat zone. Use thrusters to maintain position perpendicular to FPSO heading
+4. Use leeway and current to block ice from zone

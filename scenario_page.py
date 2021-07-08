@@ -21,6 +21,7 @@ from sklearn import tree
 from PIL import ImageTk, Image
 from HoverInfo import HoverText
 from simReceiver import SimReceiver
+from tkvideo import tkvideo
 import ipdb
 
 engine_dic = {"pEngine": 0, "fTunnelThruster": 0, "sEngine": 0, "aTunnelThruster": 0}
@@ -40,12 +41,14 @@ class PlayScenario:
         self.features = None
         self.log_objects = []
         self.isRealTime = isRealTime
-        self.suggested_image_id = None
+        self.video_lbl = None
+        self.suggeste_img_lbl=None
         self.general_Instruction_lbl_text = None
         self.specific_Instruction_lbl_text = None
         self.top_window = None
         self.username = None
         self.spd_wrn_lbl = tk.Label(self.root, text="")
+        self.spd_wrn_lbl.lower()
         self.spd_wrn_lbl.place(relx=0.5, rely=0.20, anchor="center")
 
         if isRealTime:
@@ -64,11 +67,11 @@ class PlayScenario:
         print(self.log_objects[-1].simtime)
         if self.log_objects[-1].sog >= 3:
             self.spd_wrn_lbl.config(text="Your speed is greater than 3 Knot. be cautious!")
+            self.spd_wrn_lbl.lift()
 
-            print("Display")
         elif self.log_objects[-1].sog < 3:
             self.spd_wrn_lbl.config(text="")
-            print("Remove")
+            self.spd_wrn_lbl.lower()
 
     # this function will make the TraceData file well_formed to be ready for parsing.
     def log_reader(self):
@@ -128,26 +131,31 @@ class PlayScenario:
     # this function is aimed to parse the log file and iterate into the file to  fill the log_objects list in which,
     # each object is a row for our csv file to be generated
     def assist(self):
-        global content
-        # global case_name
+        global content  # global case_name
+
         if self.top_window.winfo_exists():
             messagebox.showinfo(message="please first enter your name!")
         else:
-            if self.suggested_maneuver.cget("text") != "N/A":
+            # if self.suggested_maneuver.cget("text") != "N/A":
+            if self.video_lbl:
+                self.video_lbl.place_forget()
+            elif self.suggeste_img_lbl:
+                self.suggeste_img_lbl.place_forget()
 
-                # Resetting suggested approach attributes
-                self.suggested_speed.config(text="")
-                self.suggested_distance_target.config(text="")
-                self.suggested_heading.config(text="")
 
-                self.suggested_area_focus.config(text="")
-                self.suggested_aspect.config(text="")
-                self.suggested_maneuver.config(text="")
-                self.suggested_orientation.config(text="")
+            # Resetting suggested approach attributes
+            self.suggested_speed.config(text="")
+            self.suggested_distance_target.config(text="")
+            self.suggested_heading.config(text="")
 
-                # Resetting output image
-                if self.suggested_image_id:
-                    self.canvas.delete(self.suggested_image_id)
+            self.suggested_area_focus.config(text="")
+            self.suggested_aspect.config(text="")
+            self.suggested_maneuver.config(text="")
+            self.suggested_orientation.config(text="")
+
+            # Resetting output image
+            # if self.video_lbl:
+            # self.canvas.delete(self.video_lbl)
 
             if not self.isRealTime:
                 self.log_objects = []  # if the DSS is not recieving data from simulator, Every time it needs to make the log object list empty
@@ -262,7 +270,7 @@ class PlayScenario:
 
                 '''creating and passing the feature_array to the classifier for classification'''
                 feature_array = feature_array_convertor(True, self.features.speed[1],
-                                                        int(self.features.distance_from_target[0]),
+                                                        self.features.distance_from_target,
                                                         self.features.heading[1],
                                                         self.features.aspect, self.features.area_of_focus,
                                                         self.features.orientation, self.features.maneuver)
@@ -276,7 +284,7 @@ class PlayScenario:
                                                                                                         self.scenario)
 
                 self.user_logger.info(
-                    f"User {self.username} requested assistance at time={instant_second}s in the {self.scenario} scenario and the suggested approach was case {case_name}")
+                    f"{self.username if self.username else 'Unknown'} user requested assistance at time={instant_second}s in the {self.scenario} scenario and the suggested approach was case {case_name}")
 
                 suggested_approach_dict = feature_array_convertor(False, suggested_case[0], suggested_case[1],
                                                                   suggested_case[2], suggested_case[4],
@@ -313,7 +321,7 @@ class PlayScenario:
                 self.suggested_maneuver.config(text=suggested_technique)
 
                 ##### show the general instruction.
-                self.general_Instruction_lbl_text.place(relx=0.5, rely=0.5, anchor="center")
+                # self.general_Instruction_lbl_text.place(relx=0.5, rely=0.5, anchor="center")
 
                 #######find the description file for the predicted case and show up the information to the user
 
@@ -343,15 +351,15 @@ class PlayScenario:
                 #     self.logger.info(f"The not recommended cases files could'nt be opened!")
 
                 ##### This  line will show the general information for the predicted approach
-                if self.scenario in ["emergency", "emergency_4tens"]:
-                    self.general_Instruction_lbl_text.config(font=('Helvetica 13 bold'),
-                                                             text="1.If possible, adjust your heading for your final goal before you\n get to the ice edge.It’s much easier to turn in open water than in the ice.\n2. Approach the ice edge at a slow speed. \n3. Position the vessel close enough to the target to prevent the ice from \nflowing between your vessel and the target. \n4. If you want to use the leeway technique, get the stern or the bow \nfurther down to the south so the ice can flow out around the stern or bow\nof the vessel (don’t use perpendicular heading, use some angle instead).\n5. Don’t work in the zone, because the current will clear that ice.Focus\non the ice above the zone or vessel.")
-                elif self.scenario == "leeway":
-                    self.general_Instruction_lbl_text.config(font=('Helvetica 13 bold'),
-                                                             text="1. Position the vessel close enough to the target to prevent \nthe ice from flowing between your vessel and the target.\n2. If you want to use the leeway technique, get the stern\n or the bow further down to the south so the ice can flow\n out around the stern or bow of the vessel (don’t use perpendicular\n heading, use some angle instead)\n3. Don’t work in the zone, because the current will clear that ice. Focus\n on the ice above the zone or vessel.")
-                elif self.scenario == "pushing":
-                    self.general_Instruction_lbl_text.config(font=('Helvetica 13 bold'),
-                                                             text="1. Work upstream (above zone). Focusing a lot on clearing\n downstream (below the platform) is a waste of time because\n the current will clear that ice.")
+                # if self.scenario in ["emergency", "emergency_4tens"]:
+                #     self.general_Instruction_lbl_text.config(font=('Helvetica 13 bold'),
+                #                                              text="1.If possible, adjust your heading for your final goal before you\n get to the ice edge.It’s much easier to turn in open water than in the ice.\n2. Approach the ice edge at a slow speed. \n3. Position the vessel close enough to the target to prevent the ice from \nflowing between your vessel and the target. \n4. If you want to use the leeway technique, get the stern or the bow \nfurther down to the south so the ice can flow out around the stern or bow\nof the vessel (don’t use perpendicular heading, use some angle instead).\n5. Don’t work in the zone, because the current will clear that ice.Focus\non the ice above the zone or vessel.")
+                # elif self.scenario == "leeway":
+                #     self.general_Instruction_lbl_text.config(font=('Helvetica 13 bold'),
+                #                                              text="1. Position the vessel close enough to the target to prevent \nthe ice from flowing between your vessel and the target.\n2. If you want to use the leeway technique, get the stern\n or the bow further down to the south so the ice can flow\n out around the stern or bow of the vessel (don’t use perpendicular\n heading, use some angle instead)\n3. Don’t work in the zone, because the current will clear that ice. Focus\n on the ice above the zone or vessel.")
+                # elif self.scenario == "pushing":
+                #     self.general_Instruction_lbl_text.config(font=('Helvetica 13 bold'),
+                #                                              text="1. Work upstream (above zone). Focusing a lot on clearing\n downstream (below the platform) is a waste of time because\n the current will clear that ice.")
                 self.load_image(case_ID, case_name)
 
     def show_instruction(self, case_name):
@@ -366,49 +374,82 @@ class PlayScenario:
 
             more_info_content = more_info_file.read()
             if more_info_content:
-                self.specific_Instruction_lbl_text.config(wraplength=480, font=('Helvetica 13 bold'),
+                self.specific_Instruction_lbl_text.place(relx=0.5, rely=0.2, anchor="center")
+                self.specific_Instruction_lbl_text.config(wraplength=495,
+                                                          font=('Helvetica 20 bold'),
                                                           text=more_info_content)
 
         except:
             self.logger.info(f"The description file with the name {case_name} isn't exist!")
-            self.specific_Instruction_lbl_text.config(wraplength=480, font=('Helvetica 13 bold'),
+            self.specific_Instruction_lbl_text.config(wraplength=495, font=('Helvetica 20 bold'),
                                                       text=f"There is no specific instruction for this approach.\nNote: If you think this in not actually an effective approach, change your current settings and ask for an assistance again.")
         try:
 
             not_recomended_cases = open(f"Not_Recommended_Cases/NotRecommendedCases_{scenario_name}.txt",
-                                            mode="r")
+                                        mode="r")
 
             not_recomended_cases = not_recomended_cases.read()
             if case_name in not_recomended_cases.split("\n"):
                 self.not_recommended_lbl.config(bg="orange",
                                                 text="Note: The approach displayed here shows a below average result.\n See Left Panel for specific instructions for an above average result.")
             else:
-                self.not_recommended_lbl.config(text="Continue along a similar approach!")
+                self.not_recommended_lbl.config(bg="orange", text="Continue along a similar approach!")
 
         except:
             self.logger.info(f"The not recommended cases files could'nt be opened!")
 
     def load_image(self, case_ID, case_name):
+        current_path = os.getcwd()
         if self.scenario in ["emergency_4tens"]:
             scenario_name = "emergency"
         else:
             scenario_name = self.scenario
 
-        current_path = os.getcwd()
         # cases_name = pd.read_excel(
         #     current_path + "/Training_DataSet/" + self.scenario +"_N2"+ "/" + self.scenario + "_className.xls")
         # np.array(cases_name)
         # name = cases_name.values[case_ID][0]
-        print(f"this is the name of the predicted case{case_name} for {self.scenario} scenario")
-        try:
+        # print(f"this is the name of the predicted case{case_name} for {self.scenario} scenario")
+        # try:
+        #
+        #     suggested_image = Image.open(
+        #         current_path + "/images/output_images/" + scenario_name + "/" + case_name + ".png")
+        #     resized_suggested_image = suggested_image.resize((354, 369), Image.ANTIALIAS)
+        #     img = ImageTk.PhotoImage(resized_suggested_image)
+        #     self.suggested_image_id = self.canvas.create_image(352.5, 360, anchor="se", image=img)
+        # except:
+        #     self.logger.info(f"The image with the name {case_name} couldn't be found")
 
+        cases_name = pd.read_excel(
+            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_className.xls")
+        np.array(cases_name)
+        name = cases_name.values[case_ID][0]
+        print(f"this is the name of the predicted case{case_name} for {self.scenario} scenario")
+        if os.path.exists(f"{current_path}/videoes/{scenario_name}/{case_name}.avi"):
+            self.des_lbl.lower()
+            self.video_lbl = tk.Label(self.suggested_approach_frame)
+            self.video_lbl.place(x=380, y=400, anchor="se")
+            player = tkvideo(f"{current_path}/videoes/{scenario_name}/{case_name}.avi", self.video_lbl,
+                             loop=5,
+                             size=(354, 369))
+            player.play()
+
+        else:
             suggested_image = Image.open(
                 current_path + "/images/output_images/" + scenario_name + "/" + case_name + ".png")
             resized_suggested_image = suggested_image.resize((354, 369), Image.ANTIALIAS)
             img = ImageTk.PhotoImage(resized_suggested_image)
-            self.suggested_image_id = self.canvas.create_image(352.5, 360, anchor="se", image=img)
-        except:
-            self.logger.info(f"The image with the name {case_name} couldn't be found")
+            self.suggeste_img_lbl = tk.Label(self.suggested_approach_frame, image=img)
+            self.suggeste_img_lbl.image = img
+            self.suggeste_img_lbl.place(x=380, y=400, anchor="se")
+            # self.logger.info(f"The image with the name {case_name} couldn't be found")
+
+        # self.des_lbl.lower()
+        # self.video_lbl = tk.Label(self.suggested_approach_frame)
+        # self.video_lbl.place(x=380, y=400, anchor="se")
+        # player = tkvideo(f"{current_path}/videoes/{scenario_name}/{cases_name}.avi", self.video_lbl, loop=1,
+        #                  size=(350, 360))
+        # player.play()
         self.root.mainloop()
 
     # def more_info(self):
@@ -472,7 +513,7 @@ class PlayScenario:
             max_depth = 3
         else:
             max_depth = 4
-        clf = tree.DecisionTreeClassifier(random_state=None, splitter="random", max_depth=max_depth)
+        clf = tree.DecisionTreeClassifier(random_state=42, splitter="random", max_depth=max_depth)
 
         clf.fit(x_train, df_y_train)
         class_id = clf.predict(features_array)
@@ -511,8 +552,8 @@ class PlayScenario:
         self.suggested_orientation.config(text="")
 
         # Resetting output_image
-        if self.suggested_image_id:
-            self.canvas.delete(self.suggested_image_id)
+        # if self.video_lbl:
+        #     self.canvas.delete(self.video_lbl)
 
     def clean_up(self):
         if self.entry_feild.get():
@@ -536,11 +577,11 @@ class PlayScenario:
         self.container.config(borderwidth=6, relief="groove")
         self.container.place(relx=0.5, rely=0.6, anchor="center")
 
-        instructions_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.37,
-                                      height=self.main_frame_height * 0.61)
-        instructions_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
-        instructions_frame.place(relx=0.2, rely=0.5, anchor="center")
-        Instruction_lbl = tk.Label(instructions_frame, text="Instructions", font=('Helvetica 18 bold'))
+        instruction_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.37,
+                                     height=self.main_frame_height * 0.61)
+        instruction_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
+        instruction_frame.place(relx=0.2, rely=0.5, anchor="center")
+        Instruction_lbl = tk.Label(instruction_frame, text="Instruction", font=('Helvetica 18 bold'))
         Instruction_lbl.place(relx=0.2, rely=-0, anchor="center")
 
         self.suggested_status_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.20,
@@ -552,45 +593,46 @@ class PlayScenario:
                                                  font=('Helvetica 18 bold'))
         suggested_own_ship_status_lbl.place(relx=0.35, rely=0.001, anchor="center")
 
-        suggested_approach_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.32,
-                                            height=self.main_frame_height * 0.61)
-        suggested_approach_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
-        suggested_approach_frame.place(relx=0.8, rely=0.5, anchor="center")
-        suggested_approach_lbl = tk.Label(suggested_approach_frame, text="Suggested Approach", bg="white",
+        self.suggested_approach_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.32,
+                                                 height=self.main_frame_height * 0.61)
+        self.suggested_approach_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
+        self.suggested_approach_frame.place(relx=0.8, rely=0.5, anchor="center")
+        suggested_approach_lbl = tk.Label(self.suggested_approach_frame, text="Suggested Approach", bg="white",
                                           font=('Helvetica 18 bold'))
         suggested_approach_lbl.place(relx=0.22, rely=0.001, anchor="center")
 
+        ############ this Label is for housing the video file ##########
+
         ####### create the widgets for the own vessel properties frame ######
+        # general_instruction_frame = tk.Frame(instructions_frame, bg="white",
+        #                                      width=self.main_frame_width * 0.36,
+        #                                      height=self.main_frame_height * 0.24)
+        # general_instruction_frame.config(borderwidth=3, relief="groove", padx=0.03, pady=0.03)
+        # general_instruction_frame.place(relx=0.5, rely=0.24, anchor="center")
 
-        general_instruction_frame = tk.Frame(instructions_frame, bg="white",
-                                             width=self.main_frame_width * 0.36,
-                                             height=self.main_frame_height * 0.24)
-        general_instruction_frame.config(borderwidth=3, relief="groove", padx=0.03, pady=0.03)
-        general_instruction_frame.place(relx=0.5, rely=0.24, anchor="center")
+        # specific_instruction_frame = tk.Frame(instructions_frame, bg="white",
+        #                                       width=self.main_frame_width * 0.36,
+        #                                       height=self.main_frame_height * 0.32)
+        # specific_instruction_frame.config(borderwidth=3, relief="groove", padx=0.03, pady=0.03)
+        # specific_instruction_frame.place(relx=0.5, rely=0.73, anchor="center")
+        # general_Instruction_lbl_title = tk.Label(general_instruction_frame, text="General", font=('Helvetica 15'))
+        # general_Instruction_lbl_title.place(relx=0.5, rely=0.01, anchor="center")
 
-        specific_instruction_frame = tk.Frame(instructions_frame, bg="white",
-                                              width=self.main_frame_width * 0.36,
-                                              height=self.main_frame_height * 0.32)
-        specific_instruction_frame.config(borderwidth=3, relief="groove", padx=0.03, pady=0.03)
-        specific_instruction_frame.place(relx=0.5, rely=0.73, anchor="center")
-        general_Instruction_lbl_title = tk.Label(general_instruction_frame, text="General", font=('Helvetica 15'))
-        general_Instruction_lbl_title.place(relx=0.5, rely=0.01, anchor="center")
+        # specific_Instruction_lbl_title = tk.Label(specific_instruction_frame, text="Specific", font=('Helvetica 15'))
+        # specific_Instruction_lbl_title.place(relx=0.5, rely=0.01, anchor="center")
 
-        specific_Instruction_lbl_title = tk.Label(specific_instruction_frame, text="Specific", font=('Helvetica 15'))
-        specific_Instruction_lbl_title.place(relx=0.5, rely=0.01, anchor="center")
+        # self.general_Instruction_lbl_text = tk.Label(general_instruction_frame, justify="left",
+        #                                              text="There is no information yet!",
+        #                                              font=('Helvetica 17 bold'))
 
-        self.general_Instruction_lbl_text = tk.Label(general_instruction_frame, justify="left",
-                                                     text="There is no information yet!",
-                                                     font=('Helvetica 17 bold'))
+        # self.general_Instruction_lbl_text.place(relx=0.5, rely=0.5, anchor="center")
 
-        self.general_Instruction_lbl_text.place(relx=0.5, rely=0.5, anchor="center")
-
-        self.specific_Instruction_lbl_text = tk.Label(specific_instruction_frame, justify="left",
+        self.specific_Instruction_lbl_text = tk.Label(instruction_frame, justify="left",
                                                       text="There is no information yet!",
                                                       font=('Helvetica 17 bold'))
         self.specific_Instruction_lbl_text.place(relx=0.5, rely=0.5, anchor="center")
 
-        self.not_recommended_lbl = tk.Label(suggested_approach_frame, wraplength=600, justify="left",
+        self.not_recommended_lbl = tk.Label(self.suggested_approach_frame, wraplength=600, justify="left",
                                             text="",
                                             font=('Helvetica 13 bold'))
         self.not_recommended_lbl.place(relx=0.5, rely=0.89, anchor="center")
@@ -654,7 +696,7 @@ class PlayScenario:
         self.suggested_maneuver.place(relx=0.72, rely=0.7, anchor="center")
 
         ####### creat the canvas for the suggested approach section  #######
-        assist_btn = tk.Button(suggested_approach_frame, text="Assist", bg="green", width=32, height=2, anchor="c",
+        assist_btn = tk.Button(self.suggested_approach_frame, text="Assist", bg="green", width=32, height=2, anchor="c",
                                command=self.assist)
         # now, when the features object created filling the pushing scenario variables("suggested own ship status") can be done.
         assist_btn.config(relief="groove", font=("helvetica", 12, "bold"), fg="green")
@@ -672,13 +714,14 @@ class PlayScenario:
         # more_info_btn.config(relief="groove", font=("helvetica", 12, "bold"), fg="green")
         # more_info_btn.place(relx=.5, rely=.95, anchor="center")
 
-        self.canvas = tk.Canvas(suggested_approach_frame, bg='#000000')
+        # self.canvas = tk.Canvas(suggested_approach_frame, bg='#000000')
 
-        suggested_approach_frame.winfo_screenwidth()
+        self.suggested_approach_frame.winfo_screenwidth()
 
-        self.canvas.place(relx=0.5, rely=0.5, width=self.main_frame_width * 0.25,
-                          height=self.main_frame_height * 0.4,
-                          anchor="center")
+        # self.canvas.place(relx=0.5, rely=0.5, width=self.main_frame_width * 0.25,
+        #                   height=self.main_frame_height * 0.4,
+        #                   anchor="center")
+
         #### this is a explanation for the suggested approach picture
         # suggested_approach_explanation_lbl = tk.Label(suggested_approach_frame, fg="red",
         #                                               text="The diagram can be similar to your current approach\nand situation but it does not mean that it is \nhow you are performing now.",
@@ -689,6 +732,9 @@ class PlayScenario:
         img = ImageTk.PhotoImage(Image.open("images/MoreInfo.png"))
         #### the image for description section must be the size of 353*360 pixels
         img_desc = ImageTk.PhotoImage(Image.open("images/" + self.scenario + "_image.png"))
+        self.des_lbl = tk.Label(self.suggested_approach_frame, image=img_desc)
+        self.des_lbl.image = img_desc
+        self.des_lbl.place(x=380, y=400, anchor="se")
 
         speed_moreinfo = tk.Label(self.suggested_status_frame, image=img)
         speed_moreinfo.image = img
@@ -711,7 +757,7 @@ class PlayScenario:
         aspect_moreinfo.image = img
         HoverText(aspect_moreinfo,
                   "The vessel pathway in relation to the target:\n J-approach: Getting close to the target from below the zone.\n Direct: Getting close to the target directly.\n Up-current: Getting close to the target from up-current of the target.")
-        aspect_moreinfo.place(relx=0.29, rely=0.4, anchor="center")
+        aspect_moreinfo.place(relx=0.32, rely=0.4, anchor="center")
 
         orientation_moreinfo = tk.Label(self.suggested_status_frame, image=img)
         orientation_moreinfo.image = img
@@ -730,7 +776,7 @@ class PlayScenario:
                   "Techniques that each participant used in their ice management performance:\n Pushing: Using the bow or broadside of the vessel to clear ice around the indicated zone.\n Sector: Using the bow or broadside of the vessel and having a back and forth motion at the same time to clear the ice up current from the zone.\n Prop-Wash: Having a maintained position above the zone and flushing the ice from the target using the vessel’s propeller wake wash.\n Leeway: Keeping the position and blocking the flowing ice using the side of the vessel above the target area.\n Circular: Using the pushing and prop-wash techniques and having a circular motion at the same time above the target area")
         manouver_moreinfo.place(relx=0.34, rely=0.7, anchor="center")
 
-        self.canvas.create_image(352.5, 360, anchor="se", image=img_desc)
+        # self.canvas.create_image(352.5, 360, anchor="se", image=img_desc)
 
         ##### here is for asking user to put his/her username! ######
         self.top_window = tk.Toplevel()

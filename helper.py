@@ -425,17 +425,17 @@ def aspect_votter(log_objects, current_sec, aspect_vot_dict, degree_range, scena
         if log_objects[current_sec].heading <= degree_range[1] + 5 and log_objects[current_sec].heading >= \
                 degree_range[0] - 5:
             if current_sec > 120:
-                aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 2})
+                aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1.5})
             else:
                 aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
         elif 0 < log_objects[current_sec].heading < degree_range[0] - 5 or 315 < log_objects[current_sec].heading < 360:
             if current_sec > 120:
-                aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 2})
+                aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1.5})
             else:
                 aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
         elif log_objects[current_sec].heading > degree_range[1] + 5 and log_objects[current_sec].heading < 225:
             if current_sec > 120:
-                aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 2})
+                aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1.5})
             else:
                 aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
         return aspect_vot_dict
@@ -444,18 +444,18 @@ def aspect_votter(log_objects, current_sec, aspect_vot_dict, degree_range, scena
         if log_objects[current_sec].cog > degree_range[1] + 5 and log_objects[current_sec].cog < 225:
 
             if current_sec > 120:
-                aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 2})
+                aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1.5})
             else:
                 aspect_vot_dict.update({"J_approach": aspect_vot_dict["J_approach"] + 1})
         elif 0 < log_objects[current_sec].cog < degree_range[0] - 5 or 315 < log_objects[current_sec].cog < 360:
             if current_sec > 120:
-                aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 2})
+                aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1.5})
             else:
                 aspect_vot_dict.update({"up_current": aspect_vot_dict["up_current"] + 1})
         elif log_objects[current_sec].cog <= degree_range[1] + 5 and log_objects[current_sec].cog >= degree_range[
             0] - 5:
             if current_sec > 120:
-                aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 2})
+                aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1.5})
             else:
                 aspect_vot_dict.update({"direct": aspect_vot_dict["direct"] + 1})
         return aspect_vot_dict
@@ -755,7 +755,7 @@ def feature_array_convertor(encode, speed, distance, heading, aspect, area_focus
         aspect = features_codec["aspect"].index(aspect)
 
         features_array.append(
-            [int(speed), int(distance), int(heading), int(combination_of_technique), int(aspect), int(Area_of_focus),
+            [int(speed), distance, int(heading), int(combination_of_technique), int(aspect), int(Area_of_focus),
              int(orientation)])
         # features_array.append([int(distance), int(orientation), int(heading), int(combination_of_technique),
         #                       int(aspect), int(speed), int(Area_of_focus)])

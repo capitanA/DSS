@@ -1,0 +1,4 @@
+1. Approach directly upstream to lifeboat zone
+2. Continue south, clearing ice from the zone, then return to upstream position, positioning vessel stern-towards FPSO on a similar angle as shown 
+3. Maintain position using thrusters
+4. Use current and leeway to block ice from lifeboat zone

@@ -19,4 +19,5 @@ pandas
 sklearn
 matplotlib
 xlrd
+tkvideo
 

@@ -122,55 +122,58 @@ class Features:
 
     def distance_calculator(self):
 
-        # distances_list = calc_dists_from_target(self.log_objects[num].latitude,
-        #                                         self.log_objects[num].longitude,
-        #                                         self.scenario)
-        #
-        # if self.heading[0] == "perpendicular":
-        #
-        #     distances = min(distances_list) - 40
-        # else:
-        #     distances = min(distances_list) - 8.5
-        #
-        # if distances < 0:
-        #     self.logger.info("User hit the target!")
-        #     print("You hit the target. please make your distance further not to have a crash!")
+        distances_list = calc_dists_from_target(self.log_objects[self.time_stamp].latitude,
+                                                self.log_objects[self.time_stamp].longitude,
+                                                self.scenario)
 
-        count = 0
-        if self.time_stamp - 400 <= 0:
+        if self.heading[0] == "perpendicular":
 
-            starting_sec = self.time_stamp
-            ending_sec = self.time_stamp + 1
-            total = 1
-
-
+            distance = min(distances_list) - 40
         else:
-            starting_sec = 400
-            ending_sec = self.time_stamp + 1
-            total = (self.time_stamp - 400) + 1
+            distance = min(distances_list) - 8.5
 
-        for num in range(starting_sec, ending_sec, 1):
+        if distance < 0:
+            self.logger.info("User hit the target!")
+            print("You hit the target. please make your distance further not to have a crash!")
+        self.distance_from_target = distance
+        print(f"   this is the instant distance{self.distance_from_target}")
 
-            distances_list = calc_dists_from_target(self.log_objects[num].latitude,
-                                                    self.log_objects[num].longitude,
-                                                    self.scenario)
-
-            if self.heading[0] == "perpendicular":
-
-                distances = min(distances_list) - 40
-            else:
-                distances = min(distances_list) - 8.5
-
-            if distances < 0:
-                self.logger.info("User hit the target!")
-                print("You hit the target. please make your distance further not to have a crash!")
-                distances = 0
-                instant_distance = 0
-            count += distances
-            instant_distance = distances
-        self.distance_from_target = (count / total, instant_distance)
-
-        print(f" This is the average distance {count / total} and this is the instant distance{instant_distance}")
+        # count = 0
+        # if self.time_stamp - 400 <= 0:
+        #
+        #     starting_sec = self.time_stamp
+        #     ending_sec = self.time_stamp + 1
+        #     total = 1
+        #
+        #
+        # else:
+        #     starting_sec = 400
+        #     ending_sec = self.time_stamp + 1
+        #     total = (self.time_stamp - 400) + 1
+        #
+        # for num in range(starting_sec, ending_sec, 1):
+        #
+        #     distances_list = calc_dists_from_target(self.log_objects[num].latitude,
+        #                                             self.log_objects[num].longitude,
+        #                                             self.scenario)
+        #
+        #     if self.heading[0] == "perpendicular":
+        #
+        #         distances = min(distances_list) - 40
+        #     else:
+        #         distances = min(distances_list) - 8.5
+        #
+        #     if distances < 0:
+        #         self.logger.info("User hit the target!")
+        #         print("You hit the target. please make your distance further not to have a crash!")
+        #         distances = 0
+        #         instant_distance = 0
+        #     count += distances
+        #     instant_distance = distances
+        # self.distance_from_target = (count / total, instant_distance)
+        #
+        # print(f" This is the average distance {count / total} and this is the instant distance{instant_distance}")
+        # print(f" This is the average distance {count / total} and this is the instant distance{instant_distance}")
 
     def area_of_focus_determinor(self):
         area_of_focus_dict = {"av": 0, "z": 0, "az": 0, "along_zone": 0}
@@ -269,7 +272,6 @@ class Features:
                     'emergency_4tens'
 
                     if self.scenario in ["emergency", "emergency_4tens", "leeway"]:
-                        print(self.scenario)
                         dist_long_up = coordinates[self.scenario]["long_" + up_key]
                         dist_lat_up = coordinates[self.scenario]["lat_" + up_key]
                         dist_long_down = coordinates[self.scenario]["long_" + down_key]
@@ -302,16 +304,22 @@ class Features:
 
     # This function fill the speed variable in a tuple with this format: (speed_status,average_speed,instant_speed )
     def speed_calculator(self):
-        sumed_speed = 0
-        for num in range(self.time_stamp + 1):
-            sumed_speed += self.log_objects[num].sog
-        avg_speed = sumed_speed / (self.time_stamp + 1)
 
-        if avg_speed <= 3:
-            self.speed = ("safe", avg_speed, self.log_objects[self.time_stamp].sog)
+        if self.log_objects[self.time_stamp].sog <= 3:
+            self.speed = ("safe", self.log_objects[self.time_stamp].sog)
         else:
-            self.speed = ("dangerous", avg_speed, self.log_objects[self.time_stamp].sog)
-        print(f"this is speed average{sumed_speed / self.time_stamp} and is {self.speed[0]}")
+            self.speed = ("dangerous", self.log_objects[self.time_stamp].sog)
+        # sumed_speed = 0
+        # for num in range(self.time_stamp + 1):
+        #     sumed_speed += self.log_objects[num].sog
+        # avg_speed = sumed_speed / (self.time_stamp + 1)
+        #
+        # if avg_speed <= 3:
+        #     self.speed = ("safe", avg_speed, self.log_objects[self.time_stamp].sog)
+        # else:
+        #     self.speed = ("dangerous", avg_speed, self.log_objects[self.time_stamp].sog)
+        # print(f"this is speed average{sumed_speed / self.time_stamp} and is {self.speed[0]}")
+
 
     # def check_for_sector(self, root_sequence):
     #     tr_occurance = root_sequence.count("_TR")

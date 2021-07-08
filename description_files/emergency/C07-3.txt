@@ -1,4 +1,4 @@
 1.Use J-approach to clear ice from lifeboat station while approaching position
 2.Position vessel in forward third of the FPSO
-3.Rotate vessel using trusterds to angle approximately perpendicular to FPSO
+3.Rotate vessel using trusters to angle approximately perpendicular to FPSO
 4.Maintain position using current and leeway to block ice
