@@ -136,7 +136,7 @@ class Features:
             self.logger.info("User hit the target!")
             print("You hit the target. please make your distance further not to have a crash!")
         self.distance_from_target = distance
-        print(f"   this is the instant distance{self.distance_from_target}")
+        print(f"this is the instant distance{self.distance_from_target}")
 
         # count = 0
         # if self.time_stamp - 400 <= 0:
@@ -309,6 +309,7 @@ class Features:
             self.speed = ("safe", self.log_objects[self.time_stamp].sog)
         else:
             self.speed = ("dangerous", self.log_objects[self.time_stamp].sog)
+        print(f"this is the instance speed{self.speed}")
         # sumed_speed = 0
         # for num in range(self.time_stamp + 1):
         #     sumed_speed += self.log_objects[num].sog

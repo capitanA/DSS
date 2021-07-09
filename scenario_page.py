@@ -363,6 +363,7 @@ class PlayScenario:
                 self.load_image(case_ID, case_name)
 
     def show_instruction(self, case_name):
+        # ipdb.set_trace()
         if self.scenario in ["emergency_4tens"]:
             scenario_name = "emergency"
         else:
@@ -399,6 +400,7 @@ class PlayScenario:
             self.logger.info(f"The not recommended cases files could'nt be opened!")
 
     def load_image(self, case_ID, case_name):
+        # ipdb.set_trace()
         current_path = os.getcwd()
         if self.scenario in ["emergency_4tens"]:
             scenario_name = "emergency"
@@ -513,7 +515,7 @@ class PlayScenario:
             max_depth = 3
         else:
             max_depth = 4
-        clf = tree.DecisionTreeClassifier(random_state=42, splitter="random", max_depth=max_depth)
+        clf = tree.DecisionTreeClassifier(random_state=None, splitter="random", max_depth=max_depth)
 
         clf.fit(x_train, df_y_train)
         class_id = clf.predict(features_array)
