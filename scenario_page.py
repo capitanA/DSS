@@ -42,7 +42,7 @@ class PlayScenario:
         self.log_objects = []
         self.isRealTime = isRealTime
         self.video_lbl = None
-        self.suggeste_img_lbl=None
+        self.suggeste_img_lbl = None
         self.general_Instruction_lbl_text = None
         self.specific_Instruction_lbl_text = None
         self.top_window = None
@@ -142,7 +142,6 @@ class PlayScenario:
             elif self.suggeste_img_lbl:
                 self.suggeste_img_lbl.place_forget()
 
-
             # Resetting suggested approach attributes
             self.suggested_speed.config(text="")
             self.suggested_distance_target.config(text="")
@@ -224,7 +223,8 @@ class PlayScenario:
                     self.suggested_orientation.config(text="Bow")
                     self.suggested_distance_target.config(text="33.75")
                     self.suggested_maneuver.config(text="Pushing + PropWash")
-                    self.load_image(25, "G54-3")
+                    self.load_image("G54-3")
+                    self.play_video("G54-3")
                     self.show_instruction("G54-3")
 
                 elif self.features.aspect == "J_approach":
@@ -235,7 +235,8 @@ class PlayScenario:
                     self.suggested_orientation.config(text="Bow")
                     self.suggested_distance_target.config(text="22.5")
                     self.suggested_maneuver.config(text="Pushing")
-                    self.load_image(25, "NR49-3")
+                    self.load_image("NR49-3")
+                    self.play_video("G54-3")
                     self.show_instruction("NR49-3")
                 else:
                     self.suggested_speed.config(text="0.8")
@@ -245,7 +246,8 @@ class PlayScenario:
                     self.suggested_orientation.config(text="Stern")
                     self.suggested_distance_target.config(text="70")
                     self.suggested_maneuver.config(text="Pushing + Leeway")
-                    self.load_image(25, "J95-3")
+                    self.load_image("J95-3")
+                    self.play_video("G54-3")
                     self.show_instruction("J95-3")
 
                 # self.logger.info(
@@ -360,7 +362,9 @@ class PlayScenario:
                 # elif self.scenario == "pushing":
                 #     self.general_Instruction_lbl_text.config(font=('Helvetica 13 bold'),
                 #                                              text="1. Work upstream (above zone). Focusing a lot on clearing\n downstream (below the platform) is a waste of time because\n the current will clear that ice.")
-                self.load_image(case_ID, case_name)
+                print(f"this is the name of the predicted case{case_name} for {self.scenario} scenario")
+                self.load_image(case_name)
+                self.play_video(case_name)
 
     def show_instruction(self, case_name):
         # ipdb.set_trace()
@@ -375,14 +379,14 @@ class PlayScenario:
 
             more_info_content = more_info_file.read()
             if more_info_content:
-                self.specific_Instruction_lbl_text.place(relx=0.5, rely=0.2, anchor="center")
+                self.specific_Instruction_lbl_text.place(relx=0.5, rely=0.5, anchor="center")
                 self.specific_Instruction_lbl_text.config(wraplength=495,
-                                                          font=('Helvetica 20 bold'),
+                                                          font=('Helvetica 19 bold'),
                                                           text=more_info_content)
 
         except:
             self.logger.info(f"The description file with the name {case_name} isn't exist!")
-            self.specific_Instruction_lbl_text.config(wraplength=495, font=('Helvetica 20 bold'),
+            self.specific_Instruction_lbl_text.config(wraplength=495, font=('Helvetica 19 bold'),
                                                       text=f"There is no specific instruction for this approach.\nNote: If you think this in not actually an effective approach, change your current settings and ask for an assistance again.")
         try:
 
@@ -392,78 +396,52 @@ class PlayScenario:
             not_recomended_cases = not_recomended_cases.read()
             if case_name in not_recomended_cases.split("\n"):
                 self.not_recommended_lbl.config(bg="orange",
-                                                text="Note: The approach displayed here shows a below average result.\n See Left Panel for specific instructions for an above average result.")
+                                                text="Note: The approach displayed here shows a below\n average result. See Left Panel for specific\n instructions for an above average result.")
             else:
                 self.not_recommended_lbl.config(bg="orange", text="Continue along a similar approach!")
 
         except:
             self.logger.info(f"The not recommended cases files could'nt be opened!")
 
-    def load_image(self, case_ID, case_name):
-        # ipdb.set_trace()
+    def play_video(self, case_name):
+        if self.scenario in ["emergency_4tens"]:
+            scenario_name = "emergency"
+        else:
+            scenario_name = self.scenario
+        current_path = os.getcwd()
+        self.des_lbl.place_forget()
+        self.video_lbl_2.place_forget()
+        self.video_lbl = tk.Label(self.suggested_video_frame)
+        self.video_lbl.place(x=360, y=400, anchor="se")
+        try:
+
+            player = tkvideo(f"{current_path}/videoes/{scenario_name}/{case_name}.avi", self.video_lbl,
+                             loop=5,
+                             size=(350, 369))
+            player.play()
+            self.root.mainloop()
+        except FileNotFoundError:
+            self.logger.info(f"The case with the name of {case_name} could'nt be found!")
+
+    def load_image(self, case_name):
         current_path = os.getcwd()
         if self.scenario in ["emergency_4tens"]:
             scenario_name = "emergency"
         else:
             scenario_name = self.scenario
-
-        # cases_name = pd.read_excel(
-        #     current_path + "/Training_DataSet/" + self.scenario +"_N2"+ "/" + self.scenario + "_className.xls")
-        # np.array(cases_name)
-        # name = cases_name.values[case_ID][0]
-        # print(f"this is the name of the predicted case{case_name} for {self.scenario} scenario")
-        # try:
-        #
-        #     suggested_image = Image.open(
-        #         current_path + "/images/output_images/" + scenario_name + "/" + case_name + ".png")
-        #     resized_suggested_image = suggested_image.resize((354, 369), Image.ANTIALIAS)
-        #     img = ImageTk.PhotoImage(resized_suggested_image)
-        #     self.suggested_image_id = self.canvas.create_image(352.5, 360, anchor="se", image=img)
-        # except:
-        #     self.logger.info(f"The image with the name {case_name} couldn't be found")
-
         cases_name = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_className.xls")
+            current_path + "/Training_DataSet/" + scenario_name + "_N2" + "/" + scenario_name + "_className.xls")
         np.array(cases_name)
-        name = cases_name.values[case_ID][0]
-        print(f"this is the name of the predicted case{case_name} for {self.scenario} scenario")
-        if os.path.exists(f"{current_path}/videoes/{scenario_name}/{case_name}.avi"):
-            self.des_lbl.lower()
-            self.video_lbl = tk.Label(self.suggested_approach_frame)
-            self.video_lbl.place(x=380, y=400, anchor="se")
-            player = tkvideo(f"{current_path}/videoes/{scenario_name}/{case_name}.avi", self.video_lbl,
-                             loop=5,
-                             size=(354, 369))
-            player.play()
-
-        else:
+        try:
             suggested_image = Image.open(
                 current_path + "/images/output_images/" + scenario_name + "/" + case_name + ".png")
-            resized_suggested_image = suggested_image.resize((354, 369), Image.ANTIALIAS)
+            resized_suggested_image = suggested_image.resize((330, 369), Image.ANTIALIAS)
             img = ImageTk.PhotoImage(resized_suggested_image)
             self.suggeste_img_lbl = tk.Label(self.suggested_approach_frame, image=img)
             self.suggeste_img_lbl.image = img
-            self.suggeste_img_lbl.place(x=380, y=400, anchor="se")
-            # self.logger.info(f"The image with the name {case_name} couldn't be found")
-
-        # self.des_lbl.lower()
-        # self.video_lbl = tk.Label(self.suggested_approach_frame)
-        # self.video_lbl.place(x=380, y=400, anchor="se")
-        # player = tkvideo(f"{current_path}/videoes/{scenario_name}/{cases_name}.avi", self.video_lbl, loop=1,
-        #                  size=(350, 360))
-        # player.play()
-        self.root.mainloop()
-
-    # def more_info(self):
-    #     try:
-    #         more_inf_file = open(f"description_files/{self.scenario}/{case_name}.txt", mode="r")
-    #         content = more_inf_file.read()
-    #         messagebox.showinfo(title="information",
-    #                             message=content)
-    #     except:
-    #         messagebox.showinfo(title="information",
-    #                             message="There is no more information for this case yet!")
-    #         self.logger.info(f"The description file with the name {case_name} couldn't be opened")
+            self.suggeste_img_lbl.place(x=342, y=400, anchor="se")
+        except FileNotFoundError:
+            self.logger.info(f"The case with the name of {case_name} could'nt be found!")
 
     def get_selected_rows(self, class_id):
         if self.scenario in ["emergency_4tens"]:
@@ -580,28 +558,37 @@ class PlayScenario:
         self.container.place(relx=0.5, rely=0.6, anchor="center")
 
         instruction_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.37,
-                                     height=self.main_frame_height * 0.61)
+                                     height=self.main_frame_height * 0.32)
         instruction_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
-        instruction_frame.place(relx=0.2, rely=0.5, anchor="center")
+        instruction_frame.place(relx=0.2, rely=0.27, anchor="center")
         Instruction_lbl = tk.Label(instruction_frame, text="Instruction", font=('Helvetica 18 bold'))
-        Instruction_lbl.place(relx=0.2, rely=-0, anchor="center")
+        Instruction_lbl.place(relx=0.13, rely=0, anchor="center")
 
-        self.suggested_status_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.20,
+        self.suggested_video_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.28,
                                                height=self.main_frame_height * 0.61)
-        self.suggested_status_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
-        self.suggested_status_frame.place(relx=0.515, rely=0.5, anchor="center")
+        self.suggested_video_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
+        self.suggested_video_frame.place(relx=0.56, rely=0.5, anchor="center")
 
-        suggested_own_ship_status_lbl = tk.Label(self.suggested_status_frame, text="Suggested Solution", bg="white",
+        suggested_video_lbl = tk.Label(self.suggested_video_frame, text="Suggested Video", bg="white",
                                                  font=('Helvetica 18 bold'))
-        suggested_own_ship_status_lbl.place(relx=0.35, rely=0.001, anchor="center")
+        suggested_video_lbl.place(relx=0.25, rely=0.001, anchor="center")
 
-        self.suggested_approach_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.32,
+        self.suggested_approach_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.25,
                                                  height=self.main_frame_height * 0.61)
         self.suggested_approach_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
-        self.suggested_approach_frame.place(relx=0.8, rely=0.5, anchor="center")
+        self.suggested_approach_frame.place(relx=0.85, rely=0.5, anchor="center")
         suggested_approach_lbl = tk.Label(self.suggested_approach_frame, text="Suggested Approach", bg="white",
                                           font=('Helvetica 18 bold'))
-        suggested_approach_lbl.place(relx=0.22, rely=0.001, anchor="center")
+        suggested_approach_lbl.place(relx=0.36, rely=0.001, anchor="center")
+
+        self.new_suggested_status_frame = tk.Frame(self.container, borderwidth=3, bg="white", relief="groove",
+                                                   width=self.main_frame_width * 0.37,
+                                                   height=self.main_frame_height * 0.28)
+        self.new_suggested_status_frame.place(relx=0.2, rely=0.755, anchor="center")
+        new_suggested_own_ship_status_lbl = tk.Label(self.new_suggested_status_frame, text="Suggested Solution",
+                                                     bg="white",
+                                                     font=('Helvetica 18 bold'))
+        new_suggested_own_ship_status_lbl.place(relx=0.2, rely=0.015, anchor="center")
 
         ############ this Label is for housing the video file ##########
 
@@ -639,63 +626,120 @@ class PlayScenario:
                                             font=('Helvetica 13 bold'))
         self.not_recommended_lbl.place(relx=0.5, rely=0.89, anchor="center")
 
+        self.video_lbl_2 = tk.Label(self.suggested_video_frame, justify="left", font=('Helvetica 17 bold'),
+                                    text="Suggested video will be shown here")
+        self.video_lbl_2.place(relx=0.5, rely=0.5, anchor="center")
+
         # ownship_properties_explanation_lbl = tk.Label(self.suggested_status_frame, wraplength=270, fg="red",
         #                                               text="These features show the properties of the suggested approach (shown in diagram). If you want to follow this approach, your final features could be close to these values.",
         #                                               font=("helvetica", 14, "bold"),
         #                                               justify="left")
         # ownship_properties_explanation_lbl.place(relx=0.5, rely=0.14, anchor="center")
 
-        speed_lbl = tk.Label(self.suggested_status_frame, text="Vessel Speed", font=("helvetica", 16, "bold"),
+        # speed_lbl = tk.Label(self.suggested_status_frame, text="Vessel Speed", font=("helvetica", 16, "bold"),
+        #                      justify="left")
+        # speed_lbl.place(relx=0.2, rely=0.10, anchor="center")
+        #
+        # self.suggested_speed = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        #                                 justify="left")
+        # self.suggested_speed.place(relx=0.75, rely=0.10, anchor="center")
+        #
+        # heading_lbl = tk.Label(self.suggested_status_frame, text="Vessel Heading", font=("helvetica", 16, "bold"),
+        #                        justify="left")
+        # heading_lbl.place(relx=0.22, rely=0.2, anchor="center")
+        # self.suggested_heading = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        #                                   justify="left")
+        # self.suggested_heading.place(relx=0.75, rely=0.2, anchor="center")
+        #
+        # area_focus_lbl = tk.Label(self.suggested_status_frame, text="Area of Focus", font=("helvetica", 16, "bold"),
+        #                           justify="left")
+        # area_focus_lbl.place(relx=0.2, rely=0.3, anchor="center")
+        # self.suggested_area_focus = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        #                                      justify="left")
+        # self.suggested_area_focus.place(relx=0.75, rely=0.3, anchor="center")
+        #
+        # aspect_lbl = tk.Label(self.suggested_status_frame, text="Approach", font=("helvetica", 16, "bold"),
+        #                       justify="left")
+        # aspect_lbl.place(relx=0.15, rely=0.4, anchor="center")
+        # self.suggested_aspect = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        #                                  justify="left")
+        # self.suggested_aspect.place(relx=0.75, rely=0.4, anchor="center")
+        #
+        # oriantation_target_lbl = tk.Label(self.suggested_status_frame, text="Orientation to Target",
+        #                                   font=("helvetica", 16, "bold"), justify="left")
+        # oriantation_target_lbl.place(relx=0.28, rely=0.5, anchor="center")
+        # self.suggested_orientation = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        #                                       justify="left")
+        # self.suggested_orientation.place(relx=0.75, rely=0.5, anchor="center")
+        #
+        # distance_target_lbl = tk.Label(self.suggested_status_frame, text="Distance from Target",
+        #                                font=("helvetica", 16, "bold"),
+        #                                justify="left")
+        # distance_target_lbl.place(relx=0.28, rely=0.6, anchor="center")
+        # self.suggested_distance_target = tk.Label(self.suggested_status_frame, text="N/A",
+        #                                           font=("helvetica", 16, "bold"),
+        #                                           justify="left")
+        # self.suggested_distance_target.place(relx=0.75, rely=0.6, anchor="center")
+        #
+        # maneuver_lbl = tk.Label(self.suggested_status_frame, text="Maneuver", font=("helvetica", 16, "bold"),
+        #                         justify="left")
+        # maneuver_lbl.place(relx=0.15, rely=0.7, anchor="center")
+        # self.suggested_maneuver = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        #                                    justify="left")
+        # self.suggested_maneuver.place(relx=0.72, rely=0.7, anchor="center")
+        speed_lbl = tk.Label(self.new_suggested_status_frame, text="Vessel Speed", font=("helvetica", 16, "bold"),
                              justify="left")
-        speed_lbl.place(relx=0.2, rely=0.10, anchor="center")
+        speed_lbl.place(relx=0.1, rely=0.2, anchor="center")
 
-        self.suggested_speed = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        self.suggested_speed = tk.Label(self.new_suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
                                         justify="left")
-        self.suggested_speed.place(relx=0.75, rely=0.10, anchor="center")
+        self.suggested_speed.place(relx=0.4, rely=0.2, anchor="center")
 
-        heading_lbl = tk.Label(self.suggested_status_frame, text="Vessel Heading", font=("helvetica", 16, "bold"),
+        heading_lbl = tk.Label(self.new_suggested_status_frame, text="Vessel Heading", font=("helvetica", 16, "bold"),
                                justify="left")
-        heading_lbl.place(relx=0.22, rely=0.2, anchor="center")
-        self.suggested_heading = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        heading_lbl.place(relx=0.12, rely=0.4, anchor="center")
+        self.suggested_heading = tk.Label(self.new_suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
                                           justify="left")
-        self.suggested_heading.place(relx=0.75, rely=0.2, anchor="center")
+        self.suggested_heading.place(relx=0.40, rely=0.4, anchor="center")
 
-        area_focus_lbl = tk.Label(self.suggested_status_frame, text="Area of Focus", font=("helvetica", 16, "bold"),
+        area_focus_lbl = tk.Label(self.new_suggested_status_frame, text="Area of Focus", font=("helvetica", 16, "bold"),
                                   justify="left")
-        area_focus_lbl.place(relx=0.2, rely=0.3, anchor="center")
-        self.suggested_area_focus = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        area_focus_lbl.place(relx=0.11, rely=0.6, anchor="center")
+        self.suggested_area_focus = tk.Label(self.new_suggested_status_frame, text="N/A",
+                                             font=("helvetica", 16, "bold"),
                                              justify="left")
-        self.suggested_area_focus.place(relx=0.75, rely=0.3, anchor="center")
+        self.suggested_area_focus.place(relx=0.4, rely=0.6, anchor="center")
 
-        aspect_lbl = tk.Label(self.suggested_status_frame, text="Approach", font=("helvetica", 16, "bold"),
+        aspect_lbl = tk.Label(self.new_suggested_status_frame, text="Approach", font=("helvetica", 16, "bold"),
                               justify="left")
-        aspect_lbl.place(relx=0.15, rely=0.4, anchor="center")
-        self.suggested_aspect = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        aspect_lbl.place(relx=0.08, rely=0.8, anchor="center")
+        self.suggested_aspect = tk.Label(self.new_suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
                                          justify="left")
-        self.suggested_aspect.place(relx=0.75, rely=0.4, anchor="center")
+        self.suggested_aspect.place(relx=0.4, rely=0.8, anchor="center")
 
-        oriantation_target_lbl = tk.Label(self.suggested_status_frame, text="Orientation to Target",
+        oriantation_target_lbl = tk.Label(self.new_suggested_status_frame, text="Orientation to Target",
                                           font=("helvetica", 16, "bold"), justify="left")
-        oriantation_target_lbl.place(relx=0.28, rely=0.5, anchor="center")
-        self.suggested_orientation = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        oriantation_target_lbl.place(relx=0.65, rely=0.2, anchor="center")
+        self.suggested_orientation = tk.Label(self.new_suggested_status_frame, text="N/A",
+                                              font=("helvetica", 16, "bold"),
                                               justify="left")
-        self.suggested_orientation.place(relx=0.75, rely=0.5, anchor="center")
+        self.suggested_orientation.place(relx=0.92, rely=0.2, anchor="center")
 
-        distance_target_lbl = tk.Label(self.suggested_status_frame, text="Distance from Target",
+        distance_target_lbl = tk.Label(self.new_suggested_status_frame, text="Distance from Target",
                                        font=("helvetica", 16, "bold"),
                                        justify="left")
-        distance_target_lbl.place(relx=0.28, rely=0.6, anchor="center")
-        self.suggested_distance_target = tk.Label(self.suggested_status_frame, text="N/A",
+        distance_target_lbl.place(relx=0.65, rely=0.4, anchor="center")
+        self.suggested_distance_target = tk.Label(self.new_suggested_status_frame, text="N/A",
                                                   font=("helvetica", 16, "bold"),
                                                   justify="left")
-        self.suggested_distance_target.place(relx=0.75, rely=0.6, anchor="center")
+        self.suggested_distance_target.place(relx=0.92, rely=0.4, anchor="center")
 
-        maneuver_lbl = tk.Label(self.suggested_status_frame, text="Maneuver", font=("helvetica", 16, "bold"),
+        maneuver_lbl = tk.Label(self.new_suggested_status_frame, text="Maneuver", font=("helvetica", 16, "bold"),
                                 justify="left")
-        maneuver_lbl.place(relx=0.15, rely=0.7, anchor="center")
-        self.suggested_maneuver = tk.Label(self.suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
+        maneuver_lbl.place(relx=0.58, rely=0.6, anchor="center")
+        self.suggested_maneuver = tk.Label(self.new_suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
                                            justify="left")
-        self.suggested_maneuver.place(relx=0.72, rely=0.7, anchor="center")
+        self.suggested_maneuver.place(relx=0.8, rely=0.6, anchor="center")
 
         ####### creat the canvas for the suggested approach section  #######
         assist_btn = tk.Button(self.suggested_approach_frame, text="Assist", bg="green", width=32, height=2, anchor="c",
@@ -736,49 +780,89 @@ class PlayScenario:
         img_desc = ImageTk.PhotoImage(Image.open("images/" + self.scenario + "_image.png"))
         self.des_lbl = tk.Label(self.suggested_approach_frame, image=img_desc)
         self.des_lbl.image = img_desc
-        self.des_lbl.place(x=380, y=400, anchor="se")
+        self.des_lbl.place(x=340, y=400, anchor="se")
 
-        speed_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        ###### this is a more info hover option for all the solution attributes
+        # speed_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        # speed_moreinfo.image = img
+        # HoverText(speed_moreinfo, "Keep your vessel speed at this rate!")
+        # speed_moreinfo.place(relx=0.42, rely=0.1, anchor="center")
+        #
+        # heading_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        # heading_moreinfo.image = img
+        # HoverText(heading_moreinfo,
+        #           "Vessel heading in relation to target: \n   Stem: Making headway against the current(0 Degrees).\n   Prependicular: Perpendicular to the target(90 degrees).\n   Angle: All other degrees but not changing during the execution.\n   Changing: In the case of the circular technique, the heading changes constantly, so it was converted to the changing option.")
+        # heading_moreinfo.place(relx=0.47, rely=0.2, anchor="center")
+        #
+        # area_of_focus_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        # area_of_focus_moreinfo.image = img
+        # HoverText(area_of_focus_moreinfo,
+        #           f"Where seafarer is focusing most of the ice clearing time:\n Above Zone.\n Above Vessel.\n Zone: In Zone.\n Along_Zone: Left side of the zone.")
+        # area_of_focus_moreinfo.place(relx=0.45, rely=0.3, anchor="center")
+        #
+        # aspect_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        # aspect_moreinfo.image = img
+        # HoverText(aspect_moreinfo,
+        #           "The vessel pathway in relation to the target:\n J-approach: Getting close to the target from below the zone.\n Direct: Getting close to the target directly.\n Up-current: Getting close to the target from up-current of the target.")
+        # aspect_moreinfo.place(relx=0.32, rely=0.4, anchor="center")
+        #
+        # orientation_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        # orientation_moreinfo.image = img
+        # HoverText(orientation_moreinfo,
+        #           "The ownship vessel’s orientation in relation to the target:\n Bow: Ownship vessel’s bow facing the target.\n Stern: Ownship vessel’s stern facing the target.\n Parallel: Ownship is parallel with the target.\n Changing: Ownship’s orientation is constantly changing.")
+        # orientation_moreinfo.place(relx=0.6, rely=0.5, anchor="center")
+        #
+        # distance_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        # distance_moreinfo.image = img
+        # HoverText(distance_moreinfo, "How far the ownship vessel should be from the target.")
+        # distance_moreinfo.place(relx=0.6, rely=0.6, anchor="center")
+        #
+        # manouver_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        # manouver_moreinfo.image = img
+        # HoverText(manouver_moreinfo,
+        #           "Techniques that each participant used in their ice management performance:\n Pushing: Using the bow or broadside of the vessel to clear ice around the indicated zone.\n Sector: Using the bow or broadside of the vessel and having a back and forth motion at the same time to clear the ice up current from the zone.\n Prop-Wash: Having a maintained position above the zone and flushing the ice from the target using the vessel’s propeller wake wash.\n Leeway: Keeping the position and blocking the flowing ice using the side of the vessel above the target area.\n Circular: Using the pushing and prop-wash techniques and having a circular motion at the same time above the target area")
+        # manouver_moreinfo.place(relx=0.34, rely=0.7, anchor="center")
+
+        ###### this is a more info hover option for all the solution attributes
+        speed_moreinfo = tk.Label(self.new_suggested_status_frame, image=img)
         speed_moreinfo.image = img
         HoverText(speed_moreinfo, "Keep your vessel speed at this rate!")
-        speed_moreinfo.place(relx=0.42, rely=0.1, anchor="center")
+        speed_moreinfo.place(relx=0.22, rely=0.2, anchor="center")
 
-        heading_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        heading_moreinfo = tk.Label(self.new_suggested_status_frame, image=img)
         heading_moreinfo.image = img
         HoverText(heading_moreinfo,
                   "Vessel heading in relation to target: \n   Stem: Making headway against the current(0 Degrees).\n   Prependicular: Perpendicular to the target(90 degrees).\n   Angle: All other degrees but not changing during the execution.\n   Changing: In the case of the circular technique, the heading changes constantly, so it was converted to the changing option.")
-        heading_moreinfo.place(relx=0.47, rely=0.2, anchor="center")
+        heading_moreinfo.place(relx=0.25, rely=0.4, anchor="center")
 
-        area_of_focus_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        area_of_focus_moreinfo = tk.Label(self.new_suggested_status_frame, image=img)
         area_of_focus_moreinfo.image = img
         HoverText(area_of_focus_moreinfo,
                   f"Where seafarer is focusing most of the ice clearing time:\n Above Zone.\n Above Vessel.\n Zone: In Zone.\n Along_Zone: Left side of the zone.")
-        area_of_focus_moreinfo.place(relx=0.45, rely=0.3, anchor="center")
+        area_of_focus_moreinfo.place(relx=0.23, rely=0.6, anchor="center")
 
-        aspect_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        aspect_moreinfo = tk.Label(self.new_suggested_status_frame, image=img)
         aspect_moreinfo.image = img
         HoverText(aspect_moreinfo,
                   "The vessel pathway in relation to the target:\n J-approach: Getting close to the target from below the zone.\n Direct: Getting close to the target directly.\n Up-current: Getting close to the target from up-current of the target.")
-        aspect_moreinfo.place(relx=0.32, rely=0.4, anchor="center")
+        aspect_moreinfo.place(relx=0.17, rely=0.8, anchor="center")
 
-        orientation_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        orientation_moreinfo = tk.Label(self.new_suggested_status_frame, image=img)
         orientation_moreinfo.image = img
         HoverText(orientation_moreinfo,
                   "The ownship vessel’s orientation in relation to the target:\n Bow: Ownship vessel’s bow facing the target.\n Stern: Ownship vessel’s stern facing the target.\n Parallel: Ownship is parallel with the target.\n Changing: Ownship’s orientation is constantly changing.")
-        orientation_moreinfo.place(relx=0.6, rely=0.5, anchor="center")
+        orientation_moreinfo.place(relx=0.82, rely=0.2, anchor="center")
 
-        distance_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        distance_moreinfo = tk.Label(self.new_suggested_status_frame, image=img)
         distance_moreinfo.image = img
         HoverText(distance_moreinfo, "How far the ownship vessel should be from the target.")
-        distance_moreinfo.place(relx=0.6, rely=0.6, anchor="center")
+        distance_moreinfo.place(relx=0.82, rely=0.4, anchor="center")
 
-        manouver_moreinfo = tk.Label(self.suggested_status_frame, image=img)
+        manouver_moreinfo = tk.Label(self.new_suggested_status_frame, image=img)
         manouver_moreinfo.image = img
         HoverText(manouver_moreinfo,
                   "Techniques that each participant used in their ice management performance:\n Pushing: Using the bow or broadside of the vessel to clear ice around the indicated zone.\n Sector: Using the bow or broadside of the vessel and having a back and forth motion at the same time to clear the ice up current from the zone.\n Prop-Wash: Having a maintained position above the zone and flushing the ice from the target using the vessel’s propeller wake wash.\n Leeway: Keeping the position and blocking the flowing ice using the side of the vessel above the target area.\n Circular: Using the pushing and prop-wash techniques and having a circular motion at the same time above the target area")
-        manouver_moreinfo.place(relx=0.34, rely=0.7, anchor="center")
-
-        # self.canvas.create_image(352.5, 360, anchor="se", image=img_desc)
+        manouver_moreinfo.place(relx=0.67, rely=0.6, anchor="center")
 
         ##### here is for asking user to put his/her username! ######
         self.top_window = tk.Toplevel()
