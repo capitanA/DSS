@@ -42,7 +42,7 @@ class PlayScenario:
         self.log_objects = []
         self.isRealTime = isRealTime
         self.video_lbl = None
-        self.suggeste_img_lbl=None
+        self.suggeste_img_lbl = None
         self.general_Instruction_lbl_text = None
         self.specific_Instruction_lbl_text = None
         self.top_window = None
@@ -138,20 +138,19 @@ class PlayScenario:
         else:
             # if self.suggested_maneuver.cget("text") != "N/A":
             if self.video_lbl:
-                self.video_lbl.place_forget()
+                self.video_lbl.place_forget()  # if the video was playing in the previous assist just remove it.
             elif self.suggeste_img_lbl:
-                self.suggeste_img_lbl.place_forget()
+                self.suggeste_img_lbl.place_forget()  # if the picture was shown in the previous assist just remove it.
 
-
-            # Resetting suggested approach attributes
-            self.suggested_speed.config(text="")
-            self.suggested_distance_target.config(text="")
-            self.suggested_heading.config(text="")
-
-            self.suggested_area_focus.config(text="")
-            self.suggested_aspect.config(text="")
-            self.suggested_maneuver.config(text="")
-            self.suggested_orientation.config(text="")
+            # Removing the suggested solution attributes at getting  each assistance!
+            if self.log_objects:
+                self.suggested_speed.config(text="")
+                self.suggested_distance_target.config(text="")
+                self.suggested_heading.config(text="")
+                self.suggested_area_focus.config(text="")
+                self.suggested_aspect.config(text="")
+                self.suggested_maneuver.config(text="")
+                self.suggested_orientation.config(text="")
 
             # Resetting output image
             # if self.video_lbl:
@@ -205,14 +204,13 @@ class PlayScenario:
             if not self.log_objects:
                 messagebox.askokcancel(title="No Data!",
                                        message="There is no data to use for assistance! Is the simulator running? Was the logfile valid?")
-
                 return
 
             instant_second = self.log_objects[-1].simtime  # this line get the last second when the user needs an assist
             if self.log_objects[0].simtime == 0 and self.log_objects[1].simtime == 0:
                 self.log_objects.pop(0)
 
-            if instant_second < 120:  ###### Here we want to have 3 options for the best cases to show them to the user#####
+            if instant_second < 120:  ###### Here we want to have 3 options for the best cases showing to the user#####
                 self.features = Features(self.log_objects, self.scenario, self.logger,
                                          instant_second)
                 #### Once the user ask for assistance at the first 2 minutes these cases will be shown
@@ -248,11 +246,6 @@ class PlayScenario:
                     self.load_image(25, "J95-3")
                     self.show_instruction("J95-3")
 
-                # self.logger.info(
-                #     f"Assistance occurred at: {instant_second} seconds which is too soon!(Not recommended)")
-                # answer = messagebox.askokcancel(title="Proceed OR Quit",
-                #                                 message="It is too soon for getting assistance which is not recommended! Do you still want to get help?")
-            # if (instant_second < 180 and answer) or instant_second > 180:
             else:
                 self.generate_csv_file(
                     self.log_objects)  # This will generate a csv file based on self.log_objects list.
@@ -275,11 +268,6 @@ class PlayScenario:
                                                         self.features.aspect, self.features.area_of_focus,
                                                         self.features.orientation, self.features.maneuver)
 
-                # feature_array = feature_array_convertor(True, self.features.speed[1],
-                #                                         int(self.scale_distance_target.get()), self.features.heading[1],
-                #                                         self.features.aspect, self.features.area_of_focus,
-                #                                         self.features.orientation, self.features.maneuver)
-
                 suggested_case, case_ID, case_name, suggested_technique = self.decision_tree_classifier(feature_array,
                                                                                                         self.scenario)
 
@@ -291,12 +279,6 @@ class PlayScenario:
                                                                   suggested_case[5],
                                                                   suggested_case[6],
                                                                   suggested_technique)
-
-                # suggested_approach_dict = feature_array_convertor(False, suggested_case[4], suggested_case[0],
-                #                                                   suggested_case[2], suggested_case[5],
-                #                                                   suggested_case[6],
-                #                                                   suggested_case[1],
-                #                                                   suggested_technique)
 
                 # filling the suggested ownship status variables
                 self.suggested_speed.config(text=suggested_approach_dict["speed"])
@@ -320,46 +302,8 @@ class PlayScenario:
                 self.suggested_distance_target.config(text=suggested_approach_dict["distance"])
                 self.suggested_maneuver.config(text=suggested_technique)
 
-                ##### show the general instruction.
-                # self.general_Instruction_lbl_text.place(relx=0.5, rely=0.5, anchor="center")
-
-                #######find the description file for the predicted case and show up the information to the user
-
+                ####### Find the description file for the predicted case and show up the information to the user!
                 self.show_instruction(case_name)
-                # try:
-                #     more_info_file = open(f"description_files/{self.scenario}/{case_name}.txt", mode="r")
-                #     more_info_content = more_info_file.read()
-                #     if more_info_content:
-                #         self.specific_Instruction_lbl_text.config(wraplength=480, font=('Helvetica 13 bold'),
-                #                                                   text=more_info_content)
-                #
-                # except:
-                #     self.logger.info(f"The description file with the name {case_name} isn't exist!")
-                #     self.specific_Instruction_lbl_text.config(wraplength=480, font=('Helvetica 13 bold'),
-                #                                               text=f"There is no specific instruction for this approach.\nNote: If you think this in not actually an effective approach, change your current settings and ask for an assistance again.")
-                # try:
-                #     not_recomended_cases = open(f"Not_Recommended_Cases/NotRecommendedCases_{self.scenario}.txt",
-                #                                 mode="r")
-                #     not_recomended_cases = not_recomended_cases.read()
-                #     if case_name in not_recomended_cases.split("\n"):
-                #         self.not_recommended_lbl.config(bg="orange",
-                #                                         text="Note: The approach displayed here shows a below average result.\n See Left Panel for specific instructions for an above average result.")
-                #     else:
-                #         self.not_recommended_lbl.config(text="Continue along a similar approach!")
-                #
-                # except:
-                #     self.logger.info(f"The not recommended cases files could'nt be opened!")
-
-                ##### This  line will show the general information for the predicted approach
-                # if self.scenario in ["emergency", "emergency_4tens"]:
-                #     self.general_Instruction_lbl_text.config(font=('Helvetica 13 bold'),
-                #                                              text="1.If possible, adjust your heading for your final goal before you\n get to the ice edge.It’s much easier to turn in open water than in the ice.\n2. Approach the ice edge at a slow speed. \n3. Position the vessel close enough to the target to prevent the ice from \nflowing between your vessel and the target. \n4. If you want to use the leeway technique, get the stern or the bow \nfurther down to the south so the ice can flow out around the stern or bow\nof the vessel (don’t use perpendicular heading, use some angle instead).\n5. Don’t work in the zone, because the current will clear that ice.Focus\non the ice above the zone or vessel.")
-                # elif self.scenario == "leeway":
-                #     self.general_Instruction_lbl_text.config(font=('Helvetica 13 bold'),
-                #                                              text="1. Position the vessel close enough to the target to prevent \nthe ice from flowing between your vessel and the target.\n2. If you want to use the leeway technique, get the stern\n or the bow further down to the south so the ice can flow\n out around the stern or bow of the vessel (don’t use perpendicular\n heading, use some angle instead)\n3. Don’t work in the zone, because the current will clear that ice. Focus\n on the ice above the zone or vessel.")
-                # elif self.scenario == "pushing":
-                #     self.general_Instruction_lbl_text.config(font=('Helvetica 13 bold'),
-                #                                              text="1. Work upstream (above zone). Focusing a lot on clearing\n downstream (below the platform) is a waste of time because\n the current will clear that ice.")
                 self.load_image(case_ID, case_name)
 
     def show_instruction(self, case_name):
@@ -375,13 +319,13 @@ class PlayScenario:
 
             more_info_content = more_info_file.read()
             if more_info_content:
-                self.specific_Instruction_lbl_text.place(relx=0.5, rely=0.2, anchor="center")
+                self.specific_Instruction_lbl_text.place(relx=0.5, rely=0.3, anchor="center")
                 self.specific_Instruction_lbl_text.config(wraplength=495,
                                                           font=('Helvetica 20 bold'),
                                                           text=more_info_content)
 
         except:
-            self.logger.info(f"The description file with the name {case_name} isn't exist!")
+            self.logger.info(f"The description file with the name {case_name} was'nt exist!")
             self.specific_Instruction_lbl_text.config(wraplength=495, font=('Helvetica 20 bold'),
                                                       text=f"There is no specific instruction for this approach.\nNote: If you think this in not actually an effective approach, change your current settings and ask for an assistance again.")
         try:
@@ -400,32 +344,16 @@ class PlayScenario:
             self.logger.info(f"The not recommended cases files could'nt be opened!")
 
     def load_image(self, case_ID, case_name):
-        # ipdb.set_trace()
         current_path = os.getcwd()
         if self.scenario in ["emergency_4tens"]:
             scenario_name = "emergency"
         else:
             scenario_name = self.scenario
 
-        # cases_name = pd.read_excel(
-        #     current_path + "/Training_DataSet/" + self.scenario +"_N2"+ "/" + self.scenario + "_className.xls")
-        # np.array(cases_name)
-        # name = cases_name.values[case_ID][0]
-        # print(f"this is the name of the predicted case{case_name} for {self.scenario} scenario")
-        # try:
-        #
-        #     suggested_image = Image.open(
-        #         current_path + "/images/output_images/" + scenario_name + "/" + case_name + ".png")
-        #     resized_suggested_image = suggested_image.resize((354, 369), Image.ANTIALIAS)
-        #     img = ImageTk.PhotoImage(resized_suggested_image)
-        #     self.suggested_image_id = self.canvas.create_image(352.5, 360, anchor="se", image=img)
-        # except:
-        #     self.logger.info(f"The image with the name {case_name} couldn't be found")
-
         cases_name = pd.read_excel(
-            current_path + "/Training_DataSet/" + self.scenario + "_N2" + "/" + self.scenario + "_className.xls")
+            current_path + "/Training_DataSet/" + scenario_name + "_N2" + "/" + scenario_name + "_className.xls")
         np.array(cases_name)
-        name = cases_name.values[case_ID][0]
+        # name = cases_name.values[case_ID][0]
         print(f"this is the name of the predicted case{case_name} for {self.scenario} scenario")
         if os.path.exists(f"{current_path}/videoes/{scenario_name}/{case_name}.avi"):
             self.des_lbl.lower()
@@ -444,26 +372,9 @@ class PlayScenario:
             self.suggeste_img_lbl = tk.Label(self.suggested_approach_frame, image=img)
             self.suggeste_img_lbl.image = img
             self.suggeste_img_lbl.place(x=380, y=400, anchor="se")
-            # self.logger.info(f"The image with the name {case_name} couldn't be found")
 
-        # self.des_lbl.lower()
-        # self.video_lbl = tk.Label(self.suggested_approach_frame)
-        # self.video_lbl.place(x=380, y=400, anchor="se")
-        # player = tkvideo(f"{current_path}/videoes/{scenario_name}/{cases_name}.avi", self.video_lbl, loop=1,
-        #                  size=(350, 360))
-        # player.play()
+
         self.root.mainloop()
-
-    # def more_info(self):
-    #     try:
-    #         more_inf_file = open(f"description_files/{self.scenario}/{case_name}.txt", mode="r")
-    #         content = more_inf_file.read()
-    #         messagebox.showinfo(title="information",
-    #                             message=content)
-    #     except:
-    #         messagebox.showinfo(title="information",
-    #                             message="There is no more information for this case yet!")
-    #         self.logger.info(f"The description file with the name {case_name} couldn't be opened")
 
     def get_selected_rows(self, class_id):
         if self.scenario in ["emergency_4tens"]:
