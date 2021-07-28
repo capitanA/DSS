@@ -321,7 +321,6 @@ class Features:
         #     self.speed = ("dangerous", avg_speed, self.log_objects[self.time_stamp].sog)
         # print(f"this is speed average{sumed_speed / self.time_stamp} and is {self.speed[0]}")
 
-
     # def check_for_sector(self, root_sequence):
     #     tr_occurance = root_sequence.count("_TR")
     #     t_occurance = root_sequence.count("_T")

@@ -23,9 +23,17 @@ from HoverInfo import HoverText
 from simReceiver import SimReceiver
 from tkvideo import tkvideo
 import ipdb
+import random
 
 engine_dic = {"pEngine": 0, "fTunnelThruster": 0, "sEngine": 0, "aTunnelThruster": 0}
 rudder_dic = {"pRudder": 0, "sRudder": 0}
+best_cases_list = [
+    {"speed": "0.73", "heading": "102.54", "area_of_focus": "Zone", "orientation": "Bow", "aspect": "Direct",
+     "maneuver": "Pushing + PropWash", "case_ID": "G54-3"},
+    {"speed": "1", "heading": "45.2", "area_of_focus": "Above Vessel", "orientation": "Bow", "aspect": "J_approach",
+     "maneuver": "Pushing", "case_ID": "NR49_3"},
+    {"speed": "0.8", "heading": "270", "area_of_focus": "Above Zone", "orientation": "Stern", "aspect": "Up_Current",
+     "maneuver": "Pushing + Leeway", "case_ID": "J95-3"}]
 
 
 class PlayScenario:
@@ -144,7 +152,7 @@ class PlayScenario:
 
             # Resetting suggested approach attributes
             self.suggested_speed.config(text="")
-            self.suggested_distance_target.config(text="")
+            # self.suggested_distance_target.config(text="")
             self.suggested_heading.config(text="")
 
             self.suggested_area_focus.config(text="")
@@ -212,43 +220,60 @@ class PlayScenario:
                 self.log_objects.pop(0)
 
             if instant_second < 120:  ###### Here we want to have 3 options for the best cases to show them to the user#####
-                self.features = Features(self.log_objects, self.scenario, self.logger,
-                                         instant_second)
-                #### Once the user ask for assistance at the first 2 minutes these cases will be shown
-                if self.features.aspect == "direct":
-                    self.suggested_speed.config(text="0.73")
-                    self.suggested_heading.config(text="102.54")
-                    self.suggested_area_focus.config(text="Zone")
-                    self.suggested_aspect.config(text="Direct")
-                    self.suggested_orientation.config(text="Bow")
-                    self.suggested_distance_target.config(text="33.75")
-                    self.suggested_maneuver.config(text="Pushing + PropWash")
-                    self.load_image("G54-3")
-                    self.play_video("G54-3")
-                    self.show_instruction("G54-3")
+                if instant_second < 30:
+                    rand_index = random.randint(0, 2)
+                    self.suggested_speed.config(text=best_cases_list[rand_index]["speed"])
+                    self.suggested_heading.config(text=best_cases_list[rand_index]["heading"])
+                    self.suggested_area_focus.config(text=best_cases_list[rand_index]["area_of_focus"])
+                    self.suggested_aspect.config(text=best_cases_list[rand_index]["aspect"])
+                    self.suggested_orientation.config(text=best_cases_list[rand_index]["orientation"])
+                    # self.suggested_distance_target.config(text="33.75")
+                    self.suggested_maneuver.config(text=best_cases_list[rand_index]["maneuver"])
+                    self.show_instruction(best_cases_list[rand_index]["case_ID"])
+                    self.load_image(best_cases_list[rand_index]["case_ID"])
+                    self.play_video(best_cases_list[rand_index]["case_ID"])
 
-                elif self.features.aspect == "J_approach":
-                    self.suggested_speed.config(text="1")
-                    self.suggested_heading.config(text="45.2")
-                    self.suggested_area_focus.config(text="Above Vessel")
-                    self.suggested_aspect.config(text="J_Approach")
-                    self.suggested_orientation.config(text="Bow")
-                    self.suggested_distance_target.config(text="22.5")
-                    self.suggested_maneuver.config(text="Pushing")
-                    self.load_image("NR49-3")
-                    self.play_video("G54-3")
-                    self.show_instruction("NR49-3")
                 else:
-                    self.suggested_speed.config(text="0.8")
-                    self.suggested_heading.config(text="270")
-                    self.suggested_area_focus.config(text="Above Zone")
-                    self.suggested_aspect.config(text="Up_Current")
-                    self.suggested_orientation.config(text="Stern")
-                    self.suggested_distance_target.config(text="70")
-                    self.suggested_maneuver.config(text="Pushing + Leeway")
-                    self.load_image("J95-3")
-                    self.play_video("G54-3")
-                    self.show_instruction("J95-3")
+                    self.features = Features(self.log_objects, self.scenario, self.logger,
+                                             instant_second)
+                    #### Once the user ask for assistance at the first 2 minutes these cases will be shown
+                    if self.features.aspect == "direct":
+                        self.suggested_speed.config(text="0.73")
+                        self.suggested_heading.config(text="102.54")
+                        self.suggested_area_focus.config(text="Zone")
+                        self.suggested_aspect.config(text="Direct")
+                        self.suggested_orientation.config(text="Bow")
+                        # self.suggested_distance_target.config(text="33.75")
+                        self.suggested_maneuver.config(text="Pushing + PropWash")
+                        self.show_instruction("G54-3")
+                        self.load_image("G54-3")
+                        self.play_video("G54-3")
+
+
+
+                    elif self.features.aspect == "J_approach":
+                        self.suggested_speed.config(text="1")
+                        self.suggested_heading.config(text="45.2")
+                        self.suggested_area_focus.config(text="Above Vessel")
+                        self.suggested_aspect.config(text="J_Approach")
+                        self.suggested_orientation.config(text="Bow")
+                        # self.suggested_distance_target.config(text="22.5")
+                        self.suggested_maneuver.config(text="Pushing")
+                        self.show_instruction("NR49-3")
+                        self.load_image("NR49-3")
+                        self.play_video("C")
+
+                    else:
+                        self.suggested_speed.config(text="0.8")
+                        self.suggested_heading.config(text="270")
+                        self.suggested_area_focus.config(text="Above Zone")
+                        self.suggested_aspect.config(text="Up_Current")
+                        self.suggested_orientation.config(text="Stern")
+                        # self.suggested_distance_target.config(text="70")
+                        self.suggested_maneuver.config(text="Pushing + Leeway")
+                        self.show_instruction("J95-3")
+                        self.load_image("J95-3")
+                        self.play_video("J95-3")
 
                 # self.logger.info(
                 #     f"Assistance occurred at: {instant_second} seconds which is too soon!(Not recommended)")
@@ -270,7 +295,7 @@ class PlayScenario:
                 # self.scale_distance_target_avg.set(round(self.features.distance_from_target[0], 4))
                 # self.scale_instant_distance.set(round(self.features.distance_from_target[1], 4))
 
-                '''creating and passing the feature_array to the classifier for classification'''
+                '''converting the features as it needs to be for classification'''
                 feature_array = feature_array_convertor(True, self.features.speed[1],
                                                         self.features.distance_from_target,
                                                         self.features.heading[1],
@@ -319,7 +344,7 @@ class PlayScenario:
                 self.suggested_area_focus.config(text=area_of_focus)
                 self.suggested_aspect.config(text=suggested_approach_dict["aspect"])
                 self.suggested_orientation.config(text=suggested_approach_dict["orientation"])
-                self.suggested_distance_target.config(text=suggested_approach_dict["distance"])
+                # self.suggested_distance_target.config(text=suggested_approach_dict["distance"])
                 self.suggested_maneuver.config(text=suggested_technique)
 
                 ##### show the general instruction.
@@ -367,7 +392,6 @@ class PlayScenario:
                 self.play_video(case_name)
 
     def show_instruction(self, case_name):
-        # ipdb.set_trace()
         if self.scenario in ["emergency_4tens"]:
             scenario_name = "emergency"
         else:
@@ -523,7 +547,7 @@ class PlayScenario:
 
         # Resetting suggested approach attributes
         self.suggested_speed.config(text="")
-        self.suggested_distance_target.config(text="")
+        # self.suggested_distance_target.config(text="")
         self.suggested_heading.config(text="")
 
         self.suggested_area_focus.config(text="")
@@ -565,12 +589,12 @@ class PlayScenario:
         Instruction_lbl.place(relx=0.13, rely=0, anchor="center")
 
         self.suggested_video_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.28,
-                                               height=self.main_frame_height * 0.61)
+                                              height=self.main_frame_height * 0.61)
         self.suggested_video_frame.config(borderwidth=3, relief="groove", padx=3, pady=3)
         self.suggested_video_frame.place(relx=0.56, rely=0.5, anchor="center")
 
         suggested_video_lbl = tk.Label(self.suggested_video_frame, text="Suggested Video", bg="white",
-                                                 font=('Helvetica 18 bold'))
+                                       font=('Helvetica 18 bold'))
         suggested_video_lbl.place(relx=0.25, rely=0.001, anchor="center")
 
         self.suggested_approach_frame = tk.Frame(self.container, bg="white", width=self.main_frame_width * 0.25,
@@ -728,18 +752,19 @@ class PlayScenario:
         distance_target_lbl = tk.Label(self.new_suggested_status_frame, text="Distance from Target",
                                        font=("helvetica", 16, "bold"),
                                        justify="left")
-        distance_target_lbl.place(relx=0.65, rely=0.4, anchor="center")
-        self.suggested_distance_target = tk.Label(self.new_suggested_status_frame, text="N/A",
-                                                  font=("helvetica", 16, "bold"),
-                                                  justify="left")
-        self.suggested_distance_target.place(relx=0.92, rely=0.4, anchor="center")
+
+        # distance_target_lbl.place(relx=0.65, rely=0.4, anchor="center")
+        # self.suggested_distance_target = tk.Label(self.new_suggested_status_frame, text="N/A",
+        #                                           font=("helvetica", 16, "bold"),
+        #                                           justify="left")
+        # self.suggested_distance_target.place(relx=0.92, rely=0.4, anchor="center")
 
         maneuver_lbl = tk.Label(self.new_suggested_status_frame, text="Maneuver", font=("helvetica", 16, "bold"),
                                 justify="left")
-        maneuver_lbl.place(relx=0.58, rely=0.6, anchor="center")
+        maneuver_lbl.place(relx=0.58, rely=0.4, anchor="center")
         self.suggested_maneuver = tk.Label(self.new_suggested_status_frame, text="N/A", font=("helvetica", 16, "bold"),
                                            justify="left")
-        self.suggested_maneuver.place(relx=0.8, rely=0.6, anchor="center")
+        self.suggested_maneuver.place(relx=0.92, rely=0.4, anchor="center")
 
         ####### creat the canvas for the suggested approach section  #######
         assist_btn = tk.Button(self.suggested_approach_frame, text="Assist", bg="green", width=32, height=2, anchor="c",
@@ -853,16 +878,16 @@ class PlayScenario:
                   "The ownship vessel’s orientation in relation to the target:\n Bow: Ownship vessel’s bow facing the target.\n Stern: Ownship vessel’s stern facing the target.\n Parallel: Ownship is parallel with the target.\n Changing: Ownship’s orientation is constantly changing.")
         orientation_moreinfo.place(relx=0.82, rely=0.2, anchor="center")
 
-        distance_moreinfo = tk.Label(self.new_suggested_status_frame, image=img)
-        distance_moreinfo.image = img
-        HoverText(distance_moreinfo, "How far the ownship vessel should be from the target.")
-        distance_moreinfo.place(relx=0.82, rely=0.4, anchor="center")
+        # distance_moreinfo = tk.Label(self.new_suggested_status_frame, image=img)
+        # distance_moreinfo.image = img
+        # HoverText(distance_moreinfo, "How far the ownship vessel should be from the target.")
+        # distance_moreinfo.place(relx=0.82, rely=0.4, anchor="center")
 
         manouver_moreinfo = tk.Label(self.new_suggested_status_frame, image=img)
         manouver_moreinfo.image = img
         HoverText(manouver_moreinfo,
                   "Techniques that each participant used in their ice management performance:\n Pushing: Using the bow or broadside of the vessel to clear ice around the indicated zone.\n Sector: Using the bow or broadside of the vessel and having a back and forth motion at the same time to clear the ice up current from the zone.\n Prop-Wash: Having a maintained position above the zone and flushing the ice from the target using the vessel’s propeller wake wash.\n Leeway: Keeping the position and blocking the flowing ice using the side of the vessel above the target area.\n Circular: Using the pushing and prop-wash techniques and having a circular motion at the same time above the target area")
-        manouver_moreinfo.place(relx=0.67, rely=0.6, anchor="center")
+        manouver_moreinfo.place(relx=0.67, rely=0.4, anchor="center")
 
         ##### here is for asking user to put his/her username! ######
         self.top_window = tk.Toplevel()

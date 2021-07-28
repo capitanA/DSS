@@ -35,22 +35,22 @@ class CsvFile:
                    dict["IceLoad"])
 
 
-class CsvRowsOperator:
-    def __init__(self):
-        self.log_objects = []
-
-    def read_file(self, filename):
-        csv_reader = csv.reader(filename, delimiter=',', quotechar='|')
-        line_count = 0
-        for row in csv_reader:
-            if line_count == 0:
-                line_count += 1
-                continue
-            else:
-                self.log_objects.append(
-                    CsvFile(float(row[0]), float(row[1]), abs(float(row[2])), float(row[3]), float(row[4]),
-                            float(row[5]),
-                            float(row[6]), float(row[7]), float(row[8]), float(row[9]), float(row[10]),
-                            float(row[11])))
-                line_count += 1
-        return self.log_objects
+# class CsvRowsOperator:
+#     def __init__(self):
+#         self.log_objects = []
+#
+#     def read_file(self, filename):
+#         csv_reader = csv.reader(filename, delimiter=',', quotechar='|')
+#         line_count = 0
+#         for row in csv_reader:
+#             if line_count == 0:
+#                 line_count += 1
+#                 continue
+#             else:
+#                 self.log_objects.append(
+#                     CsvFile(float(row[0]), float(row[1]), abs(float(row[2])), float(row[3]), float(row[4]),
+#                             float(row[5]),
+#                             float(row[6]), float(row[7]), float(row[8]), float(row[9]), float(row[10]),
+#                             float(row[11])))
+#                 line_count += 1
+#         return self.log_objects
